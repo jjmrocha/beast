@@ -42,8 +42,8 @@ func main() {
 
 func runCmd(args []string) {
 	runOption := flag.NewFlagSet("run", flag.ExitOnError)
-	nRequests := runOption.Int("n", 1, "number of requests")
-	nParallel := runOption.Int("c", 1, "number of concurrent requests")
+	nRequests := runOption.Int("n", 1, "Number of requests")
+	nParallel := runOption.Int("c", 1, "Number of concurrent requests")
 	runOption.Parse(args)
 	nonFlagArgs := runOption.Args()
 
@@ -58,7 +58,7 @@ func runCmd(args []string) {
 
 func generateCmd(args []string) {
 	generateOption := flag.NewFlagSet("generate", flag.ExitOnError)
-	method := generateOption.String("m", "GET", "http method")
+	method := generateOption.String("m", "GET", "HTTP method")
 	generateOption.Parse(args)
 	nonFlagArgs := generateOption.Args()
 

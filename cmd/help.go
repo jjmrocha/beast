@@ -17,6 +17,25 @@ package cmd
 
 import "fmt"
 
+const help = `===========================================
+The Beast - Stress testing for RESTful APIs
+===========================================
+Usage:
+	beast [help]
+	beast generate [-m <http method>] [url] <script>
+	beast run [-n <number of requests>] [-c <number of concurrent requests>] <script>
+Where:
+	generate Creates a script template, using user provided parameters
+	         -m     string HTTP method (default "GET")
+	         url    string Endpoint to be tested
+	         script string JSON file with details about the request to test
+
+	run      Executes a script and presents a report with execution results
+	         -c     int    Number of concurrent requests (default 1)
+	         -n     int    Number of requests (default 1)
+	         script string JSON file with details about the request to test 
+`
+
 func Help() {
-	fmt.Println("Help")
+	fmt.Println(help)
 }
