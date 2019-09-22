@@ -13,23 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package beast
+package cmd
 
-import "time"
+import "fmt"
 
-type BHeader struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
-type BRequest struct {
-	Method   string    `json:"method"`
-	Endpoint string    `json:"url"`
-	Headers  []BHeader `json:"headers"`
-	Body     string    `json:"body"`
-}
-
-type BResponse struct {
-	StatusCode int
-	Duration   time.Duration
+func Run(nRequests, nParallel *int, fileName *string) {
+	fmt.Println("Run", *nRequests, *nParallel, *fileName)
 }
