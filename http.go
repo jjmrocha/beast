@@ -32,7 +32,7 @@ func HttpClient() *http.Client {
 	return &http.Client{Transport: transport}
 }
 
-func convertToReq(request *BRequest) (*http.Request, error) {
+func Convert(request *BRequest) (*http.Request, error) {
 	req, err := http.NewRequest(request.Method, request.Endpoint, bodyReader(request.Body))
 	if err != nil {
 		return nil, err
@@ -53,24 +53,15 @@ func bodyReader(body string) io.Reader {
 	return strings.NewReader(body)
 }
 
-func Execute(client *http.Client, request *BRequest) *BResponse {
-	req, err := convertToReq(request)
-	if err != nil {
-		log.Printf("Invalid request %v: %v\n", request, err)
-		return &BResponse{
-			StatusCode: -1,
-			Duration:   time.Duration(0),
-		}
-	}
-
+func Execute(client *http.Client, req *http.Request) *BResponse {
 	start := time.Now()
 	resp, err := client.Do(req)
 	duration := time.Since(start)
 
 	if err != nil {
-		log.Printf("Error executing request %v: %v\n", request, err)
+		log.Printf("Error executing request %v: %v\n", req, err)
 		return &BResponse{
-			StatusCode: -2,
+			StatusCode: -1,
 			Duration:   duration,
 		}
 	}
