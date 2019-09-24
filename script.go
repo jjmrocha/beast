@@ -33,7 +33,7 @@ func ReadScript(fileName string) *BRequest {
 }
 
 func WriteScript(fileName string, request *BRequest) {
-	data, err := json.Marshal(request)
+	data, err := json.MarshalIndent(request, "", "  ")
 	if err != nil {
 		log.Printf("Error encoding request %v to JSON: %v\n", *request, err)
 	}

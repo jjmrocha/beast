@@ -25,8 +25,8 @@ type BHeader struct {
 type BRequest struct {
 	Method   string    `json:"method"`
 	Endpoint string    `json:"url"`
-	Headers  []BHeader `json:"headers"`
-	Body     string    `json:"body"`
+	Headers  []BHeader `json:"headers,omitempty"`
+	Body     string    `json:"body,omitempty"`
 }
 
 type BResponse struct {

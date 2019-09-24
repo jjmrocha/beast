@@ -15,8 +15,41 @@
  */
 package cmd
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/jjmrocha/beast"
+)
 
 func Generate(method, url, fileName *string) {
-	fmt.Println("Generate", *method, *url, *fileName)
+	if *url == "" {
+		writeTemplate(*fileName)
+	} else {
+		writeScript(*method, *url, *fileName)
+	}
+}
+
+func writeTemplate(fileName string) {
+	template := beast.BRequest{
+		Method:   "Use Http method: GET/POST/PUT/DELETE",
+		Endpoint: "Http URL to be invoked",
+		Headers: []beast.BHeader{
+			{Key: "User-Agent", Value: "Beast/1"},
+		},
+		Body: "Optional, enter body to send with POST or PUT",
+	}
+	beast.WriteScript(fileName, &template)
+	fmt.Printf("File %s was created, please edit before use\n", fileName)
+}
+
+func writeScript(method, url, fileName string) {
+	script := beast.BRequest{
+		Method:   method,
+		Endpoint: url,
+		Headers: []beast.BHeader{
+			{Key: "User-Agent", Value: "Beast/1"},
+		},
+	}
+	beast.WriteScript(fileName, &script)
+	fmt.Printf("File %s was created for '%s %s'\n", fileName, method, url)
 }
