@@ -59,7 +59,7 @@ func Execute(client *http.Client, req *http.Request) *BResponse {
 	duration := time.Since(start)
 
 	if err != nil {
-		log.Printf("Error executing request %v: %v\n", req, err)
+		log.Printf("Error executing request '%s %s': %v\n", req.Method, req.URL.String(), err)
 		return &BResponse{
 			StatusCode: -1,
 			Duration:   duration,

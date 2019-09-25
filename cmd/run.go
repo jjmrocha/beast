@@ -15,8 +15,49 @@
  */
 package cmd
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"sync"
+
+	"github.com/jjmrocha/beast"
+)
 
 func Run(nRequests, nParallel *int, fileName *string) {
-	fmt.Println("Run", *nRequests, *nParallel, *fileName)
+	req := readRequest(*fileName)
+	output := make(chan *beast.BResponse, *nRequests)
+	client := beast.HttpClient()
+	semaphore := beast.NewSemaphore(*nParallel)
+	var wg sync.WaitGroup
+	wg.Add(*nRequests)
+
+	go func() {
+		for i := 0; i < *nRequests; i++ {
+			semaphore.Acquire()
+			go func(r *http.Request) {
+				defer wg.Done()
+				output <- beast.Execute(client, r)
+				semaphore.Release()
+			}(req)
+		}
+	}()
+
+	go func() {
+		wg.Wait()
+		close(output)
+	}()
+
+	for response := range output {
+		fmt.Println(*response)
+	}
+}
+
+func readRequest(fileName string) *http.Request {
+	script := beast.ReadScript(fileName)
+	request, err := beast.Convert(script)
+	if err != nil {
+		log.Fatalf("Invalid request %v: %v\n", *script, err)
+	}
+	return request
 }

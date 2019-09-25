@@ -33,3 +33,17 @@ type BResponse struct {
 	StatusCode int
 	Duration   time.Duration
 }
+
+type Semaphore chan bool
+
+func NewSemaphore(size int) Semaphore {
+	return make(chan bool, size)
+}
+
+func (s Semaphore) Acquire() {
+	s <- true
+}
+
+func (s Semaphore) Release() {
+	<-s
+}
