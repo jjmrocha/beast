@@ -27,9 +27,13 @@ func HttpClient() *http.Client {
 	transport := &http.Transport{
 		DisableCompression: true,
 		DisableKeepAlives:  false,
+		MaxConnsPerHost:    0,
 	}
 
-	return &http.Client{Transport: transport}
+	return &http.Client{
+		Transport: transport,
+		Timeout:   time.Second * 10,
+	}
 }
 
 func Convert(request *BRequest) (*http.Request, error) {

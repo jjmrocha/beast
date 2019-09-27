@@ -16,6 +16,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -24,6 +25,7 @@ import (
 )
 
 func Run(nRequests, nParallel int, fileName string) {
+	printRequest(fileName, nRequests, nParallel)
 	req := readRequest(fileName)
 	output := make(chan *beast.BResponse, nRequests)
 	client := beast.HttpClient()
@@ -47,13 +49,22 @@ func Run(nRequests, nParallel int, fileName string) {
 		close(output)
 	}()
 
-	report := new(beast.Report)
+	report := beast.NewReport(nParallel)
+	progress := beast.NewBar(nRequests)
 
 	for response := range output {
 		report.Update(response)
+		progress.Update()
 	}
 
 	report.Print()
+}
+
+func printRequest(fileName string, nRequests, nParallel int) {
+	fmt.Printf("=== Test ===\n")
+	fmt.Printf("Script to execeute: %v\n", fileName)
+	fmt.Printf("Number of requests: %v\n", nRequests)
+	fmt.Printf("Number of concurrent requests: %v\n", nParallel)
 }
 
 func readRequest(fileName string) *http.Request {

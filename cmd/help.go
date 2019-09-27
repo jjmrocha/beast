@@ -17,9 +17,7 @@ package cmd
 
 import "fmt"
 
-const help = `
-The Beast - Stress testing for RESTful APIs
-===========================================
+const help = `The Beast - Stress testing for RESTful APIs
 Usage:
 	beast [help]
 	beast generate [-m <http method>] [url] <script>
