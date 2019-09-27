@@ -16,7 +16,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -24,16 +23,16 @@ import (
 	"github.com/jjmrocha/beast"
 )
 
-func Run(nRequests, nParallel *int, fileName *string) {
-	req := readRequest(*fileName)
-	output := make(chan *beast.BResponse, *nRequests)
+func Run(nRequests, nParallel int, fileName string) {
+	req := readRequest(fileName)
+	output := make(chan *beast.BResponse, nRequests)
 	client := beast.HttpClient()
-	semaphore := beast.NewSemaphore(*nParallel)
+	semaphore := beast.NewSemaphore(nParallel)
 	var wg sync.WaitGroup
-	wg.Add(*nRequests)
+	wg.Add(nRequests)
 
 	go func() {
-		for i := 0; i < *nRequests; i++ {
+		for i := 0; i < nRequests; i++ {
 			semaphore.Acquire()
 			go func(r *http.Request) {
 				defer wg.Done()
@@ -48,9 +47,13 @@ func Run(nRequests, nParallel *int, fileName *string) {
 		close(output)
 	}()
 
+	report := new(beast.Report)
+
 	for response := range output {
-		fmt.Println(*response)
+		report.Update(response)
 	}
+
+	report.Print()
 }
 
 func readRequest(fileName string) *http.Request {

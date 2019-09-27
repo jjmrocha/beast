@@ -21,11 +21,11 @@ import (
 	"github.com/jjmrocha/beast"
 )
 
-func Generate(method, url, fileName *string) {
-	if *url == "" {
-		writeTemplate(*fileName)
+func Generate(method, url, fileName string) {
+	if url == "" {
+		writeTemplate(fileName)
 	} else {
-		writeScript(*method, *url, *fileName)
+		writeScript(method, url, fileName)
 	}
 }
 

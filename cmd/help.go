@@ -18,7 +18,6 @@ package cmd
 import "fmt"
 
 const help = `
-===========================================
 The Beast - Stress testing for RESTful APIs
 ===========================================
 Usage:

@@ -53,7 +53,7 @@ func runCmd(args []string) {
 	}
 
 	fileName := nonFlagArgs[0]
-	cmd.Run(nRequests, nParallel, &fileName)
+	cmd.Run(*nRequests, *nParallel, fileName)
 }
 
 func generateCmd(args []string) {
@@ -75,5 +75,5 @@ func generateCmd(args []string) {
 		return
 	}
 
-	cmd.Generate(method, &url, &fileName)
+	cmd.Generate(*method, url, fileName)
 }
