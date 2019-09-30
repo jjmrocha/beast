@@ -35,7 +35,7 @@ type TRequest struct {
 	Body     string    `json:"body,omitempty"`
 }
 
-func (t *TRequest) Convert() (*client.BRequest, error) {
+func (t *TRequest) Generate() (*client.BRequest, error) {
 	req, err := http.NewRequest(t.Method, t.Endpoint, bodyReader(t.Body))
 	if err != nil {
 		return nil, err

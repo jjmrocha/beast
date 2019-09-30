@@ -31,7 +31,7 @@ type Stats struct {
 	StatusMap  map[int]int
 }
 
-func NewReport(nParallel int) *Stats {
+func NewStats(nParallel int) *Stats {
 	return &Stats{
 		concurrent: nParallel,
 		StatusMap:  make(map[int]int),

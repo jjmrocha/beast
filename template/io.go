@@ -35,7 +35,7 @@ func Read(fileName string) *TRequest {
 func Write(fileName string, request *TRequest) {
 	data, err := json.MarshalIndent(request, "", "  ")
 	if err != nil {
-		log.Printf("Error encoding request %v to JSON: %v\n", *request, err)
+		log.Printf("Error encoding request %v to JSON: %v\n", request, err)
 	}
 
 	err = ioutil.WriteFile(fileName, data, 0666)

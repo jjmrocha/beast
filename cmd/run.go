@@ -50,7 +50,7 @@ func Run(nRequests, nParallel int, fileName string) {
 		close(output)
 	}()
 
-	stats := report.NewReport(nParallel)
+	stats := report.NewStats(nParallel)
 	progress := report.NewBar(nRequests)
 
 	for response := range output {
@@ -69,10 +69,10 @@ func printTest(fileName string, nRequests, nParallel int) {
 }
 
 func readRequest(fileName string) *client.BRequest {
-	template := template.Read(fileName)
-	request, err := template.Convert()
+	requestTemplate := template.Read(fileName)
+	request, err := requestTemplate.Generate()
 	if err != nil {
-		log.Fatalf("Invalid request %v: %v\n", *template, err)
+		log.Fatalf("Invalid request %v: %v\n", requestTemplate, err)
 	}
 	return request
 }
