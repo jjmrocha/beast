@@ -62,7 +62,7 @@ func (o *Report) Tps() float64 {
 }
 
 func (o *Report) Avg() time.Duration {
-	return o.Duration / time.Duration(o.Requests)
+	return time.Duration(o.Duration.Nanoseconds() / int64(o.Requests))
 }
 
 func (o *Report) Print() {
