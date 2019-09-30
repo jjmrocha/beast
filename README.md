@@ -12,9 +12,9 @@ $ go get -u github.com/jjmrocha/beast
 
 ## Usage
 Beast currently supports the following commands:
-.help
-.generate
-.run
+*help
+*generate
+*run
 
 ### help
 Displays the help information.
