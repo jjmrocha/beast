@@ -18,29 +18,30 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"sync"
 
-	"github.com/jjmrocha/beast"
+	"github.com/jjmrocha/beast/client"
+	"github.com/jjmrocha/beast/report"
+	"github.com/jjmrocha/beast/template"
 )
 
 func Run(nRequests, nParallel int, fileName string) {
-	printRequest(fileName, nRequests, nParallel)
-	req := readRequest(fileName)
-	output := make(chan *beast.BResponse, nRequests)
-	client := beast.HttpClient()
-	semaphore := beast.NewSemaphore(nParallel)
+	printTest(fileName, nRequests, nParallel)
+	request := readRequest(fileName)
+	output := make(chan *client.BResponse, nRequests)
+	http := client.Http()
+	semaphore := client.NewSemaphore(nParallel)
 	var wg sync.WaitGroup
 	wg.Add(nRequests)
 
 	go func() {
 		for i := 0; i < nRequests; i++ {
 			semaphore.Acquire()
-			go func(r *http.Request) {
+			go func() {
 				defer wg.Done()
-				output <- beast.Execute(client, r)
+				output <- http.Execute(request)
 				semaphore.Release()
-			}(req)
+			}()
 		}
 	}()
 
@@ -49,29 +50,29 @@ func Run(nRequests, nParallel int, fileName string) {
 		close(output)
 	}()
 
-	report := beast.NewReport(nParallel)
-	progress := beast.NewBar(nRequests)
+	stats := report.NewReport(nParallel)
+	progress := report.NewBar(nRequests)
 
 	for response := range output {
-		report.Update(response)
+		stats.Update(response)
 		progress.Update()
 	}
 
-	report.Print()
+	stats.Print()
 }
 
-func printRequest(fileName string, nRequests, nParallel int) {
+func printTest(fileName string, nRequests, nParallel int) {
 	fmt.Printf("=== Test ===\n")
 	fmt.Printf("Script to execeute: %v\n", fileName)
 	fmt.Printf("Number of requests: %v\n", nRequests)
 	fmt.Printf("Number of concurrent requests: %v\n", nParallel)
 }
 
-func readRequest(fileName string) *http.Request {
-	script := beast.ReadScript(fileName)
-	request, err := beast.Convert(script)
+func readRequest(fileName string) *client.BRequest {
+	template := template.Read(fileName)
+	request, err := template.Convert()
 	if err != nil {
-		log.Fatalf("Invalid request %v: %v\n", *script, err)
+		log.Fatalf("Invalid request %v: %v\n", *template, err)
 	}
 	return request
 }
