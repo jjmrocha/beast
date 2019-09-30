@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jjmrocha/beast"
 )
@@ -50,6 +51,16 @@ func writeScript(method, url, fileName string) {
 			{Key: "User-Agent", Value: "Beast/1"},
 		},
 	}
+
+	if usesBody(method) {
+		script.Body = "Optional, enter body to send with POST or PUT"
+	}
+
 	beast.WriteScript(fileName, &script)
 	fmt.Printf("File %s was created for '%s %s'\n", fileName, method, url)
+}
+
+func usesBody(method string) bool {
+	upperCaseMethod := strings.ToUpper(method)
+	return upperCaseMethod == "PUT" || upperCaseMethod == "POST"
 }
