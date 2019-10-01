@@ -43,7 +43,7 @@ The template command functions as a utility to generate request files.
 
 Can be used to generate an "empty" request:
 ```sh
-$ beast generate test.json                                                        
+$ beast template test.json                                                        
 File test.json was created, please edit before use
 
 $ cat test.json
@@ -62,7 +62,7 @@ $ cat test.json
 
 Or, to generate the base request, that you can customize, adding headers or payload:
 ```sh
-$ beast generate https://github.com/jjmrocha/beast test.json
+$ beast template https://github.com/jjmrocha/beast test.json
 File test.json was created for 'GET https://github.com/jjmrocha/beast'
 
 $ cat test.json
