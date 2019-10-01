@@ -63,7 +63,7 @@ func Run(nRequests, nParallel int, fileName string) {
 
 func printTest(fileName string, nRequests, nParallel int) {
 	fmt.Printf("=== Test ===\n")
-	fmt.Printf("Script to execeute: %v\n", fileName)
+	fmt.Printf("Script to execute: %v\n", fileName)
 	fmt.Printf("Number of requests: %v\n", nRequests)
 	fmt.Printf("Number of concurrent requests: %v\n", nParallel)
 }

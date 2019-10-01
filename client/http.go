@@ -51,7 +51,7 @@ func Http() *BClient {
 	}
 	native := &http.Client{
 		Transport: transport,
-		Timeout:   time.Second * 10,
+		Timeout:   time.Second * 30,
 	}
 
 	return &BClient{
@@ -71,6 +71,8 @@ func (c *BClient) Execute(request *BRequest) *BResponse {
 			Duration:   duration,
 		}
 	}
+
+	defer resp.Body.Close()
 
 	return &BResponse{
 		StatusCode: resp.StatusCode,
