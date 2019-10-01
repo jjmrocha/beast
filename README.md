@@ -13,7 +13,7 @@ $ go get -u github.com/jjmrocha/beast
 ## Usage
 Beast currently supports the following commands:
 * help
-* generate
+* template
 * run
 
 ### help
@@ -24,22 +24,22 @@ $ beast help
 The Beast - Stress testing for RESTful APIs
 Usage:
 	beast [help]
-	beast generate [-m <http method>] [url] <file>
-	beast run [-n <number of requests>] [-c <number of concurrent requests>] <file>
+	beast template [-m <http method>] [url] <template>
+	beast run [-n <number of requests>] [-c <number of concurrent requests>] <template>
 Where:
-	generate Creates a request file, using user provided parameters
-	         -m     string HTTP method (default "GET")
-	         url    string Endpoint to be tested
-	         file   string JSON file with details about the request to test
+	generate Creates a request template file, using user provided parameters
+	         -m       string HTTP method (default "GET")
+	         url      string Endpoint to be tested
+	         template string JSON file with details about the request to test
 
 	run      Executes a script and presents a report with execution results
-	         -c     int    Number of concurrent requests (default 1)
-	         -n     int    Number of requests (default 1)
-	         file   string JSON file with details about the request to test
+	         -c       int    Number of concurrent requests (default 1)
+	         -n       int    Number of requests (default 1)
+	         template string JSON file with details about the request to test
 ```
 
-### generate
-The generate command functions as a utility to generate request files.
+### template
+The template command functions as a utility to generate request files.
 
 Can be used to generate an "empty" request:
 ```sh

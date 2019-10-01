@@ -22,7 +22,7 @@ import (
 	"github.com/jjmrocha/beast/template"
 )
 
-func Generate(method, url, fileName string) {
+func Template(method, url, fileName string) {
 	if url == "" {
 		writeTemplate(fileName)
 	} else {

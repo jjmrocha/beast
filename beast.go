@@ -34,7 +34,7 @@ func main() {
 	case "run":
 		runCmd(os.Args[2:])
 	case "generate":
-		generateCmd(os.Args[2:])
+		templateCmd(os.Args[2:])
 	default:
 		cmd.Help()
 	}
@@ -56,11 +56,11 @@ func runCmd(args []string) {
 	cmd.Run(*nRequests, *nParallel, fileName)
 }
 
-func generateCmd(args []string) {
-	generateOption := flag.NewFlagSet("generate", flag.ExitOnError)
-	method := generateOption.String("m", "GET", "HTTP method")
-	generateOption.Parse(args)
-	nonFlagArgs := generateOption.Args()
+func templateCmd(args []string) {
+	templateOption := flag.NewFlagSet("template", flag.ExitOnError)
+	method := templateOption.String("m", "GET", "HTTP method")
+	templateOption.Parse(args)
+	nonFlagArgs := templateOption.Args()
 
 	var url, fileName string
 
@@ -75,5 +75,5 @@ func generateCmd(args []string) {
 		return
 	}
 
-	cmd.Generate(*method, url, fileName)
+	cmd.Template(*method, url, fileName)
 }
