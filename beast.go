@@ -32,14 +32,24 @@ func main() {
 	case "help":
 		cmd.Help()
 	case "config":
-		cmd.WriteDefaultConfig()
+		runConfig(os.Args[2:])
 	case "run":
 		runCmd(os.Args[2:])
-	case "generate":
+	case "template":
 		templateCmd(os.Args[2:])
 	default:
 		cmd.Help()
 	}
+}
+
+func runConfig(args []string) {
+	if len(args) != 1 {
+		cmd.Help()
+		return
+	}
+
+	fileName := args[0]
+	cmd.Config(fileName)
 }
 
 func runCmd(args []string) {

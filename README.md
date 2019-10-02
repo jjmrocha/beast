@@ -2,8 +2,6 @@ the Beast
 =========
 *Stress testing for RESTful APIs*
 
-![Superhero GO](https://github.com/egonelbre/gophers/blob/master/vector/superhero/lifting-1TB.svg)
-
 ## Installation
 Binaries are available on [releases](https://github.com/jjmrocha/beast/releases).
 
@@ -15,6 +13,7 @@ $ go get -u github.com/jjmrocha/beast
 ## Usage
 Beast currently supports the following commands:
 * help
+* config
 * template
 * run
 
@@ -25,19 +24,52 @@ Displays the help information.
 $ beast help
 The Beast - Stress testing for RESTful APIs
 Usage:
-	beast [help]
-	beast template [-m <http method>] [url] <template>
-	beast run [-n <number of requests>] [-c <number of concurrent requests>] <template>
+   beast [help]
+   beast config <fileName>
+   beast template [-m <http method>] [url] <template>
+   beast run [-n <number of requests>] [-c <number of concurrent requests>] <template>
 Where:
-	generate Creates a request template file, using user provided parameters
-	         -m       string HTTP method (default "GET")
-	         url      string Endpoint to be tested
-	         template string JSON file with details about the request to test
+   config   Creates a file with the default parameters to setup HTTP connections
+            fileName string Name of the file to be created
+			 			
+   template Creates a request template file, using user provided parameters
+            -m       string HTTP method (default "GET")
+            url      string Endpoint to be tested
+            template string JSON file with details about the request to test
 
-	run      Executes a script and presents a report with execution results
-	         -c       int    Number of concurrent requests (default 1)
-	         -n       int    Number of requests (default 1)
-	         template string JSON file with details about the request to test
+   run      Executes a script and presents a report with execution results
+            -c       int    Number of concurrent requests (default 1)
+			-n       int    Number of requests (default 1)
+            template string JSON file with details about the request to test 
+```
+
+### config
+The config command creates a JSOn file with parameters used to setup HTTP connections, with
+default values.
+
+* disable-compression 
+  > If true, prevents this client from requesting compression  with an "Accept-Encoding: gzip"
+
+* disable-keep-alives 
+  > If true, disables HTTP keep-alives and will only use the  connection to the server for a single request 
+  
+* max-connections 
+  > Limits the total number of connections per host,  zero means no limit                                   |
+
+* timeout
+  > Specifies a time limit in seconds for requests made by this Client,  zero means no timeout
+
+```sh
+$ beast config config.json
+File config.json was created with default configuration
+
+$ cat config.json
+{
+	"disable-compression": true,
+	"disable-keep-alives": false,
+	"max-connections": 0,
+	"timeout": 30
+}
 ```
 
 ### template
@@ -50,16 +82,16 @@ File test.json was created, please edit before use
 
 $ cat test.json
 {
-  "method": "Use Http method: GET/POST/PUT/DELETE",
-  "url": "Http URL to be invoked",
-  "headers": [
-    {
-      "key": "User-Agent",
-      "value": "Beast/1"
-    }
-  ],
-  "body": "Optional, enter body to send with POST or PUT"
-}
+	"method": "Use Http method: GET/POST/PUT/DELETE",
+	"url": "Http URL to be invoked",
+	"headers": [
+		{
+			"key": "User-Agent",
+			"value": "Beast/1"
+		}
+	],
+	"body": "Optional, enter body to send with POST or PUT"
+}%
 ```
 
 Or, to generate the base request, that you can customize, adding headers or payload:
@@ -69,14 +101,14 @@ File test.json was created for 'GET https://github.com/jjmrocha/beast'
 
 $ cat test.json
 {
-  "method": "GET",
-  "url": "https://github.com/jjmrocha/beast",
-  "headers": [
-    {
-      "key": "User-Agent",
-      "value": "Beast/1"
-    }
-  ]
+	"method": "GET",
+	"url": "https://github.com/jjmrocha/beast",
+	"headers": [
+		{
+			"key": "User-Agent",
+			"value": "Beast/1"
+		}
+	]
 }
 ```
 

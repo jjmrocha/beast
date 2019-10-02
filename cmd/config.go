@@ -1,16 +1,18 @@
 package cmd
 
 import (
-	"encoding/json"
-	"os"
+	"fmt"
 
-	"github.com/jjmrocha/beast/models"
+	"github.com/jjmrocha/beast/config"
 )
 
-func WriteDefaultConfig() error {
-	f, err := os.Create("config.json")
-	if err != nil {
-		return err
+func Config(fileName string) {
+	defaults := &config.Config{
+		DisableCompression: true,
+		DisableKeepAlives:  false,
+		MaxConnections:     0,
+		Timeout:            30,
 	}
-	return json.NewEncoder(f).Encode(models.NewDefaultConfig())
+	config.Write(fileName, defaults)
+	fmt.Printf("File %s was created with default configuration\n", fileName)
 }

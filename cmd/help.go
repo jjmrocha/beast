@@ -19,19 +19,23 @@ import "fmt"
 
 const help = `The Beast - Stress testing for RESTful APIs
 Usage:
-	beast [help]
-	beast template [-m <http method>] [url] <template>
-	beast run [-n <number of requests>] [-c <number of concurrent requests>] <template>
+   beast [help]
+   beast config <fileName>
+   beast template [-m <http method>] [url] <template>
+   beast run [-n <number of requests>] [-c <number of concurrent requests>] <template>
 Where:
-	template Creates a request template file, using user provided parameters
-	         -m       string HTTP method (default "GET")
-	         url      string Endpoint to be tested
-	         template string JSON file with details about the request to test
+   config   Creates a file with the default parameters to setup HTTP connections
+            fileName string Name of the file to be created
+			 			
+   template Creates a request template file, using user provided parameters
+            -m       string HTTP method (default "GET")
+            url      string Endpoint to be tested
+            template string JSON file with details about the request to test
 
-	run      Executes a script and presents a report with execution results
-	         -c       int    Number of concurrent requests (default 1)
-	         -n       int    Number of requests (default 1)
-	         template string JSON file with details about the request to test 
+   run      Executes a script and presents a report with execution results
+            -c       int    Number of concurrent requests (default 1)
+			-n       int    Number of requests (default 1)
+            template string JSON file with details about the request to test 
 `
 
 func Help() {
