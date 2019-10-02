@@ -31,6 +31,8 @@ func main() {
 	switch os.Args[1] {
 	case "help":
 		cmd.Help()
+	case "config":
+		cmd.WriteDefaultConfig()
 	case "run":
 		runCmd(os.Args[2:])
 	case "generate":
