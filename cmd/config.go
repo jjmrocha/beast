@@ -7,12 +7,7 @@ import (
 )
 
 func Config(fileName string) {
-	defaults := &config.Config{
-		DisableCompression: true,
-		DisableKeepAlives:  false,
-		MaxConnections:     0,
-		Timeout:            30,
-	}
+	defaults := config.Default()
 	config.Write(fileName, defaults)
 	fmt.Printf("File %s was created with default configuration\n", fileName)
 }

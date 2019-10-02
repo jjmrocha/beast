@@ -39,7 +39,8 @@ Where:
 
    run      Executes a script and presents a report with execution results
             -c       int    Number of concurrent requests (default 1)
-			-n       int    Number of requests (default 1)
+            -n       int    Number of requests (default 1)
+            -config  string Config file to use
             template string JSON file with details about the request to test 
 ```
 
@@ -54,7 +55,7 @@ default values.
   > If true, disables HTTP keep-alives and will only use the  connection to the server for a single request 
   
 * max-connections 
-  > Limits the total number of connections per host,  zero means no limit                                   |
+  > Limits the total number of connections per host,  zero means no limit
 
 * timeout
   > Specifies a time limit in seconds for requests made by this Client,  zero means no timeout
@@ -116,9 +117,10 @@ $ cat test.json
 The run command loads a request from a file and executes the request concurrently multiple times.
 
 ```sh
-$ beast run -n 100 -c 5 test.json
+$ beast run -n 100 -c 5 -config config.json test.json
 === Test ===
-Script to execeute: test.json
+Script to execute: test.json
+Config file: config.json
 Number of requests: 100
 Number of concurrent requests: 5
 2019/10/01 00:45:20 [#...................] 5%

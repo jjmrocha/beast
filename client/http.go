@@ -20,6 +20,8 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/jjmrocha/beast/config"
 )
 
 type BRequest struct {
@@ -43,15 +45,15 @@ type BClient struct {
 	Native *http.Client
 }
 
-func Http() *BClient {
+func Http(config *config.Config) *BClient {
 	transport := &http.Transport{
-		DisableCompression: true,
-		DisableKeepAlives:  false,
-		MaxConnsPerHost:    0,
+		DisableCompression: config.DisableCompression,
+		DisableKeepAlives:  config.DisableKeepAlives,
+		MaxConnsPerHost:    config.MaxConnections,
 	}
 	native := &http.Client{
 		Transport: transport,
-		Timeout:   time.Second * 30,
+		Timeout:   time.Duration(time.Second.Nanoseconds() * int64(config.Timeout)),
 	}
 
 	return &BClient{

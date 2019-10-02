@@ -21,15 +21,17 @@ import (
 	"sync"
 
 	"github.com/jjmrocha/beast/client"
+	"github.com/jjmrocha/beast/config"
 	"github.com/jjmrocha/beast/report"
 	"github.com/jjmrocha/beast/template"
 )
 
-func Run(nRequests, nParallel int, fileName string) {
-	printTest(fileName, nRequests, nParallel)
+func Run(nRequests, nParallel int, fileName, configFile string) {
+	printTest(fileName, configFile, nRequests, nParallel)
 	request := readRequest(fileName)
 	output := make(chan *client.BResponse, nRequests)
-	http := client.Http()
+	config := readConfig(configFile)
+	http := client.Http(config)
 	semaphore := client.NewSemaphore(nParallel)
 	var wg sync.WaitGroup
 	wg.Add(nRequests)
@@ -61,11 +63,24 @@ func Run(nRequests, nParallel int, fileName string) {
 	stats.Print()
 }
 
-func printTest(fileName string, nRequests, nParallel int) {
+func printTest(fileName, configFile string, nRequests, nParallel int) {
 	fmt.Printf("=== Test ===\n")
 	fmt.Printf("Script to execute: %v\n", fileName)
+
+	if configFile != "" {
+		fmt.Printf("Config file: %v\n", configFile)
+	}
+
 	fmt.Printf("Number of requests: %v\n", nRequests)
 	fmt.Printf("Number of concurrent requests: %v\n", nParallel)
+}
+
+func readConfig(configFile string) *config.Config {
+	if configFile == "" {
+		return config.Default()
+	}
+
+	return config.Read(configFile)
 }
 
 func readRequest(fileName string) *client.BRequest {

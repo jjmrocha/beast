@@ -56,6 +56,7 @@ func runCmd(args []string) {
 	runOption := flag.NewFlagSet("run", flag.ExitOnError)
 	nRequests := runOption.Int("n", 1, "Number of requests")
 	nParallel := runOption.Int("c", 1, "Number of concurrent requests")
+	configFile := runOption.String("config", "", "Config file to use")
 	runOption.Parse(args)
 	nonFlagArgs := runOption.Args()
 
@@ -65,7 +66,7 @@ func runCmd(args []string) {
 	}
 
 	fileName := nonFlagArgs[0]
-	cmd.Run(*nRequests, *nParallel, fileName)
+	cmd.Run(*nRequests, *nParallel, fileName, *configFile)
 }
 
 func templateCmd(args []string) {

@@ -34,7 +34,8 @@ Where:
 
    run      Executes a script and presents a report with execution results
             -c       int    Number of concurrent requests (default 1)
-			-n       int    Number of requests (default 1)
+            -n       int    Number of requests (default 1)
+            -config  string Config file to use
             template string JSON file with details about the request to test 
 `
 
