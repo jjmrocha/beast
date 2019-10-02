@@ -2,6 +2,8 @@ the Beast
 =========
 *Stress testing for RESTful APIs*
 
+![Superhero GO](https://github.com/egonelbre/gophers/blob/master/vector/superhero/lifting-1TB.svg)
+
 ## Installation
 Binaries are available on [releases](https://github.com/jjmrocha/beast/releases).
 
