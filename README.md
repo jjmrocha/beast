@@ -57,19 +57,27 @@ default values.
 * max-connections 
   > Limits the total number of connections per host,  zero means no limit
 
-* timeout
+* request-timeout
   > Specifies a time limit in seconds for requests made by this Client,  zero means no timeout
+
+* disable-certificate-check
+  > If true, disables TLS certificate checking, allowing the use of expired or invalid certificates
+
+* disable-redirects
+  > If true, the http client will not follow an HTTP redirect
 
 ```sh
 $ beast config config.json
 File config.json was created with default configuration
 
 $ cat config.json
-{
+
 	"disable-compression": true,
 	"disable-keep-alives": false,
 	"max-connections": 0,
-	"timeout": 30
+	"request-timeout": 30,
+	"disable-certificate-check": false,
+	"disable-redirects": true
 }
 ```
 

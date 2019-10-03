@@ -16,6 +16,7 @@
 package client
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
@@ -29,7 +30,7 @@ type BRequest struct {
 }
 
 func (r *BRequest) String() string {
-	return fmt.Sprintf("%s %s", r.Native.Method, r.Native.URL.String())
+	return fmt.Sprintf("%s %s", r.Native.Method, r.Native.URL)
 }
 
 type BResponse struct {
@@ -46,18 +47,28 @@ type BClient struct {
 }
 
 func Http(config *config.Config) *BClient {
+	tls := &tls.Config{
+		InsecureSkipVerify: config.DisableCertificateCheck,
+	}
 	transport := &http.Transport{
 		DisableCompression: config.DisableCompression,
 		DisableKeepAlives:  config.DisableKeepAlives,
 		MaxConnsPerHost:    config.MaxConnections,
+		TLSClientConfig:    tls,
 	}
-	native := &http.Client{
+	client := &http.Client{
 		Transport: transport,
-		Timeout:   time.Duration(time.Second.Nanoseconds() * int64(config.Timeout)),
+		Timeout:   time.Duration(time.Second.Nanoseconds() * int64(config.RequestTimeout)),
+	}
+
+	if config.DisableRedirects {
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
 	}
 
 	return &BClient{
-		Native: native,
+		Native: client,
 	}
 }
 

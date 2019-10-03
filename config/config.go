@@ -22,18 +22,22 @@ import (
 )
 
 type Config struct {
-	DisableCompression bool `json:"disable-compression"`
-	DisableKeepAlives  bool `json:"disable-keep-alives"`
-	MaxConnections     int  `json:"max-connections"`
-	Timeout            int  `json:"timeout"`
+	DisableCompression      bool `json:"disable-compression"`
+	DisableKeepAlives       bool `json:"disable-keep-alives"`
+	MaxConnections          int  `json:"max-connections"`
+	RequestTimeout          int  `json:"request-timeout"`
+	DisableCertificateCheck bool `json:"disable-certificate-check"`
+	DisableRedirects        bool `json:"disable-redirects"`
 }
 
 func Default() *Config {
 	return &Config{
-		DisableCompression: true,
-		DisableKeepAlives:  false,
-		MaxConnections:     0,
-		Timeout:            30,
+		DisableCompression:      true,
+		DisableKeepAlives:       false,
+		MaxConnections:          0,
+		RequestTimeout:          30,
+		DisableCertificateCheck: false,
+		DisableRedirects:        true,
 	}
 }
 
@@ -54,7 +58,7 @@ func checkConfig(config *Config) {
 		log.Fatalln("Invalid config, 'max-connections' must be zero or positive")
 	}
 
-	if config.Timeout < 0 {
+	if config.RequestTimeout < 0 {
 		log.Fatalln("Invalid config, 'timeout' must be zero or positive")
 	}
 }
