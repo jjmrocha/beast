@@ -18,44 +18,35 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"sync"
 
 	"github.com/jjmrocha/beast/client"
 	"github.com/jjmrocha/beast/config"
+	"github.com/jjmrocha/beast/control"
 	"github.com/jjmrocha/beast/report"
 	"github.com/jjmrocha/beast/template"
 )
 
 func Run(nRequests, nParallel int, fileName, configFile string) {
 	printTest(fileName, configFile, nRequests, nParallel)
+	http := createHttpClient(configFile)
+	control := control.New(nRequests, nParallel)
 	request := readRequest(fileName)
-	output := make(chan *client.BResponse, nRequests)
-	config := readConfig(configFile)
-	http := client.Http(config)
-	semaphore := client.NewSemaphore(nParallel)
-	var wg sync.WaitGroup
-	wg.Add(nRequests)
 
 	go func() {
 		for i := 0; i < nRequests; i++ {
-			semaphore.Acquire()
+			control.WaitToStart()
 			go func() {
-				defer wg.Done()
-				output <- http.Execute(request)
-				semaphore.Release()
+				defer control.Done()
+				control.Send(http.Execute(request))
 			}()
 		}
 	}()
 
-	go func() {
-		wg.Wait()
-		close(output)
-	}()
-
+	go control.CloseWhenDone()
 	stats := report.NewStats(nParallel)
 	progress := report.NewBar(nRequests)
 
-	for response := range output {
+	for response := range control.Output() {
 		stats.Update(response)
 		progress.Update()
 	}
@@ -73,6 +64,11 @@ func printTest(fileName, configFile string, nRequests, nParallel int) {
 
 	fmt.Printf("Number of requests: %v\n", nRequests)
 	fmt.Printf("Number of concurrent requests: %v\n", nParallel)
+}
+
+func createHttpClient(configFile string) *client.BClient {
+	config := readConfig(configFile)
+	return client.Http(config)
 }
 
 func readConfig(configFile string) *config.Config {
