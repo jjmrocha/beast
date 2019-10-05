@@ -86,7 +86,7 @@ func avg(duration time.Duration, requests int) time.Duration {
 }
 
 func (s *Stats) Print() {
-	fmt.Printf("=== Results ===\n")
+	fmt.Printf("=== Result Stats ===\n")
 	fmt.Printf("Executed requests: %v\n", s.Requests)
 	fmt.Printf("Time taken to complete: %v\n", s.Duration)
 	fmt.Printf("Requests per second: %.4f\n", s.Tps())
@@ -110,7 +110,7 @@ func (s *Stats) Print() {
 	}
 
 	if len(s.ErrorMap) > 0 {
-		fmt.Printf("=== Errors ===\n")
+		fmt.Printf("=== Non Success Status ===\n")
 
 		for key, value := range s.ErrorMap {
 			fmt.Printf("Status %v: %v requests\n", key, value)

@@ -37,7 +37,7 @@ func New(nRequests, nParallel int) *BControl {
 	return ctrl
 }
 
-func (c *BControl) Send(response *client.BResponse) {
+func (c *BControl) Push(response *client.BResponse) {
 	c.outputChan <- response
 }
 
@@ -46,7 +46,7 @@ func (c *BControl) CloseWhenDone() {
 	close(c.outputChan)
 }
 
-func (c *BControl) Output() <-chan *client.BResponse {
+func (c *BControl) OutputChannel() <-chan *client.BResponse {
 	return c.outputChan
 }
 
@@ -55,6 +55,6 @@ func (c *BControl) Done() {
 	c.wg.Done()
 }
 
-func (c *BControl) WaitToStart() {
+func (c *BControl) WaitForRoom() {
 	c.semaphore.Acquire()
 }

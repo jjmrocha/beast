@@ -34,10 +34,10 @@ func Run(nRequests, nParallel int, fileName, configFile string) {
 
 	go func() {
 		for i := 0; i < nRequests; i++ {
-			control.WaitToStart()
+			control.WaitForRoom()
 			go func() {
 				defer control.Done()
-				control.Send(http.Execute(request))
+				control.Push(http.Execute(request))
 			}()
 		}
 	}()
@@ -46,7 +46,7 @@ func Run(nRequests, nParallel int, fileName, configFile string) {
 	stats := report.NewStats(nParallel)
 	progress := report.NewBar(nRequests)
 
-	for response := range control.Output() {
+	for response := range control.OutputChannel() {
 		stats.Update(response)
 		progress.Update()
 	}
@@ -55,15 +55,16 @@ func Run(nRequests, nParallel int, fileName, configFile string) {
 }
 
 func printTest(fileName, configFile string, nRequests, nParallel int) {
-	fmt.Printf("=== Test ===\n")
-	fmt.Printf("Script to execute: %v\n", fileName)
+	fmt.Printf("=== Request ===\n")
+	fmt.Printf("Request template: %v\n", fileName)
 
 	if configFile != "" {
-		fmt.Printf("Config file: %v\n", configFile)
+		fmt.Printf("Configuration: %v\n", configFile)
 	}
 
 	fmt.Printf("Number of requests: %v\n", nRequests)
 	fmt.Printf("Number of concurrent requests: %v\n", nParallel)
+	fmt.Printf("=== Test ===\n")
 }
 
 func createHttpClient(configFile string) *client.BClient {

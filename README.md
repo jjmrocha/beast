@@ -71,7 +71,7 @@ $ beast config config.json
 File config.json was created with default configuration
 
 $ cat config.json
-
+{
 	"disable-compression": true,
 	"disable-keep-alives": false,
 	"max-connections": 0,
@@ -126,11 +126,12 @@ The run command loads a request from a file and executes the request concurrentl
 
 ```sh
 $ beast run -n 100 -c 5 -config config.json test.json
-=== Test ===
-Script to execute: test.json
-Config file: config.json
+=== Request ===
+Request template: test.json
+Configuration: config.json
 Number of requests: 100
 Number of concurrent requests: 5
+=== Test ===
 2019/10/05 01:08:30 [#...................] 5%
 2019/10/05 01:08:32 [##..................] 10%
 2019/10/05 01:08:33 [###.................] 15%
@@ -151,7 +152,7 @@ Number of concurrent requests: 5
 2019/10/05 01:08:43 [##################..] 90%
 2019/10/05 01:08:43 [###################.] 95%
 2019/10/05 01:08:44 [####################] 100%
-=== Results ===
+=== Result Stats ===
 Executed requests: 100
 Time taken to complete: 1m17.630595087s
 Requests per second: 6.4408
@@ -159,13 +160,13 @@ Avg response time: 776.30595ms
 === Status 200 ===
 40 requests, with avg response time of 1.48163871s
 And the following distribution:
- The fastest request took 849.443863ms
+  The fastest request took 849.443863ms
   20% of requests under 1.05389514s
   40% of requests under 1.192986887s
   60% of requests under 1.590280578s
   80% of requests under 1.95515696s
   The slowest request took 2.43441918s
-=== Errors ===
+=== Non Success Status ===
 Status 429: 60 requests
 ```
 
