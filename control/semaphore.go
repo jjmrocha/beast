@@ -13,33 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package template
+package control
 
-import (
-	"encoding/json"
-	"io/ioutil"
-	"log"
-)
+type Semaphore chan bool
 
-func Read(fileName string) *TRequest {
-	data, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		log.Fatalf("Error reading file %s: %v\n", fileName, err)
-	}
-
-	var request TRequest
-	json.Unmarshal(data, &request)
-	return &request
+func NewSemaphore(size int) Semaphore {
+	return make(chan bool, size)
 }
 
-func Write(fileName string, request *TRequest) {
-	data, err := json.MarshalIndent(request, "", "\t")
-	if err != nil {
-		log.Printf("Error encoding request %v to JSON: %v\n", request, err)
-	}
+func (s Semaphore) Acquire() {
+	s <- true
+}
 
-	err = ioutil.WriteFile(fileName, data, 0666)
-	if err != nil {
-		log.Printf("Error writing to file %s: %v\n", fileName, err)
-	}
+func (s Semaphore) Release() {
+	<-s
 }

@@ -16,7 +16,10 @@
 package template
 
 import (
+	"encoding/json"
 	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 
@@ -54,4 +57,27 @@ func bodyReader(body string) io.Reader {
 	}
 
 	return strings.NewReader(body)
+}
+
+func Read(fileName string) *TRequest {
+	data, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		log.Fatalf("Error reading file %s: %v\n", fileName, err)
+	}
+
+	var request TRequest
+	json.Unmarshal(data, &request)
+	return &request
+}
+
+func Write(fileName string, request *TRequest) {
+	data, err := json.MarshalIndent(request, "", "\t")
+	if err != nil {
+		log.Printf("Error encoding request %v to JSON: %v\n", request, err)
+	}
+
+	err = ioutil.WriteFile(fileName, data, 0666)
+	if err != nil {
+		log.Printf("Error writing to file %s: %v\n", fileName, err)
+	}
 }

@@ -23,13 +23,13 @@ import (
 
 type BControl struct {
 	wg         sync.WaitGroup
-	semaphore  client.Semaphore
+	semaphore  Semaphore
 	outputChan chan *client.BResponse
 }
 
 func New(nRequests, nParallel int) *BControl {
 	ctrl := &BControl{
-		semaphore:  client.NewSemaphore(nParallel),
+		semaphore:  NewSemaphore(nParallel),
 		outputChan: make(chan *client.BResponse, nRequests),
 	}
 	ctrl.wg.Add(nRequests)
@@ -39,7 +39,6 @@ func New(nRequests, nParallel int) *BControl {
 
 func (c *BControl) Send(response *client.BResponse) {
 	c.outputChan <- response
-	c.semaphore.Release()
 }
 
 func (c *BControl) CloseWhenDone() {
@@ -52,6 +51,7 @@ func (c *BControl) Output() <-chan *client.BResponse {
 }
 
 func (c *BControl) Done() {
+	c.semaphore.Release()
 	c.wg.Done()
 }
 

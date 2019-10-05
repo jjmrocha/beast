@@ -17,46 +17,60 @@ package report
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/jjmrocha/beast/client"
 )
 
+type durationSlice []time.Duration
+
+func (a durationSlice) Len() int {
+	return len(a)
+}
+
+func (a durationSlice) Less(i, j int) bool {
+	return a[i] < a[j]
+}
+
+func (a durationSlice) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
 type Stats struct {
 	concurrent int
 	Requests   int
 	Duration   time.Duration
-	Min        time.Duration
-	Max        time.Duration
-	StatusMap  map[int]int
+	SuccessMap map[int]durationSlice
+	ErrorMap   map[int]int
 }
 
 func NewStats(nParallel int) *Stats {
 	return &Stats{
 		concurrent: nParallel,
-		StatusMap:  make(map[int]int),
+		SuccessMap: make(map[int]durationSlice),
+		ErrorMap:   make(map[int]int),
 	}
 }
 
 func (s *Stats) Update(r *client.BResponse) {
-	response := *r
 	s.Requests++
-	s.Duration += response.Duration
+	s.Duration += r.Duration
 
-	if s.Requests == 1 {
-		s.Min = response.Duration
-		s.Max = response.Duration
+	if success(r.StatusCode) {
+		durations, present := s.SuccessMap[r.StatusCode]
+		if !present {
+			durations = make(durationSlice, 0)
+		}
+
+		s.SuccessMap[r.StatusCode] = append(durations, r.Duration)
 	} else {
-		if s.Min > response.Duration {
-			s.Min = response.Duration
-		}
-
-		if s.Max < response.Duration {
-			s.Max = response.Duration
-		}
+		s.ErrorMap[r.StatusCode]++
 	}
+}
 
-	s.StatusMap[response.StatusCode]++
+func success(statusCode int) bool {
+	return statusCode >= 200 && statusCode < 300
 }
 
 func (s *Stats) Tps() float64 {
@@ -64,21 +78,52 @@ func (s *Stats) Tps() float64 {
 }
 
 func (s *Stats) Avg() time.Duration {
-	return time.Duration(s.Duration.Nanoseconds() / int64(s.Requests))
+	return avg(s.Duration, s.Requests)
+}
+
+func avg(duration time.Duration, requests int) time.Duration {
+	return time.Duration(duration.Nanoseconds() / int64(requests))
 }
 
 func (s *Stats) Print() {
 	fmt.Printf("=== Results ===\n")
 	fmt.Printf("Executed requests: %v\n", s.Requests)
 	fmt.Printf("Time taken to complete: %v\n", s.Duration)
-	fmt.Printf("=== Stats ===\n")
-	fmt.Printf("Min response time: %v\n", s.Min)
-	fmt.Printf("Max response time: %v\n", s.Max)
-	fmt.Printf("Avg response time: %v\n", s.Avg())
 	fmt.Printf("Requests per second: %.4f\n", s.Tps())
-	fmt.Printf("=== Status Code ===\n")
+	fmt.Printf("Avg response time: %v\n", s.Avg())
 
-	for key, value := range s.StatusMap {
-		fmt.Printf("Status %v: %v requests\n", key, value)
+	for key, durations := range s.SuccessMap {
+		fmt.Printf("=== Status %v ===\n", key)
+		count := len(durations)
+		duration := sum(durations)
+		sort.Sort(durations)
+		fmt.Printf("%v requests, with avg response time of %v\n", count, avg(duration, count))
+		if count >= 5 {
+			fmt.Printf("And the following distribution:\n")
+			fmt.Printf("  The fastest request took %v\n", durations[0])
+			fmt.Printf("  20%% of requests under %v\n", durations[count/5-1])
+			fmt.Printf("  40%% of requests under %v\n", durations[count/5*2-1])
+			fmt.Printf("  60%% of requests under %v\n", durations[count/5*3-1])
+			fmt.Printf("  80%% of requests under %v\n", durations[count/5*4-1])
+			fmt.Printf("  The slowest request took %v\n", durations[count-1])
+		}
 	}
+
+	if len(s.ErrorMap) > 0 {
+		fmt.Printf("=== Errors ===\n")
+
+		for key, value := range s.ErrorMap {
+			fmt.Printf("Status %v: %v requests\n", key, value)
+		}
+	}
+}
+
+func sum(durations durationSlice) time.Duration {
+	var sum time.Duration
+
+	for _, value := range durations {
+		sum += value
+	}
+
+	return sum
 }
