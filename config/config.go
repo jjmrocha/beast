@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package config
 
 import (
@@ -44,7 +45,7 @@ func Default() *Config {
 func Read(fileName string) *Config {
 	data, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		log.Fatalf("Error reading file %s: %v\n", fileName, err)
+		log.Fatalf("Error reading config file %s: %v\n", fileName, err)
 	}
 
 	config := Default()
@@ -71,6 +72,6 @@ func Write(fileName string, config *Config) {
 
 	err = ioutil.WriteFile(fileName, data, 0666)
 	if err != nil {
-		log.Printf("Error writing to file %s: %v\n", fileName, err)
+		log.Printf("Error writing configuration to file %s: %v\n", fileName, err)
 	}
 }

@@ -13,30 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package cmd
 
 import "fmt"
 
-const help = `The Beast - Stress testing for RESTful APIs
+const help = `the Beast - Stress testing for RESTful APIs
 Usage:
    beast [help]
-   beast config <fileName>
-   beast template [-m <http method>] [url] <template>
-   beast run [-n <number of requests>] [-c <number of concurrent requests>] <template>
+   beast config <configFile>
+   beast template [-m <http method>] [url] <templateFile>
+   beast run [-n <number of requests>] [-c <number of concurrent requests>] 
+             [-config <configFile>] [-data dataFile] <templateFile>
 Where:
    config   Creates a file with the default parameters to setup HTTP connections
-            fileName string Name of the file to be created
+            configFile   string Name of the file to be created
 			 			
    template Creates a request template file, using user provided parameters
-            -m       string HTTP method (default "GET")
-            url      string Endpoint to be tested
-            template string JSON file with details about the request to test
+            -m           string HTTP method (default "GET")
+            url          string Endpoint to be tested
+            templateFile string JSON file with details about the request to test
 
    run      Executes a script and presents a report with execution results
-            -c       int    Number of concurrent requests (default 1)
-            -n       int    Number of requests (default 1)
-            -config  string Config file to use
-            template string JSON file with details about the request to test 
+            -c           int    Number of concurrent requests (default 1)
+            -n           int    Number of requests (default 1)
+            -config      string Config file to setup HTTP client
+            -data        string CSV file with data for request generation
+            templateFile string JSON file with details about the request to test 
 `
 
 func Help() {

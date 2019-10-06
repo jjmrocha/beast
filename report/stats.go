@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package report
 
 import (
@@ -37,35 +38,59 @@ func (a durationSlice) Swap(i, j int) {
 	a[i], a[j] = a[j], a[i]
 }
 
+func (a durationSlice) first() time.Duration {
+	return a[0]
+}
+
+func (a durationSlice) last() time.Duration {
+	return a[len(a)-1]
+}
+
+func (a durationSlice) percentage(value int) time.Duration {
+	size := len(a)
+	pos := (size * value / 100) - 1
+	return a[pos]
+}
+
+func (a durationSlice) sum() time.Duration {
+	var sum time.Duration
+
+	for _, value := range a {
+		sum += value
+	}
+
+	return sum
+}
+
 type Stats struct {
 	concurrent int
-	Requests   int
-	Duration   time.Duration
-	SuccessMap map[int]durationSlice
-	ErrorMap   map[int]int
+	requests   int
+	duration   time.Duration
+	successMap map[int]durationSlice
+	errorMap   map[int]int
 }
 
 func NewStats(nParallel int) *Stats {
 	return &Stats{
 		concurrent: nParallel,
-		SuccessMap: make(map[int]durationSlice),
-		ErrorMap:   make(map[int]int),
+		successMap: make(map[int]durationSlice),
+		errorMap:   make(map[int]int),
 	}
 }
 
 func (s *Stats) Update(r *client.BResponse) {
-	s.Requests++
-	s.Duration += r.Duration
+	s.requests++
+	s.duration += r.Duration
 
 	if success(r.StatusCode) {
-		durations, present := s.SuccessMap[r.StatusCode]
+		durations, present := s.successMap[r.StatusCode]
 		if !present {
 			durations = make(durationSlice, 0)
 		}
 
-		s.SuccessMap[r.StatusCode] = append(durations, r.Duration)
+		s.successMap[r.StatusCode] = append(durations, r.Duration)
 	} else {
-		s.ErrorMap[r.StatusCode]++
+		s.errorMap[r.StatusCode]++
 	}
 }
 
@@ -73,12 +98,12 @@ func success(statusCode int) bool {
 	return statusCode >= 200 && statusCode < 300
 }
 
-func (s *Stats) Tps() float64 {
-	return float64(s.concurrent) * (float64(s.Requests) / s.Duration.Seconds())
+func (s *Stats) tps() float64 {
+	return float64(s.concurrent) * (float64(s.requests) / s.duration.Seconds())
 }
 
-func (s *Stats) Avg() time.Duration {
-	return avg(s.Duration, s.Requests)
+func (s *Stats) avg() time.Duration {
+	return avg(s.duration, s.requests)
 }
 
 func avg(duration time.Duration, requests int) time.Duration {
@@ -87,43 +112,33 @@ func avg(duration time.Duration, requests int) time.Duration {
 
 func (s *Stats) Print() {
 	fmt.Printf("=== Result Stats ===\n")
-	fmt.Printf("Executed requests: %v\n", s.Requests)
-	fmt.Printf("Time taken to complete: %v\n", s.Duration)
-	fmt.Printf("Requests per second: %.4f\n", s.Tps())
-	fmt.Printf("Avg response time: %v\n", s.Avg())
+	fmt.Printf("Executed requests: %v\n", s.requests)
+	fmt.Printf("Time taken to complete: %v\n", s.duration)
+	fmt.Printf("Requests per second: %.4f\n", s.tps())
+	fmt.Printf("Avg response time: %v\n", s.avg())
 
-	for key, durations := range s.SuccessMap {
+	for key, durations := range s.successMap {
 		fmt.Printf("=== Status %v ===\n", key)
-		count := len(durations)
-		duration := sum(durations)
-		sort.Sort(durations)
+		count := durations.Len()
+		duration := durations.sum()
 		fmt.Printf("%v requests, with avg response time of %v\n", count, avg(duration, count))
 		if count >= 5 {
+			sort.Sort(durations)
 			fmt.Printf("And the following distribution:\n")
-			fmt.Printf("  The fastest request took %v\n", durations[0])
-			fmt.Printf("  20%% of requests under %v\n", durations[count/5-1])
-			fmt.Printf("  40%% of requests under %v\n", durations[count/5*2-1])
-			fmt.Printf("  60%% of requests under %v\n", durations[count/5*3-1])
-			fmt.Printf("  80%% of requests under %v\n", durations[count/5*4-1])
-			fmt.Printf("  The slowest request took %v\n", durations[count-1])
+			fmt.Printf("  The fastest request took %v\n", durations.first())
+			fmt.Printf("  20%% of requests under %v\n", durations.percentage(20))
+			fmt.Printf("  40%% of requests under %v\n", durations.percentage(40))
+			fmt.Printf("  60%% of requests under %v\n", durations.percentage(60))
+			fmt.Printf("  80%% of requests under %v\n", durations.percentage(80))
+			fmt.Printf("  The slowest request took %v\n", durations.last())
 		}
 	}
 
-	if len(s.ErrorMap) > 0 {
+	if len(s.errorMap) > 0 {
 		fmt.Printf("=== Non Success Status ===\n")
 
-		for key, value := range s.ErrorMap {
+		for key, value := range s.errorMap {
 			fmt.Printf("Status %v: %v requests\n", key, value)
 		}
 	}
-}
-
-func sum(durations durationSlice) time.Duration {
-	var sum time.Duration
-
-	for _, value := range durations {
-		sum += value
-	}
-
-	return sum
 }

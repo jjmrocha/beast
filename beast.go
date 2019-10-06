@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package main
 
 import (
@@ -56,7 +57,8 @@ func runCmd(args []string) {
 	runOption := flag.NewFlagSet("run", flag.ExitOnError)
 	nRequests := runOption.Int("n", 1, "Number of requests")
 	nParallel := runOption.Int("c", 1, "Number of concurrent requests")
-	configFile := runOption.String("config", "", "Config file to use")
+	configFile := runOption.String("config", "", "Config file to setup HTTP client")
+	dataFile := runOption.String("data", "", "CSV file with data for request generation")
 	runOption.Parse(args)
 	nonFlagArgs := runOption.Args()
 
@@ -66,7 +68,7 @@ func runCmd(args []string) {
 	}
 
 	fileName := nonFlagArgs[0]
-	cmd.Run(*nRequests, *nParallel, fileName, *configFile)
+	cmd.Run(*nRequests, *nParallel, fileName, *configFile, *dataFile)
 }
 
 func templateCmd(args []string) {

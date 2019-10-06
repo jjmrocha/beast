@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package client
 
 import (
@@ -46,7 +47,7 @@ type BClient struct {
 	Native *http.Client
 }
 
-func Http(config *config.Config) *BClient {
+func HTTP(config *config.Config) *BClient {
 	tls := &tls.Config{
 		InsecureSkipVerify: config.DisableCertificateCheck,
 	}

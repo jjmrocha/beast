@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package report
 
 import (
@@ -22,20 +23,20 @@ import (
 )
 
 type Bar struct {
-	Max     int
-	Current int
+	max     int
+	current int
 	last    int
 }
 
 func NewBar(max int) *Bar {
 	return &Bar{
-		Max: max,
+		max: max,
 	}
 }
 
 func (b *Bar) Update() {
-	b.Current++
-	percentage := b.Current * 100.0 / b.Max
+	b.current++
+	percentage := b.current * 100.0 / b.max
 
 	if percentage != b.last && percentage%5 == 0 {
 		b.last = percentage

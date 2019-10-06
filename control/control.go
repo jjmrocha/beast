@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package control
 
 import (
@@ -21,15 +22,29 @@ import (
 	"github.com/jjmrocha/beast/client"
 )
 
+type semaphore chan bool
+
+func newSemaphore(size int) semaphore {
+	return make(chan bool, size)
+}
+
+func (s semaphore) acquire() {
+	s <- true
+}
+
+func (s semaphore) release() {
+	<-s
+}
+
 type BControl struct {
 	wg         sync.WaitGroup
-	semaphore  Semaphore
+	semaphore  semaphore
 	outputChan chan *client.BResponse
 }
 
 func New(nRequests, nParallel int) *BControl {
 	ctrl := &BControl{
-		semaphore:  NewSemaphore(nParallel),
+		semaphore:  newSemaphore(nParallel),
 		outputChan: make(chan *client.BResponse, nRequests),
 	}
 	ctrl.wg.Add(nRequests)
@@ -51,10 +66,10 @@ func (c *BControl) OutputChannel() <-chan *client.BResponse {
 }
 
 func (c *BControl) Done() {
-	c.semaphore.Release()
+	c.semaphore.release()
 	c.wg.Done()
 }
 
-func (c *BControl) WaitForRoom() {
-	c.semaphore.Acquire()
+func (c *BControl) WaitForSlot() {
+	c.semaphore.acquire()
 }

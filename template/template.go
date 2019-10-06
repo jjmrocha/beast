@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package template
 
 import (
@@ -62,7 +63,7 @@ func bodyReader(body string) io.Reader {
 func Read(fileName string) *TRequest {
 	data, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		log.Fatalf("Error reading file %s: %v\n", fileName, err)
+		log.Fatalf("Error reading template file %s: %v\n", fileName, err)
 	}
 
 	var request TRequest
@@ -78,6 +79,6 @@ func Write(fileName string, request *TRequest) {
 
 	err = ioutil.WriteFile(fileName, data, 0666)
 	if err != nil {
-		log.Printf("Error writing to file %s: %v\n", fileName, err)
+		log.Printf("Error writing template to file %s: %v\n", fileName, err)
 	}
 }

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package cmd
 
 import (
@@ -26,15 +27,15 @@ import (
 	"github.com/jjmrocha/beast/template"
 )
 
-func Run(nRequests, nParallel int, fileName, configFile string) {
-	printTest(fileName, configFile, nRequests, nParallel)
-	http := createHttpClient(configFile)
+func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
+	printTest(fileName, configFile, dataFile, nRequests, nParallel)
+	http := createHTTPClient(configFile)
 	control := control.New(nRequests, nParallel)
 	request := readRequest(fileName)
 
 	go func() {
 		for i := 0; i < nRequests; i++ {
-			control.WaitForRoom()
+			control.WaitForSlot()
 			go func() {
 				defer control.Done()
 				control.Push(http.Execute(request))
@@ -54,9 +55,13 @@ func Run(nRequests, nParallel int, fileName, configFile string) {
 	stats.Print()
 }
 
-func printTest(fileName, configFile string, nRequests, nParallel int) {
+func printTest(fileName, configFile, dataFile string, nRequests, nParallel int) {
 	fmt.Printf("=== Request ===\n")
 	fmt.Printf("Request template: %v\n", fileName)
+
+	if dataFile != "" {
+		fmt.Printf("Sample Data: %v\n", dataFile)
+	}
 
 	if configFile != "" {
 		fmt.Printf("Configuration: %v\n", configFile)
@@ -67,9 +72,9 @@ func printTest(fileName, configFile string, nRequests, nParallel int) {
 	fmt.Printf("=== Test ===\n")
 }
 
-func createHttpClient(configFile string) *client.BClient {
+func createHTTPClient(configFile string) *client.BClient {
 	config := readConfig(configFile)
-	return client.Http(config)
+	return client.HTTP(config)
 }
 
 func readConfig(configFile string) *config.Config {
