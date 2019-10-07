@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jjmrocha/beast/template"
+	"github.com/jjmrocha/beast/request"
 )
 
 func Template(method, url, fileName string) {
@@ -32,32 +32,32 @@ func Template(method, url, fileName string) {
 }
 
 func writeTemplate(fileName string) {
-	request := template.TRequest{
+	req := request.TRequest{
 		Method:   "Use Http method: GET/POST/PUT/DELETE",
 		Endpoint: "Http URL to be invoked",
-		Headers: []template.THeader{
+		Headers: []request.THeader{
 			{Key: "User-Agent", Value: "Beast/1"},
 		},
 		Body: "Optional, enter body to send with POST or PUT",
 	}
-	template.Write(fileName, &request)
+	request.Write(fileName, &req)
 	fmt.Printf("File %s was created, please edit before use\n", fileName)
 }
 
 func writeRequest(method, url, fileName string) {
-	request := template.TRequest{
+	req := request.TRequest{
 		Method:   method,
 		Endpoint: url,
-		Headers: []template.THeader{
+		Headers: []request.THeader{
 			{Key: "User-Agent", Value: "Beast/1"},
 		},
 	}
 
 	if usesBody(method) {
-		request.Body = "Optional, enter body to send with POST or PUT"
+		req.Body = "Optional, enter body to send with POST or PUT"
 	}
 
-	template.Write(fileName, &request)
+	request.Write(fileName, &req)
 	fmt.Printf("File %s was created for '%s %s'\n", fileName, method, url)
 }
 

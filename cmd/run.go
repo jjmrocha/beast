@@ -23,23 +23,24 @@ import (
 	"github.com/jjmrocha/beast/client"
 	"github.com/jjmrocha/beast/config"
 	"github.com/jjmrocha/beast/control"
+	"github.com/jjmrocha/beast/data"
 	"github.com/jjmrocha/beast/report"
-	"github.com/jjmrocha/beast/template"
+	"github.com/jjmrocha/beast/request"
 )
 
 func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
 	printTest(fileName, configFile, dataFile, nRequests, nParallel)
 	http := createHTTPClient(configFile)
 	control := control.New(nRequests, nParallel)
-	request := readRequest(fileName)
+	requests := generateRequests(fileName, dataFile, nRequests)
 
 	go func() {
-		for i := 0; i < nRequests; i++ {
+		for _, request := range requests {
 			control.WaitForSlot()
-			go func() {
+			go func(r *client.BRequest) {
 				defer control.Done()
-				control.Push(http.Execute(request))
-			}()
+				control.Push(http.Execute(r))
+			}(request)
 		}
 	}()
 
@@ -85,11 +86,20 @@ func readConfig(configFile string) *config.Config {
 	return config.Read(configFile)
 }
 
-func readRequest(fileName string) *client.BRequest {
-	requestTemplate := template.Read(fileName)
-	request, err := requestTemplate.Generate()
-	if err != nil {
-		log.Fatalf("Invalid request %v: %v\n", requestTemplate, err)
+func readData(dataFile string) *data.Data {
+	if dataFile == "" {
+		return nil
 	}
-	return request
+
+	return data.Read(dataFile)
+}
+
+func generateRequests(fileName, dataFile string, nRequests int) []*client.BRequest {
+	requestTemplate := request.Read(fileName)
+	data := readData(dataFile)
+	requests, err := requestTemplate.Generate(nRequests, data)
+	if err != nil {
+		log.Fatalf("Error generating requests: %v\n", err)
+	}
+	return requests
 }
