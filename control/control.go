@@ -70,6 +70,6 @@ func (c *BControl) Done() {
 	c.wg.Done()
 }
 
-func (c *BControl) WaitForSlot() {
+func (c *BControl) RunWhenAvailable() {
 	c.semaphore.acquire()
 }

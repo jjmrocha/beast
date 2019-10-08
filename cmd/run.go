@@ -30,13 +30,14 @@ import (
 
 func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
 	printTest(fileName, configFile, dataFile, nRequests, nParallel)
-	http := createHTTPClient(configFile)
 	control := control.New(nRequests, nParallel)
-	requests := generateRequests(fileName, dataFile, nRequests)
 
 	go func() {
+		http := createHTTPClient(configFile)
+		requests := generateRequests(fileName, dataFile, nRequests)
+
 		for _, request := range requests {
-			control.WaitForSlot()
+			control.RunWhenAvailable()
 			go func(r *client.BRequest) {
 				defer control.Done()
 				control.Push(http.Execute(r))
