@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// Package request provide functions to read, write templates and generate requests
 package request
 
 import (
@@ -22,11 +23,13 @@ import (
 	"log"
 )
 
+// THeader represents an HTTP Header template
 type THeader struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
 
+// TRequest represents an HTTP request template
 type TRequest struct {
 	Method   string    `json:"method"`
 	Endpoint string    `json:"url"`
@@ -34,6 +37,7 @@ type TRequest struct {
 	Body     string    `json:"body,omitempty"`
 }
 
+// Read reads an HTTP request template from a file
 func Read(fileName string) *TRequest {
 	data, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -45,6 +49,7 @@ func Read(fileName string) *TRequest {
 	return &request
 }
 
+// Write writes an HTTP request template to a file
 func Write(fileName string, request *TRequest) {
 	data, err := json.MarshalIndent(request, "", "\t")
 	if err != nil {

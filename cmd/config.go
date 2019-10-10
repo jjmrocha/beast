@@ -22,6 +22,7 @@ import (
 	"github.com/jjmrocha/beast/config"
 )
 
+// Config implements the `beast config <fileName>` command
 func Config(fileName string) {
 	defaults := config.Default()
 	config.Write(fileName, defaults)

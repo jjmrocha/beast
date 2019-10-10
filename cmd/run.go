@@ -28,6 +28,7 @@ import (
 	"github.com/jjmrocha/beast/request"
 )
 
+// Run implements the `beast run ...` command
 func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
 	printTest(fileName, configFile, dataFile, nRequests, nParallel)
 	control := control.New(nRequests, nParallel)

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+// Package control provides functions to manage the execution of multiple goroutines
+// in simultaneous
 package control
 
 import (
@@ -36,12 +38,14 @@ func (s semaphore) release() {
 	<-s
 }
 
+// BControle is used to control the execution of multiple goroutines
 type BControl struct {
 	wg         sync.WaitGroup
 	semaphore  semaphore
 	outputChan chan *client.BResponse
 }
 
+// New creates a BControle
 func New(nRequests, nParallel int) *BControl {
 	ctrl := &BControl{
 		semaphore:  newSemaphore(nParallel),
@@ -52,24 +56,29 @@ func New(nRequests, nParallel int) *BControl {
 	return ctrl
 }
 
+// Push sends the BResponse to the client goroutine
 func (c *BControl) Push(response *client.BResponse) {
 	c.outputChan <- response
 }
 
+// CloseWhenDone closes the OutputChannel when all goroutines finish execution
 func (c *BControl) CloseWhenDone() {
 	c.wg.Wait()
 	close(c.outputChan)
 }
 
+// OutputChannel returns a channel for receiving the BResponse sent using Push
 func (c *BControl) OutputChannel() <-chan *client.BResponse {
 	return c.outputChan
 }
 
+// Done should be used by a goroutine to indicate it finished processing
 func (c *BControl) Done() {
 	c.semaphore.release()
 	c.wg.Done()
 }
 
+// RunWhenAvailable blocks waiting for a execution slot
 func (c *BControl) RunWhenAvailable() {
 	c.semaphore.acquire()
 }

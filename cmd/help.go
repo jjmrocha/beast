@@ -42,6 +42,7 @@ Where:
             templateFile string JSON file with details about the request to test 
 `
 
+// Help implements the `beast [help]` command
 func Help() {
 	fmt.Println(help)
 }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// Package config provides functions to save and read configurations
 package config
 
 import (
@@ -22,6 +23,7 @@ import (
 	"log"
 )
 
+// Config defines the structure a configuration file
 type Config struct {
 	DisableCompression      bool `json:"disable-compression"`
 	DisableKeepAlives       bool `json:"disable-keep-alives"`
@@ -31,6 +33,7 @@ type Config struct {
 	DisableRedirects        bool `json:"disable-redirects"`
 }
 
+// Default return the default configuration
 func Default() *Config {
 	return &Config{
 		DisableCompression:      true,
@@ -42,6 +45,7 @@ func Default() *Config {
 	}
 }
 
+// Read reads the configuration from a file
 func Read(fileName string) *Config {
 	data, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -64,6 +68,7 @@ func checkConfig(config *Config) {
 	}
 }
 
+// Write writes a configuration to a file
 func Write(fileName string, config *Config) {
 	data, err := json.MarshalIndent(config, "", "\t")
 	if err != nil {

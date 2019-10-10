@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// Package client provides functions and types for the execution of HTTP requests
 package client
 
 import (
@@ -26,6 +27,7 @@ import (
 	"github.com/jjmrocha/beast/config"
 )
 
+// BRequest represents an HTTP request
 type BRequest struct {
 	Native *http.Request
 }
@@ -34,6 +36,7 @@ func (r *BRequest) String() string {
 	return fmt.Sprintf("%s %s", r.Native.Method, r.Native.URL)
 }
 
+// BResponse contains the status code and the duration taken for execution of a request
 type BResponse struct {
 	StatusCode int
 	Duration   time.Duration
@@ -43,10 +46,12 @@ func (r *BResponse) String() string {
 	return fmt.Sprintf("%v - %v", r.StatusCode, r.Duration)
 }
 
+// BClient represents an HTTP client
 type BClient struct {
 	Native *http.Client
 }
 
+// HTTP creates a BClient based on the provided configuration
 func HTTP(config *config.Config) *BClient {
 	tls := &tls.Config{
 		InsecureSkipVerify: config.DisableCertificateCheck,
@@ -73,6 +78,7 @@ func HTTP(config *config.Config) *BClient {
 	}
 }
 
+// Execute executes the request measuring the time taken to execute and return a BResponse
 func (c *BClient) Execute(request *BRequest) *BResponse {
 	start := time.Now()
 	resp, err := c.Native.Do(request.Native)

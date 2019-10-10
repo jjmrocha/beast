@@ -23,6 +23,7 @@ import (
 	"github.com/jjmrocha/beast/request"
 )
 
+// Template implements the `beast template ... <fileName>` command
 func Template(method, url, fileName string) {
 	if url == "" {
 		writeTemplate(fileName)

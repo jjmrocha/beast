@@ -22,18 +22,22 @@ import (
 	"strings"
 )
 
+// Bar represents a progress bar
 type Bar struct {
 	max     int
 	current int
 	last    int
 }
 
+// NewBar creates a new progress bar
 func NewBar(max int) *Bar {
 	return &Bar{
 		max: max,
 	}
 }
 
+// Update indicates to the progress bar that we receive another output,
+// the bar will update its representation accordingly
 func (b *Bar) Update() {
 	b.current++
 	percentage := b.current * 100.0 / b.max

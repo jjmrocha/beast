@@ -21,6 +21,7 @@ import (
 	"github.com/jjmrocha/beast/data"
 )
 
+// Generate creates a slice with all requests to be executed
 func (t *TRequest) Generate(nRequests int, data *data.Data) ([]*client.BRequest, error) {
 	if data == nil {
 		return staticRequests(nRequests, t)

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// Package data provides functions to read and manipulate CSV files used on the generation of requests
 package data
 
 import (
@@ -23,8 +24,10 @@ import (
 	"os"
 )
 
+// Record represents a line on the CSV file
 type Record map[string]string
 
+// Data contains the content of the CSV file
 type Data struct {
 	fields  []string
 	records []Record
@@ -46,6 +49,7 @@ func (d *Data) add(columns []string) {
 	}
 }
 
+// Next loops through the records
 func (d *Data) Next() *Record {
 	d.current++
 
@@ -56,6 +60,7 @@ func (d *Data) Next() *Record {
 	return &d.records[d.current]
 }
 
+// Read reads the content of the CSV file
 func Read(fileName string) *Data {
 	csvfile, err := os.Open(fileName)
 	if err != nil {

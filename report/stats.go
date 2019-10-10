@@ -62,6 +62,7 @@ func (a durationSlice) sum() time.Duration {
 	return sum
 }
 
+// Stats collects statistics about the results of the execution
 type Stats struct {
 	concurrent int
 	requests   int
@@ -70,6 +71,7 @@ type Stats struct {
 	errorMap   map[int]int
 }
 
+// NewStats creates a new Stats
 func NewStats(nParallel int) *Stats {
 	return &Stats{
 		concurrent: nParallel,
@@ -78,6 +80,7 @@ func NewStats(nParallel int) *Stats {
 	}
 }
 
+// Update receives results and update the stats accordingly
 func (s *Stats) Update(r *client.BResponse) {
 	s.requests++
 	s.duration += r.Duration
@@ -110,6 +113,7 @@ func avg(duration time.Duration, requests int) time.Duration {
 	return time.Duration(duration.Nanoseconds() / int64(requests))
 }
 
+// Print displays the stats
 func (s *Stats) Print() {
 	fmt.Printf("=== Result Stats ===\n")
 	fmt.Printf("Executed requests: %v\n", s.requests)
