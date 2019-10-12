@@ -1,0 +1,11 @@
+{
+	"method": "POST",
+	"url": "http://someendpoint.pt/{{ .RequestID }}",
+	"headers": [
+		{
+			"key": "Content-Type",
+			"value": "application/json"
+		}
+	],
+	"body": "{\"id\": {{ .RequestID }}, \"value\": \"{{ .Data.A }}\"}"
+}

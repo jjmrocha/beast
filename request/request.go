@@ -25,9 +25,9 @@ import (
 func (t *TRequest) Generate(nRequests int, data *data.Data) ([]*client.BRequest, error) {
 	if data == nil {
 		return staticRequests(nRequests, t)
-	} else {
-		return dynamicRequests(nRequests, t, data)
 	}
+
+	return dynamicRequests(nRequests, t, data)
 }
 
 func staticRequests(nRequests int, tRequest *TRequest) ([]*client.BRequest, error) {

@@ -51,13 +51,13 @@ func (d *Data) add(columns []string) {
 
 // Next loops through the records
 func (d *Data) Next() *Record {
-	d.current++
-
 	if d.current == len(d.records) {
 		d.current = 0
 	}
 
-	return &d.records[d.current]
+	next := d.records[d.current]
+	d.current++
+	return &next
 }
 
 // Read reads the content of the CSV file
