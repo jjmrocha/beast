@@ -20,6 +20,12 @@ Beast currently supports the following commands:
 ### help
 Displays the help information.
 
+#### Usage
+```sh
+beast [help]
+```
+
+Example:
 ```sh
 $ beast help
 the Beast - Stress testing for RESTful APIs
@@ -28,12 +34,12 @@ Usage:
    beast config <configFile>
    beast template [-m <http method>] [url] <templateFile>
    beast run [-n <number of requests>] [-c <number of concurrent requests>] 
-             [-config <configFile>] [-data dataFile] <templateFile>
+             [-config <configFile>] [-data <dataFile>] <templateFile>
 Where:
    config   Creates a file with the default parameters to setup HTTP connections
             configFile   string Name of the file to be created
 			 			
-   template Creates a request template file, using user provided parameters
+   template Creates a request template file, using user-provided parameters
             -m           string HTTP method (default "GET")
             url          string Endpoint to be tested
             templateFile string JSON file with details about the request to test
@@ -47,9 +53,31 @@ Where:
 ```
 
 ### config
-The config command creates a JSOn file with parameters used to setup HTTP connections, with
+The config command creates a JSON file with parameters used to setup HTTP connections, with
 default values.
 
+#### Usage
+```sh
+beast config <configFile>
+```
+* configFile
+  > Name of the file to be created with the default configuration
+
+#### Configuration file
+```sh
+$ beast config config.json
+File config.json was created with the default configuration
+
+$ cat config.json
+{
+	"disable-compression": true,
+	"disable-keep-alives": false,
+	"max-connections": 0,
+	"request-timeout": 30,
+	"disable-certificate-check": false,
+	"disable-redirects": true
+}
+```
 * disable-compression 
   > If true, prevents this client from requesting compression  with an "Accept-Encoding: gzip"
 
@@ -66,27 +94,26 @@ default values.
   > If true, disables TLS certificate checking, allowing the use of expired or invalid certificates
 
 * disable-redirects
-  > If true, the http client will not follow an HTTP redirect
-
-```sh
-$ beast config config.json
-File config.json was created with default configuration
-
-$ cat config.json
-{
-	"disable-compression": true,
-	"disable-keep-alives": false,
-	"max-connections": 0,
-	"request-timeout": 30,
-	"disable-certificate-check": false,
-	"disable-redirects": true
-}
-```
+  > If true, the HTTP client will not follow an HTTP redirect
 
 ### template
 The template command functions as a utility to generate request files.
 
-Can be used to generate an "empty" request:
+#### Usage
+```sh
+beast template [-m <http method>] [url] <templateFile>
+```
+* http method
+  > HTTP method to use on the request, defaults to GET
+
+* url
+  > Endpoint to test
+
+* templateFile
+  > Name of the file to be created with the request template
+
+#### Examples
+Can be used to generate an "empty" request template:
 ```sh
 $ beast template test.json                                                        
 File test.json was created, please edit before use
@@ -126,6 +153,59 @@ $ cat test.json
 ### run
 The run command loads a request from a file and executes the request concurrently multiple times.
 
+#### Usage
+```sh
+beast run [-n <number of requests>] [-c <number of concurrent requests>] 
+          [-config <configFile>] [-data <dataFile>] <templateFile>
+```
+* number of requests
+  > Number the request to be performed, defaults to 1
+
+* number of concurrent requests
+  > Number of requests to be performed simultaneously, defaults to 1
+
+* configFile
+  > Name of the file with the configuration to set up HTTP connections
+
+* dataFile
+  > Name of the CSV files to be used on the generation of dynamic requests
+
+* templateFile
+  > Name of the file with request template to test
+
+#### Data files
+Data files are CSV files with data that can be replaced on the request template, to generate
+dynamic requests.
+
+The first line should contain the name of the columns.
+
+#### Template language
+The template language used on the template files is the [GO template](https://golang.org/pkg/text/template/).
+
+The fields that may contain dynamic expressions are the following:
+* url
+* headers/value
+* body
+
+Special features implemented:
+1. To include the request id you can use ```{{ .RequestID }}```
+2. To include a value from the data file, use ```{{ .Data.<column name> }}```
+
+```
+{
+	"method": "POST",
+	"url": "http://someendpoint.pt/{{ .RequestID }}",
+	"headers": [
+		{
+			"key": "Content-Type",
+			"value": "application/json"
+		}
+	],
+	"body": "{\"id\": {{ .RequestID }}, \"value\": \"{{ .Data.A }}\"}"
+}
+```
+
+#### Running example
 ```sh
 $ beast run -n 100 -c 5 -config config.json test.json
 === Request ===

@@ -24,12 +24,12 @@ Usage:
    beast config <configFile>
    beast template [-m <http method>] [url] <templateFile>
    beast run [-n <number of requests>] [-c <number of concurrent requests>] 
-             [-config <configFile>] [-data dataFile] <templateFile>
+             [-config <configFile>] [-data <dataFile>] <templateFile>
 Where:
    config   Creates a file with the default parameters to setup HTTP connections
             configFile   string Name of the file to be created
 			 			
-   template Creates a request template file, using user provided parameters
+   template Creates a request template file, using user-provided parameters
             -m           string HTTP method (default "GET")
             url          string Endpoint to be tested
             templateFile string JSON file with details about the request to test
