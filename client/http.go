@@ -29,11 +29,11 @@ import (
 
 // BRequest represents an HTTP request
 type BRequest struct {
-	Native *http.Request
+	native *http.Request
 }
 
 func (r *BRequest) String() string {
-	return fmt.Sprintf("%s %s", r.Native.Method, r.Native.URL)
+	return fmt.Sprintf("%s %s", r.native.Method, r.native.URL)
 }
 
 // BResponse contains the status code and the duration taken for execution of a request
@@ -48,7 +48,7 @@ func (r *BResponse) String() string {
 
 // BClient represents an HTTP client
 type BClient struct {
-	Native *http.Client
+	native *http.Client
 }
 
 // HTTP creates a BClient based on the provided configuration
@@ -74,14 +74,14 @@ func HTTP(config *config.Config) *BClient {
 	}
 
 	return &BClient{
-		Native: client,
+		native: client,
 	}
 }
 
 // Execute executes the request measuring the time taken to execute and return a BResponse
 func (c *BClient) Execute(request *BRequest) *BResponse {
 	start := time.Now()
-	resp, err := c.Native.Do(request.Native)
+	resp, err := c.native.Do(request.native)
 	duration := time.Since(start)
 
 	if err != nil {
