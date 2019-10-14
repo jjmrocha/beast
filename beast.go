@@ -33,7 +33,7 @@ func main() {
 	case "help":
 		cmd.Help()
 	case "config":
-		runConfig(os.Args[2:])
+		configCmd(os.Args[2:])
 	case "run":
 		runCmd(os.Args[2:])
 	case "template":
@@ -43,7 +43,7 @@ func main() {
 	}
 }
 
-func runConfig(args []string) {
+func configCmd(args []string) {
 	if len(args) != 1 {
 		cmd.Help()
 		return
