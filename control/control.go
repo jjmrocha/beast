@@ -38,7 +38,7 @@ func (s semaphore) release() {
 	<-s
 }
 
-// BControle is used to control the execution of multiple goroutines
+// BControl is used to control the execution of multiple goroutines
 type BControl struct {
 	wg         sync.WaitGroup
 	semaphore  semaphore
@@ -74,8 +74,8 @@ func (c *BControl) OutputChannel() <-chan *client.BResponse {
 
 // Done should be used by a goroutine to indicate it finished processing
 func (c *BControl) Done() {
+	defer c.wg.Done()
 	c.semaphore.release()
-	c.wg.Done()
 }
 
 // RunWhenAvailable blocks waiting for a execution slot
