@@ -32,6 +32,11 @@ type BRequest struct {
 	native *http.Request
 }
 
+// MakeRequest creates a BRequest using a http.Request
+func MakeRequest(req *http.Request) *BRequest {
+	return &BRequest{native: req}
+}
+
 func (r *BRequest) String() string {
 	return fmt.Sprintf("%s %s", r.native.Method, r.native.URL)
 }

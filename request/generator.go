@@ -92,7 +92,7 @@ func (t *TRequest) request() (*client.BRequest, error) {
 		req.Header.Add(header.Key, header.Value)
 	}
 
-	return &client.BRequest{Native: req}, nil
+	return client.MakeRequest(req), nil
 }
 
 func bodyReader(body string) io.Reader {
