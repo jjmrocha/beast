@@ -28,13 +28,15 @@ beast [help]
 Example:
 ```sh
 $ beast help
-the Beast - Stress testing for RESTful APIs
+the Beast v2.x.x - Stress testing for RESTful APIs
+
 Usage:
    beast [help]
    beast config <configFile>
    beast template [-m <http method>] [url] <templateFile>
    beast run [-n <number of requests>] [-c <number of concurrent requests>] 
              [-config <configFile>] [-data <dataFile>] <templateFile>
+
 Where:
    config   Creates a file with the default parameters to setup HTTP connections
             configFile   string Name of the file to be created

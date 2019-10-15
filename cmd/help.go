@@ -18,13 +18,16 @@ package cmd
 
 import "fmt"
 
-const help = `the Beast - Stress testing for RESTful APIs
+const version = "v2.0.1"
+const help = `the Beast %v - Stress testing for RESTful APIs
+
 Usage:
    beast [help]
    beast config <configFile>
    beast template [-m <http method>] [url] <templateFile>
    beast run [-n <number of requests>] [-c <number of concurrent requests>] 
              [-config <configFile>] [-data <dataFile>] <templateFile>
+
 Where:
    config   Creates a file with the default parameters to setup HTTP connections
             configFile   string Name of the file to be created
@@ -40,9 +43,10 @@ Where:
             -config      string Config file to setup HTTP client
             -data        string CSV file with data for request generation
             templateFile string JSON file with details about the request to test 
+
 `
 
 // Help implements the `beast [help]` command
 func Help() {
-	fmt.Println(help)
+	fmt.Printf(help, version)
 }
