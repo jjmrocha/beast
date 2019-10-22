@@ -17,12 +17,46 @@
 package request
 
 import (
+	"fmt"
+
 	"github.com/jjmrocha/beast/client"
 	"github.com/jjmrocha/beast/data"
 )
 
-// Generate creates a slice with all requests to be executed
-func (t *TRequest) Generate(nRequests int, data *data.Data) ([]*client.BRequest, error) {
+// Generator generates BRequests
+type Generator struct {
+	final    *client.BRequest
+	template *cRequest
+	recordID int
+	data     *data.Record
+}
+
+// Request uses that template and a record and returns a BRequests
+func (g *Generator) Request() (*client.BRequest, error) {
+	if g.final != nil {
+		return g.final, nil
+	}
+
+	dRequest, err := g.template.executeTemplate(g.recordID, g.data)
+	if err != nil {
+		return nil, err
+	}
+
+	bRequest, err := dRequest.request()
+	if err != nil {
+		return nil, err
+	}
+
+	return bRequest, nil
+}
+
+// Log generates a log message for the request
+func (g *Generator) Log() string {
+	return fmt.Sprintf("requestId: %v and data: %v", g.recordID, g.data)
+}
+
+// CreateRequests creates a slice with requests generators
+func (t *TRequest) CreateRequests(nRequests int, data *data.Data) ([]*Generator, error) {
 	if data == nil {
 		return staticRequests(nRequests, t)
 	}
@@ -30,40 +64,38 @@ func (t *TRequest) Generate(nRequests int, data *data.Data) ([]*client.BRequest,
 	return dynamicRequests(nRequests, t, data)
 }
 
-func staticRequests(nRequests int, tRequest *TRequest) ([]*client.BRequest, error) {
+func staticRequests(nRequests int, tRequest *TRequest) ([]*Generator, error) {
 	bRequest, err := tRequest.request()
 	if err != nil {
 		return nil, err
 	}
 
-	requests := make([]*client.BRequest, 0, nRequests)
+	generator := &Generator{final: bRequest}
+	generators := make([]*Generator, 0, nRequests)
+
 	for i := 0; i < nRequests; i++ {
-		requests = append(requests, bRequest)
+		generators = append(generators, generator)
 	}
 
-	return requests, nil
+	return generators, nil
 }
 
-func dynamicRequests(nRequests int, tRequest *TRequest, data *data.Data) ([]*client.BRequest, error) {
+func dynamicRequests(nRequests int, tRequest *TRequest, data *data.Data) ([]*Generator, error) {
 	cRequest, err := tRequest.compile()
 	if err != nil {
 		return nil, err
 	}
 
-	requests := make([]*client.BRequest, 0, nRequests)
+	generators := make([]*Generator, 0, nRequests)
+
 	for i := 1; i <= nRequests; i++ {
-		dRequest, err := cRequest.executeTemplate(i, data.Next())
-		if err != nil {
-			return nil, err
+		generator := &Generator{
+			data:     data.Next(),
+			recordID: i,
+			template: cRequest,
 		}
-
-		bRequest, err := dRequest.request()
-		if err != nil {
-			return nil, err
-		}
-
-		requests = append(requests, bRequest)
+		generators = append(generators, generator)
 	}
 
-	return requests, nil
+	return generators, nil
 }

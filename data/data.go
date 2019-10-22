@@ -18,7 +18,9 @@
 package data
 
 import (
+	"bytes"
 	"encoding/csv"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -26,6 +28,21 @@ import (
 
 // Record represents a line on the CSV file
 type Record map[string]string
+
+func (r *Record) String() string {
+	var buffer bytes.Buffer
+	buffer.WriteString("{")
+	for key, value := range *r {
+		if buffer.Len() > 1 {
+			buffer.WriteString(", ")
+		}
+
+		keyValue := fmt.Sprintf("%v: %v", key, value)
+		buffer.WriteString(keyValue)
+	}
+	buffer.WriteString("}")
+	return buffer.String()
+}
 
 // Data contains the content of the CSV file
 type Data struct {

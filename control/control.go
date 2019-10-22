@@ -41,14 +41,16 @@ func (s semaphore) release() {
 // BControl is used to control the execution of multiple goroutines
 type BControl struct {
 	wg         sync.WaitGroup
-	semaphore  semaphore
+	goSem      semaphore
+	runSem     semaphore
 	outputChan chan *client.BResponse
 }
 
 // New creates a BControle
 func New(nRequests, nParallel int) *BControl {
 	ctrl := &BControl{
-		semaphore:  newSemaphore(nParallel),
+		goSem:      newSemaphore(nParallel * 2),
+		runSem:     newSemaphore(nParallel),
 		outputChan: make(chan *client.BResponse, nRequests),
 	}
 	ctrl.wg.Add(nRequests)
@@ -72,13 +74,23 @@ func (c *BControl) OutputChannel() <-chan *client.BResponse {
 	return c.outputChan
 }
 
-// Done should be used by a goroutine to indicate it finished processing
-func (c *BControl) Done() {
+// Finish should be used by a goroutine to indicate it finished processing
+func (c *BControl) Finish() {
 	defer c.wg.Done()
-	c.semaphore.release()
+	c.goSem.release()
 }
 
-// RunWhenAvailable blocks waiting for a execution slot
-func (c *BControl) RunWhenAvailable() {
-	c.semaphore.acquire()
+// WaitForSlot blocks waiting for a execution slot to start a new goroutine
+func (c *BControl) WaitForSlot() {
+	c.goSem.acquire()
+}
+
+// WaitToExecute blocks waiting for a execution slot to start the test
+func (c *BControl) WaitToExecute() {
+	c.runSem.acquire()
+}
+
+// FinishExecution should be used by a goroutine to indicate it finished processing
+func (c *BControl) FinishExecution() {
+	c.runSem.release()
 }

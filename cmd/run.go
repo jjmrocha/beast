@@ -35,14 +35,21 @@ func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
 
 	go func() {
 		http := createHTTPClient(configFile)
-		requests := generateRequests(fileName, dataFile, nRequests)
+		generators := createRequestGenerators(fileName, dataFile, nRequests)
 
-		for _, request := range requests {
-			control.RunWhenAvailable()
-			go func(r *client.BRequest) {
-				defer control.Done()
-				control.Push(http.Execute(r))
-			}(request)
+		for _, generator := range generators {
+			control.WaitForSlot()
+			go func(g *request.Generator) {
+				defer control.Finish()
+				request, err := g.Request()
+				if err != nil {
+					log.Printf("Error generating request for %s: %v\n", g.Log(), err)
+					return
+				}
+				control.WaitToExecute()
+				defer control.FinishExecution()
+				control.Push(http.Execute(request))
+			}(generator)
 		}
 	}()
 
@@ -96,10 +103,10 @@ func readData(dataFile string) *data.Data {
 	return data.Read(dataFile)
 }
 
-func generateRequests(fileName, dataFile string, nRequests int) []*client.BRequest {
+func createRequestGenerators(fileName, dataFile string, nRequests int) []*request.Generator {
 	requestTemplate := request.Read(fileName)
 	data := readData(dataFile)
-	requests, err := requestTemplate.Generate(nRequests, data)
+	requests, err := requestTemplate.CreateRequests(nRequests, data)
 	if err != nil {
 		log.Fatalf("Error generating requests: %v\n", err)
 	}
