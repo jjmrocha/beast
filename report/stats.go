@@ -129,12 +129,12 @@ func (s *Stats) Print() {
 		if count >= 5 {
 			sort.Sort(durations)
 			fmt.Printf("And the following distribution:\n")
-			fmt.Printf("  The fastest request took %v\n", durations.first())
-			fmt.Printf("  20%% of requests under %v\n", durations.percentage(20))
-			fmt.Printf("  40%% of requests under %v\n", durations.percentage(40))
-			fmt.Printf("  60%% of requests under %v\n", durations.percentage(60))
-			fmt.Printf("  80%% of requests under %v\n", durations.percentage(80))
-			fmt.Printf("  The slowest request took %v\n", durations.last())
+			fmt.Printf("- The fastest request took %v\n", durations.first())
+			fmt.Printf("- 20%% of requests under %v\n", durations.percentage(20))
+			fmt.Printf("- 40%% of requests under %v\n", durations.percentage(40))
+			fmt.Printf("- 60%% of requests under %v\n", durations.percentage(60))
+			fmt.Printf("- 80%% of requests under %v\n", durations.percentage(80))
+			fmt.Printf("- The slowest request took %v\n", durations.last())
 		}
 	}
 

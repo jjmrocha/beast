@@ -6,7 +6,7 @@ the Beast
 Binaries are available on [releases](https://github.com/jjmrocha/beast/releases).
 
 Or you can download the code and compile yourself:
-```sh
+```
 $ go get -u github.com/jjmrocha/beast
 ```
 
@@ -21,12 +21,12 @@ Beast currently supports the following commands:
 Displays the help information.
 
 #### Usage
-```sh
+```
 beast [help]
 ```
 
 Example:
-```sh
+```
 $ beast help
 the Beast v2.x.x - Stress testing for RESTful APIs
 
@@ -59,14 +59,14 @@ The config command creates a JSON file with parameters used to setup HTTP connec
 default values.
 
 #### Usage
-```sh
+```
 beast config <configFile>
 ```
 * configFile
   > Name of the file to be created with the default configuration
 
 #### Configuration file
-```sh
+```
 $ beast config config.json
 File config.json was created with the default configuration
 
@@ -102,7 +102,7 @@ $ cat config.json
 The template command functions as a utility to generate request files.
 
 #### Usage
-```sh
+```
 beast template [-m <http method>] [url] <templateFile>
 ```
 * http method
@@ -116,7 +116,7 @@ beast template [-m <http method>] [url] <templateFile>
 
 #### Examples
 Can be used to generate an "empty" request template:
-```sh
+```
 $ beast template test.json                                                        
 File test.json was created, please edit before use
 
@@ -131,11 +131,11 @@ $ cat test.json
 		}
 	],
 	"body": "Optional, enter body to send with POST or PUT"
-}%
+}
 ```
 
 Or, to generate the base request, that you can customize, adding headers or payload:
-```sh
+```
 $ beast template https://github.com/jjmrocha/beast test.json
 File test.json was created for 'GET https://github.com/jjmrocha/beast'
 
@@ -156,7 +156,7 @@ $ cat test.json
 The run command loads a request from a file and executes the request concurrently multiple times.
 
 #### Usage
-```sh
+```
 beast run [-n <number of requests>] [-c <number of concurrent requests>] 
           [-config <configFile>] [-data <dataFile>] <templateFile>
 ```
@@ -208,7 +208,7 @@ Special features implemented:
 ```
 
 #### Running example
-```sh
+```
 $ beast run -n 100 -c 5 -config config.json test.json
 === Request ===
 Request template: test.json
@@ -244,12 +244,12 @@ Avg response time: 776.30595ms
 === Status 200 ===
 40 requests, with avg response time of 1.48163871s
 And the following distribution:
-  The fastest request took 849.443863ms
-  20% of requests under 1.05389514s
-  40% of requests under 1.192986887s
-  60% of requests under 1.590280578s
-  80% of requests under 1.95515696s
-  The slowest request took 2.43441918s
+- The fastest request took 849.443863ms
+- 20% of requests under 1.05389514s
+- 40% of requests under 1.192986887s
+- 60% of requests under 1.590280578s
+- 80% of requests under 1.95515696s
+- The slowest request took 2.43441918s
 === Non Success Status ===
 Status 429: 60 requests
 ```
