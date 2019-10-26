@@ -17,7 +17,7 @@ Beast currently supports the following commands:
 * template
 * run
 
-### help
+### beast help
 Displays the help information.
 
 #### Usage
@@ -54,7 +54,7 @@ Where:
             templateFile string JSON file with details about the request to test 
 ```
 
-### config
+### beast config
 The config command creates a JSON file with parameters used to setup HTTP connections, with
 default values.
 
@@ -98,7 +98,7 @@ $ cat config.json
 * disable-redirects
   > If true, the HTTP client will not follow an HTTP redirect
 
-### template
+### beast template
 The template command functions as a utility to generate request files.
 
 #### Usage
@@ -152,7 +152,7 @@ $ cat test.json
 }
 ```
 
-### run
+### beast run
 The run command loads a request from a file and executes the request concurrently multiple times.
 
 #### Usage

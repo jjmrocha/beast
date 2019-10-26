@@ -19,9 +19,11 @@ package client
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/jjmrocha/beast/config"
@@ -51,9 +53,14 @@ func (r *BResponse) String() string {
 	return fmt.Sprintf("%v - %v", r.StatusCode, r.Duration)
 }
 
+// This interface exists to allow the mocking of the client
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
 // BClient represents an HTTP client
 type BClient struct {
-	native *http.Client
+	native httpClient
 }
 
 // HTTP creates a BClient based on the provided configuration
@@ -90,9 +97,17 @@ func (c *BClient) Execute(request *BRequest) *BResponse {
 	duration := time.Since(start)
 
 	if err != nil {
+		var urlErr *url.Error
+		if ok := errors.As(err, &urlErr); ok && urlErr.Timeout() {
+			return &BResponse{
+				StatusCode: -400,
+				Duration:   duration,
+			}
+		}
+
 		log.Printf("Error executing request '%v': %v\n", request, err)
 		return &BResponse{
-			StatusCode: -1,
+			StatusCode: -500,
 			Duration:   duration,
 		}
 	}
