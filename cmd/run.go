@@ -28,6 +28,10 @@ import (
 	"github.com/jjmrocha/beast/request"
 )
 
+var errorGeneratingRequestResponse = &client.BResponse{
+	StatusCode: -100,
+}
+
 // Run implements the `beast run ...` command
 func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
 	printTest(fileName, configFile, dataFile, nRequests, nParallel)
@@ -44,6 +48,7 @@ func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
 				request, err := g.Request()
 				if err != nil {
 					log.Printf("Error generating request for %s: %v\n", g.Log(), err)
+					control.Push(errorGeneratingRequestResponse)
 					return
 				}
 				control.WaitToExecute()

@@ -2,7 +2,8 @@ the Beast
 =========
 *Stress testing for RESTful APIs*
 
-## Installation
+Installation
+------------
 Binaries are available on [releases](https://github.com/jjmrocha/beast/releases).
 
 Or you can download the code and compile yourself:
@@ -10,17 +11,18 @@ Or you can download the code and compile yourself:
 $ go get -u github.com/jjmrocha/beast
 ```
 
-## Usage
+Usage
+--------
 Beast currently supports the following commands:
-* help
-* config
-* template
-* run
+* [help](#beast-help)
+* [config](#beast-config)
+* [template](#beast-template)
+* [run](#beast-run)
 
 ### beast help
 Displays the help information.
 
-#### Usage
+__Usage__
 ```
 beast [help]
 ```
@@ -58,14 +60,14 @@ Where:
 The config command creates a JSON file with parameters used to setup HTTP connections, with
 default values.
 
-#### Usage
+__Usage__
 ```
 beast config <configFile>
 ```
 * configFile
   > Name of the file to be created with the default configuration
 
-#### Configuration file
+__Configuration file__
 ```
 $ beast config config.json
 File config.json was created with the default configuration
@@ -101,7 +103,7 @@ $ cat config.json
 ### beast template
 The template command functions as a utility to generate request files.
 
-#### Usage
+__Usage__
 ```
 beast template [-m <http method>] [url] <templateFile>
 ```
@@ -114,7 +116,7 @@ beast template [-m <http method>] [url] <templateFile>
 * templateFile
   > Name of the file to be created with the request template
 
-#### Examples
+__Examples__
 Can be used to generate an "empty" request template:
 ```
 $ beast template test.json                                                        
@@ -155,7 +157,7 @@ $ cat test.json
 ### beast run
 The run command loads a request from a file and executes the request concurrently multiple times.
 
-#### Usage
+__Usage__
 ```
 beast run [-n <number of requests>] [-c <number of concurrent requests>] 
           [-config <configFile>] [-data <dataFile>] <templateFile>
@@ -175,13 +177,13 @@ beast run [-n <number of requests>] [-c <number of concurrent requests>]
 * templateFile
   > Name of the file with request template to test
 
-#### Data files
+__Data files__
 Data files are CSV files with data that can be replaced on the request template, to generate
 dynamic requests.
 
 The first line should contain the name of the columns.
 
-#### Template language
+__Template language__
 The template language used on the template files is the [GO template](https://golang.org/pkg/text/template/).
 
 The fields that may contain dynamic expressions are the following:
@@ -207,7 +209,7 @@ Special features implemented:
 }
 ```
 
-#### Running example
+__Example__
 ```
 $ beast run -n 100 -c 5 -config config.json test.json
 === Request ===
@@ -251,8 +253,11 @@ And the following distribution:
 - 80% of requests under 1.95515696s
 - The slowest request took 2.43441918s
 === Non Success Status ===
-Status 429: 60 requests
+Status 429: 50 requests
+=== Errors ===
+- Request timeout: 10 errors
 ```
 
-## License
+License
+-------
 Any contributions made under this project will be governed by the [Apache License 2.0](./LICENSE.md).

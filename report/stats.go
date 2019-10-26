@@ -62,13 +62,29 @@ func (a durationSlice) sum() time.Duration {
 	return sum
 }
 
+type errorCode int
+
+func (e errorCode) String() string {
+	switch e {
+	case -100:
+		return "Request generation error"
+	case -400:
+		return "Request timeout"
+	case -500:
+		return "Unexpected error"
+	}
+
+	return ""
+}
+
 // Stats collects statistics about the results of the execution
 type Stats struct {
 	concurrent int
 	requests   int
 	duration   time.Duration
 	successMap map[int]durationSlice
-	errorMap   map[int]int
+	statusMap  map[int]int
+	errorMap   map[errorCode]int
 }
 
 // NewStats creates a new Stats
@@ -76,7 +92,8 @@ func NewStats(nParallel int) *Stats {
 	return &Stats{
 		concurrent: nParallel,
 		successMap: make(map[int]durationSlice),
-		errorMap:   make(map[int]int),
+		statusMap:  make(map[int]int),
+		errorMap:   make(map[errorCode]int),
 	}
 }
 
@@ -92,13 +109,20 @@ func (s *Stats) Update(r *client.BResponse) {
 		}
 
 		s.successMap[r.StatusCode] = append(durations, r.Duration)
+	} else if error(r.StatusCode) {
+		errorCode := errorCode(r.StatusCode)
+		s.errorMap[errorCode]++
 	} else {
-		s.errorMap[r.StatusCode]++
+		s.statusMap[r.StatusCode]++
 	}
 }
 
 func success(statusCode int) bool {
 	return statusCode >= 200 && statusCode < 300
+}
+
+func error(statusCode int) bool {
+	return statusCode < 0
 }
 
 func (s *Stats) tps() float64 {
@@ -138,11 +162,19 @@ func (s *Stats) Print() {
 		}
 	}
 
-	if len(s.errorMap) > 0 {
+	if len(s.statusMap) > 0 {
 		fmt.Printf("=== Non Success Status ===\n")
 
-		for key, value := range s.errorMap {
+		for key, value := range s.statusMap {
 			fmt.Printf("Status %v: %v requests\n", key, value)
+		}
+	}
+
+	if len(s.errorMap) > 0 {
+		fmt.Printf("=== Errors ===\n")
+
+		for key, value := range s.errorMap {
+			fmt.Printf("- %v: %v errors\n", key, value)
 		}
 	}
 }
