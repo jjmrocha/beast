@@ -19,6 +19,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"runtime"
 
 	"github.com/jjmrocha/beast/client"
 	"github.com/jjmrocha/beast/config"
@@ -34,13 +35,15 @@ var errorGeneratingRequestResponse = &client.BResponse{
 
 // Run implements the `beast run ...` command
 func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
+	printSystem()
 	printTest(fileName, configFile, dataFile, nRequests, nParallel)
+	fmt.Printf("===== Preparing =====\n")
 	control := control.New(nRequests, nParallel)
+	http := createHTTPClient(configFile)
+	generators := createRequestGenerators(fileName, dataFile, nRequests)
+	fmt.Printf("===== Executing =====\n")
 
 	go func() {
-		http := createHTTPClient(configFile)
-		generators := createRequestGenerators(fileName, dataFile, nRequests)
-
 		for _, generator := range generators {
 			control.WaitForSlot()
 			go func(g *request.Generator) {
@@ -70,8 +73,15 @@ func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
 	stats.Print()
 }
 
+func printSystem() {
+	fmt.Printf("===== System =====\n")
+	fmt.Printf("Operating System: %v\n", runtime.GOOS)
+	fmt.Printf("System Architecture: %v\n", runtime.GOARCH)
+	fmt.Printf("Logical CPUs: %v\n", runtime.NumCPU())
+}
+
 func printTest(fileName, configFile, dataFile string, nRequests, nParallel int) {
-	fmt.Printf("=== Request ===\n")
+	fmt.Printf("===== Test =====\n")
 	fmt.Printf("Request template: %v\n", fileName)
 
 	if dataFile != "" {
@@ -84,7 +94,6 @@ func printTest(fileName, configFile, dataFile string, nRequests, nParallel int) 
 
 	fmt.Printf("Number of requests: %v\n", nRequests)
 	fmt.Printf("Number of concurrent requests: %v\n", nParallel)
-	fmt.Printf("=== Test ===\n")
 }
 
 func createHTTPClient(configFile string) *client.BClient {
@@ -97,6 +106,7 @@ func readConfig(configFile string) *config.Config {
 		return config.Default()
 	}
 
+	fmt.Println("- Reading configuration")
 	return config.Read(configFile)
 }
 
@@ -105,12 +115,15 @@ func readData(dataFile string) *data.Data {
 		return nil
 	}
 
+	fmt.Println("- Loading data file")
 	return data.Read(dataFile)
 }
 
 func createRequestGenerators(fileName, dataFile string, nRequests int) []*request.Generator {
-	requestTemplate := request.Read(fileName)
 	data := readData(dataFile)
+	fmt.Println("- Loading request template")
+	requestTemplate := request.Read(fileName)
+	fmt.Println("- Generating requests")
 	requests, err := requestTemplate.CreateRequests(nRequests, data)
 	if err != nil {
 		log.Fatalf("Error generating requests: %v\n", err)

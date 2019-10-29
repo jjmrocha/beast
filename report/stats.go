@@ -139,14 +139,14 @@ func avg(duration time.Duration, requests int) time.Duration {
 
 // Print displays the stats
 func (s *Stats) Print() {
-	fmt.Printf("=== Result Stats ===\n")
+	fmt.Printf("===== Stats =====\n")
 	fmt.Printf("Executed requests: %v\n", s.requests)
 	fmt.Printf("Time taken to complete: %v\n", s.duration)
 	fmt.Printf("Requests per second: %.4f\n", s.tps())
 	fmt.Printf("Avg response time: %v\n", s.avg())
 
 	for key, durations := range s.successMap {
-		fmt.Printf("=== Status %v ===\n", key)
+		fmt.Printf("===== Status %v =====\n", key)
 		count := durations.Len()
 		duration := durations.sum()
 		fmt.Printf("%v requests, with avg response time of %v\n", count, avg(duration, count))
@@ -163,7 +163,7 @@ func (s *Stats) Print() {
 	}
 
 	if len(s.statusMap) > 0 {
-		fmt.Printf("=== Non Success Status ===\n")
+		fmt.Printf("===== Non Success Status =====\n")
 
 		for key, value := range s.statusMap {
 			fmt.Printf("Status %v: %v requests\n", key, value)
@@ -171,7 +171,7 @@ func (s *Stats) Print() {
 	}
 
 	if len(s.errorMap) > 0 {
-		fmt.Printf("=== Errors ===\n")
+		fmt.Printf("===== Errors =====\n")
 
 		for key, value := range s.errorMap {
 			fmt.Printf("- %v: %v errors\n", key, value)
