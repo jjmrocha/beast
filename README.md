@@ -194,8 +194,11 @@ The fields that may contain dynamic expressions are the following:
 Special features implemented:
 1. To include the request id you can use ```{{ .RequestID }}```
 2. To include a value from the data file, use ```{{ .Data.<column name> }}```
+3. We specify the payload (body) in a separeted file by using the following syntax:
+   ```"body": "@<path to file to be used as request payload>"```
 
 ```
+$ cat example.json
 {
 	"method": "POST",
 	"url": "http://someendpoint.pt/{{ .RequestID }}",
@@ -205,7 +208,13 @@ Special features implemented:
 			"value": "application/json"
 		}
 	],
-	"body": "{\"id\": {{ .RequestID }}, \"value\": \"{{ .Data.A }}\"}"
+	"body": "@payload.json"
+}
+
+$ cat payload.json
+{
+   "id": {{ .RequestID }}, 
+   "value": "{{ .Data.A }}"
 }
 ```
 

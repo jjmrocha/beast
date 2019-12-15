@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"strings"
 )
 
 // THeader represents an HTTP Header template
@@ -46,6 +47,11 @@ func Read(fileName string) *TRequest {
 
 	var request TRequest
 	json.Unmarshal(data, &request)
+
+	if body, readed := externalBody(request.Body); readed {
+		request.Body = body
+	}
+
 	return &request
 }
 
@@ -60,4 +66,18 @@ func Write(fileName string, request *TRequest) {
 	if err != nil {
 		log.Printf("Error writing template to file %s: %v\n", fileName, err)
 	}
+}
+
+func externalBody(body string) (string, bool) {
+	if strings.HasPrefix(body, "@") {
+		fileName := body[1:]
+		data, err := ioutil.ReadFile(fileName)
+		if err != nil {
+			log.Fatalf("Error reading external body file %s: %v\n", fileName, err)
+		}
+
+		return string(data), true
+	}
+
+	return "", false
 }

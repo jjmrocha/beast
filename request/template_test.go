@@ -70,3 +70,48 @@ func TestReadTemplatePOST(t *testing.T) {
 		t.Errorf("got %v expected %v", template, expected)
 	}
 }
+
+func TestReadTemplatePOSTWithExternalBody(t *testing.T) {
+	// given
+	expected := &TRequest{
+		Method:   "POST",
+		Endpoint: "http://someendpoint.pt/{{ .RequestID }}",
+		Headers: []THeader{
+			{"Content-Type", "application/json"},
+		},
+		Body: "{\"id\": {{ .RequestID }}, \"value\": \"{{ .Data.A }}\"}",
+	}
+	// when
+	template := Read("../testdata/template_post_external.json")
+	// then
+	if !reflect.DeepEqual(template, expected) {
+		t.Errorf("got %v expected %v", template, expected)
+	}
+}
+
+func TestExternalBodyWithExternalBody(t *testing.T) {
+	// given
+	body := "@../testdata/body.json"
+	expected := "{\"id\": {{ .RequestID }}, \"value\": \"{{ .Data.A }}\"}"
+	// when
+	response, found := externalBody(body)
+	// then
+	if found != true {
+		t.Errorf("got %v expected %v for found", found, true)
+	}
+
+	if response != expected {
+		t.Errorf("got %v expected %v for response", response, expected)
+	}
+}
+
+func TestExternalBodyWithoutExternalBody(t *testing.T) {
+	// given
+	body := "{\"id\": {{ .RequestID }}, \"value\": \"{{ .Data.A }}\"}"
+	// when
+	_, found := externalBody(body)
+	// then
+	if found != false {
+		t.Errorf("got %v expected %v", found, false)
+	}
+}
