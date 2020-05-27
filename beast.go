@@ -67,6 +67,11 @@ func runCmd(args []string) {
 		return
 	}
 
+	if *nRequests == 0 || *nParallel == 0 {
+		cmd.Help()
+		return
+	}
+
 	fileName := nonFlagArgs[0]
 	cmd.Run(*nRequests, *nParallel, fileName, *configFile, *dataFile)
 }
