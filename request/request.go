@@ -23,6 +23,9 @@ import (
 	"github.com/jjmrocha/beast/data"
 )
 
+// emptyRecord contains a empty record to be used when no data is provided
+var emptyRecord = data.NewRecord()
+
 // Generator generates BRequests
 type Generator struct {
 	final    *client.BRequest
@@ -57,27 +60,7 @@ func (g *Generator) Log() string {
 
 // CreateRequests creates a slice with requests generators
 func (t *TRequest) CreateRequests(nRequests int, data *data.Data) ([]*Generator, error) {
-	if data == nil {
-		return staticRequests(nRequests, t)
-	}
-
 	return dynamicRequests(nRequests, t, data)
-}
-
-func staticRequests(nRequests int, tRequest *TRequest) ([]*Generator, error) {
-	bRequest, err := tRequest.request()
-	if err != nil {
-		return nil, err
-	}
-
-	generator := &Generator{final: bRequest}
-	generators := make([]*Generator, 0, nRequests)
-
-	for i := 0; i < nRequests; i++ {
-		generators = append(generators, generator)
-	}
-
-	return generators, nil
 }
 
 func dynamicRequests(nRequests int, tRequest *TRequest, data *data.Data) ([]*Generator, error) {
@@ -90,7 +73,7 @@ func dynamicRequests(nRequests int, tRequest *TRequest, data *data.Data) ([]*Gen
 
 	for i := 1; i <= nRequests; i++ {
 		generator := &Generator{
-			data:     data.Next(),
+			data:     nextRecord(data),
 			recordID: i,
 			template: cRequest,
 		}
@@ -98,4 +81,12 @@ func dynamicRequests(nRequests int, tRequest *TRequest, data *data.Data) ([]*Gen
 	}
 
 	return generators, nil
+}
+
+func nextRecord(data *data.Data) *data.Record {
+	if data == nil {
+		return &emptyRecord
+	}
+
+	return data.Next()
 }

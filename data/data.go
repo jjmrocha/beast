@@ -56,7 +56,7 @@ func (d *Data) add(columns []string) {
 		d.fields = columns
 	} else {
 		fieldsNumber := len(d.fields)
-		record := make(map[string]string)
+		record := NewRecord()
 
 		for i := 0; i < fieldsNumber; i++ {
 			record[d.fields[i]] = columns[i]
@@ -64,6 +64,11 @@ func (d *Data) add(columns []string) {
 
 		d.records = append(d.records, record)
 	}
+}
+
+// NewRecord creates a new record
+func NewRecord() Record {
+	return make(map[string]string)
 }
 
 // Next loops through the records
