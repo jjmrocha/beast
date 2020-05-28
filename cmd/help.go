@@ -35,14 +35,14 @@ Where:
    template Creates a request template file, using user-provided parameters
             -m           string HTTP method (default "GET")
             url          string Endpoint to be tested
-            templateFile string JSON file with details about the request to test
+            templateFile string JSON/YAML file with details about the request to test
 
    run      Executes a script and presents a report with execution results
             -c           int    Number of concurrent requests (default 1)
             -n           int    Number of requests (default 1)
             -config      string Config file to setup HTTP client
             -data        string CSV file with data for request generation
-            templateFile string JSON file with details about the request to test 
+            templateFile string JSON/YAML file with details about the request to test 
 
 `
 

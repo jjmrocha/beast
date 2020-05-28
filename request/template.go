@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"log"
 	"strings"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -50,9 +51,11 @@ func Read(fileName string) *TRequest {
 
 func readFile(fileName string) []byte {
 	data, err := ioutil.ReadFile(fileName)
+
 	if err != nil {
 		log.Fatalf("Error reading template file %s: %v\n", fileName, err)
 	}
+
 	return data
 }
 
@@ -66,8 +69,7 @@ func Write(fileName string, request *TRequest) {
 }
 
 func writeFile(data []byte, fileName string) {
-	err := ioutil.WriteFile(fileName, data, 0666)
-	if err != nil {
+	if err := ioutil.WriteFile(fileName, data, 0666); err != nil {
 		log.Printf("Error writing template to file %s: %v\n", fileName, err)
 	}
 }
@@ -113,6 +115,7 @@ func writeJSON(fileName string, request *TRequest) {
 	if err != nil {
 		log.Printf("Error encoding request %v to JSON: %v\n", request, err)
 	}
+
 	writeFile(data, fileName)
 }
 
@@ -177,10 +180,12 @@ func fromHeaderMap(headers map[string]string) []THeader {
 
 func writeYAML(fileName string, request *TRequest) {
 	yamlRequest := toYamlRequest(request)
+
 	data, err := yaml.Marshal(yamlRequest)
 	if err != nil {
 		log.Printf("Error encoding request %v to YAML: %v\n", request, err)
 	}
+
 	writeFile(data, fileName)
 }
 
