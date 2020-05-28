@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"log"
 	"strings"
+	"gopkg.in/yaml.v3"
 )
 
 // THeader represents an HTTP Header template
@@ -40,32 +41,57 @@ type TRequest struct {
 
 // Read reads an HTTP request template from a file
 func Read(fileName string) *TRequest {
+	if isJSON(fileName) {
+		return readJSON(fileName)
+	}
+
+	return readYAML(fileName)
+}
+
+func readFile(fileName string) []byte {
 	data, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		log.Fatalf("Error reading template file %s: %v\n", fileName, err)
 	}
-
-	var request TRequest
-	json.Unmarshal(data, &request)
-
-	if body, readed := externalBody(request.Body); readed {
-		request.Body = body
-	}
-
-	return &request
+	return data
 }
 
 // Write writes an HTTP request template to a file
 func Write(fileName string, request *TRequest) {
-	data, err := json.MarshalIndent(request, "", "\t")
-	if err != nil {
-		log.Printf("Error encoding request %v to JSON: %v\n", request, err)
+	if isJSON(fileName) {
+		writeJSON(fileName, request)
+	} else {
+		writeYAML(fileName, request)
 	}
+}
 
-	err = ioutil.WriteFile(fileName, data, 0666)
+func writeFile(data []byte, fileName string) {
+	err := ioutil.WriteFile(fileName, data, 0666)
 	if err != nil {
 		log.Printf("Error writing template to file %s: %v\n", fileName, err)
 	}
+}
+
+// JSON
+
+func isJSON(fileName string) bool {
+	lowerCaseFileName := strings.ToLower(fileName)
+	return strings.HasSuffix(lowerCaseFileName, ".json")
+}
+
+func readJSON(fileName string) *TRequest {
+	data := readFile(fileName)
+
+	var request TRequest
+	if err := json.Unmarshal(data, &request); err != nil {
+		log.Printf("Invalid JSON template file %s: %v\n", fileName, err)
+	}
+
+	if body, read := externalBody(request.Body); read {
+		request.Body = body
+	}
+
+	return &request
 }
 
 func externalBody(body string) (string, bool) {
@@ -80,4 +106,91 @@ func externalBody(body string) (string, bool) {
 	}
 
 	return "", false
+}
+
+func writeJSON(fileName string, request *TRequest) {
+	data, err := json.MarshalIndent(request, "", "\t")
+	if err != nil {
+		log.Printf("Error encoding request %v to JSON: %v\n", request, err)
+	}
+	writeFile(data, fileName)
+}
+
+// YAML
+
+type yamlRequest struct {
+	Method   string            `yaml:"method"`
+	Endpoint string            `yaml:"endpoint"`
+	Headers  map[string]string `yaml:"headers,omitempty"`
+	Body     string            `yaml:"request-body,omitempty"`
+}
+
+func toYamlRequest(request *TRequest) *yamlRequest {
+	return &yamlRequest{
+		Method:   request.Method,
+		Endpoint: request.Endpoint,
+		Headers:  toHeaderMap(request.Headers),
+		Body:     request.Body,
+	}
+}
+
+func toHeaderMap(headers []THeader) map[string]string {
+	if headers == nil {
+		return nil
+	}
+
+	headerMap := make(map[string]string)
+
+	for _, header := range headers {
+		headerMap[header.Key] = header.Value
+	}
+
+	return headerMap
+}
+
+func fromYamlRequest(request *yamlRequest) *TRequest {
+	return &TRequest{
+		Method:   request.Method,
+		Endpoint: request.Endpoint,
+		Headers:  fromHeaderMap(request.Headers),
+		Body:     request.Body,
+	}
+}
+
+func fromHeaderMap(headers map[string]string) []THeader {
+	if headers == nil {
+		return nil
+	}
+
+	tHeaders := make([]THeader, 0, len(headers))
+
+	for key, value := range headers {
+		header := THeader{
+			Key:   key,
+			Value: value,
+		}
+		tHeaders = append(tHeaders, header)
+	}
+
+	return tHeaders
+}
+
+func writeYAML(fileName string, request *TRequest) {
+	yamlRequest := toYamlRequest(request)
+	data, err := yaml.Marshal(yamlRequest)
+	if err != nil {
+		log.Printf("Error encoding request %v to YAML: %v\n", request, err)
+	}
+	writeFile(data, fileName)
+}
+
+func readYAML(fileName string) *TRequest {
+	data := readFile(fileName)
+
+	var request yamlRequest
+	if err := yaml.Unmarshal(data, &request); err != nil {
+		log.Printf("Invalid YAML template file %s: %v\n", fileName, err)
+	}
+
+	return fromYamlRequest(&request)
 }
