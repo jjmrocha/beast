@@ -1,0 +1,5 @@
+method: POST
+endpoint: "http://someendpoint.pt"
+headers:
+   - Content-Type: "application/json"
+request-body: "{\"id\": 1, \"value\": \"any\"}"
