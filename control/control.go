@@ -24,20 +24,6 @@ import (
 	"github.com/jjmrocha/beast/client"
 )
 
-type semaphore chan bool
-
-func newSemaphore(size int) semaphore {
-	return make(chan bool, size)
-}
-
-func (s semaphore) acquire() {
-	s <- true
-}
-
-func (s semaphore) release() {
-	<-s
-}
-
 // BControl is used to control the execution of multiple goroutines
 type BControl struct {
 	wg         sync.WaitGroup

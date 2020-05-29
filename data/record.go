@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,35 +14,32 @@
  * limitations under the License.
  */
 
-package report
+package data
 
 import (
-	"testing"
+	"bytes"
+	"fmt"
 )
 
-func TestSuccess(t *testing.T) {
-	// given
-	var tests = []struct {
-		input    int
-		expected bool
-	}{
-		{100, false},
-		{122, false},
-		{200, true},
-		{201, true},
-		{300, false},
-		{307, false},
-		{400, false},
-		{404, false},
-		{429, false},
-		{500, false},
-		{502, false},
-	}
-	// then
-	for _, test := range tests {
-		result := success(test.input)
-		if result != test.expected {
-			t.Errorf("got %v expected %v for status %v", result, test.expected, test.input)
+// Record represents a line on the CSV file
+type Record map[string]string
+
+func (r *Record) String() string {
+	var buffer bytes.Buffer
+	buffer.WriteString("{")
+	for key, value := range *r {
+		if buffer.Len() > 1 {
+			buffer.WriteString(", ")
 		}
+
+		keyValue := fmt.Sprintf("%v: %v", key, value)
+		buffer.WriteString(keyValue)
 	}
+	buffer.WriteString("}")
+	return buffer.String()
+}
+
+// NewRecord creates a new record
+func NewRecord() Record {
+	return make(map[string]string)
 }

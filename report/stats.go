@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,59 +23,6 @@ import (
 
 	"github.com/jjmrocha/beast/client"
 )
-
-type durationSlice []time.Duration
-
-func (a durationSlice) Len() int {
-	return len(a)
-}
-
-func (a durationSlice) Less(i, j int) bool {
-	return a[i] < a[j]
-}
-
-func (a durationSlice) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
-
-func (a durationSlice) first() time.Duration {
-	return a[0]
-}
-
-func (a durationSlice) last() time.Duration {
-	return a[len(a)-1]
-}
-
-func (a durationSlice) percentage(value int) time.Duration {
-	size := len(a)
-	pos := (size * value / 100) - 1
-	return a[pos]
-}
-
-func (a durationSlice) sum() time.Duration {
-	var sum time.Duration
-
-	for _, value := range a {
-		sum += value
-	}
-
-	return sum
-}
-
-type errorCode int
-
-func (e errorCode) String() string {
-	switch e {
-	case -100:
-		return "Request generation error"
-	case -400:
-		return "Request timeout"
-	case -500:
-		return "Unexpected error"
-	}
-
-	return ""
-}
 
 // Stats collects statistics about the results of the execution
 type Stats struct {

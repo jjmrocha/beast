@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package request
+package template
 
 import (
 	"reflect"

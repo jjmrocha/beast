@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package request
+// Package template provide functions to read, write templates and generate requests
+package template
 
 import (
-	"bytes"
 	"io"
 	"net/http"
 	"strings"
@@ -27,59 +27,18 @@ import (
 	"github.com/jjmrocha/beast/data"
 )
 
-type cHeader struct {
-	key   string
-	value *template.Template
+// THeader represents an HTTP Header template
+type THeader struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
-type cRequest struct {
-	method   string
-	endpoint *template.Template
-	headers  []cHeader
-	body     *template.Template
-}
-
-func (c *cRequest) executeTemplate(requestID int, record *data.Record) (*TRequest, error) {
-	var context = struct {
-		RequestID int
-		Data      *data.Record
-	}{
-		RequestID: requestID,
-		Data:      record,
-	}
-
-	tRequest := TRequest{
-		Method:  c.method,
-		Headers: make([]THeader, 0, len(c.headers)),
-	}
-
-	var endpoint bytes.Buffer
-	if err := c.endpoint.Execute(&endpoint, context); err != nil {
-		return nil, err
-	}
-	tRequest.Endpoint = endpoint.String()
-
-	for _, header := range c.headers {
-		var headerValue bytes.Buffer
-		if err := header.value.Execute(&headerValue, context); err != nil {
-			return nil, err
-		}
-		tHeader := THeader{
-			Key:   header.key,
-			Value: headerValue.String(),
-		}
-		tRequest.Headers = append(tRequest.Headers, tHeader)
-	}
-
-	if c.body != nil {
-		var body bytes.Buffer
-		if err := c.body.Execute(&body, context); err != nil {
-			return nil, err
-		}
-		tRequest.Body = body.String()
-	}
-
-	return &tRequest, nil
+// TRequest represents an HTTP request template
+type TRequest struct {
+	Method   string    `json:"method"`
+	Endpoint string    `json:"url"`
+	Headers  []THeader `json:"headers,omitempty"`
+	Body     string    `json:"body,omitempty"`
 }
 
 func (t *TRequest) request() (*client.BRequest, error) {
@@ -137,4 +96,33 @@ func (t *TRequest) compile() (*cRequest, error) {
 		body:     tBody,
 	}
 	return &cRequest, nil
+}
+
+// BuildGenerators creates a slice with requests generators
+func (t *TRequest) BuildGenerators(nRequests int, data *data.Data) ([]*Generator, error) {
+	cRequest, err := t.compile()
+	if err != nil {
+		return nil, err
+	}
+
+	generators := make([]*Generator, 0, nRequests)
+
+	for i := 1; i <= nRequests; i++ {
+		generator := &Generator{
+			data:     nextRecord(data),
+			recordID: i,
+			template: cRequest,
+		}
+		generators = append(generators, generator)
+	}
+
+	return generators, nil
+}
+
+func nextRecord(data *data.Data) *data.Record {
+	if data == nil {
+		return &emptyRecord
+	}
+
+	return data.Next()
 }

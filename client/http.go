@@ -20,7 +20,6 @@ package client
 import (
 	"crypto/tls"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -28,30 +27,6 @@ import (
 
 	"github.com/jjmrocha/beast/config"
 )
-
-// BRequest represents an HTTP request
-type BRequest struct {
-	native *http.Request
-}
-
-// MakeRequest creates a BRequest using a http.Request
-func MakeRequest(req *http.Request) *BRequest {
-	return &BRequest{native: req}
-}
-
-func (r *BRequest) String() string {
-	return fmt.Sprintf("%s %s", r.native.Method, r.native.URL)
-}
-
-// BResponse contains the status code and the duration taken for execution of a request
-type BResponse struct {
-	StatusCode int
-	Duration   time.Duration
-}
-
-func (r *BResponse) String() string {
-	return fmt.Sprintf("%v - %v", r.StatusCode, r.Duration)
-}
 
 // This interface exists to allow the mocking of the client
 type httpClient interface {

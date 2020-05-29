@@ -26,7 +26,7 @@ import (
 	"github.com/jjmrocha/beast/control"
 	"github.com/jjmrocha/beast/data"
 	"github.com/jjmrocha/beast/report"
-	"github.com/jjmrocha/beast/request"
+	"github.com/jjmrocha/beast/template"
 )
 
 var errorGeneratingRequestResponse = &client.BResponse{
@@ -46,7 +46,7 @@ func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
 	go func() {
 		for _, generator := range generators {
 			control.WaitForSlot()
-			go func(g *request.Generator) {
+			go func(g *template.Generator) {
 				defer control.Finish()
 				request, err := g.Request()
 				if err != nil {
@@ -119,12 +119,12 @@ func readData(dataFile string) *data.Data {
 	return data.Read(dataFile)
 }
 
-func createRequestGenerators(fileName, dataFile string, nRequests int) []*request.Generator {
+func createRequestGenerators(fileName, dataFile string, nRequests int) []*template.Generator {
 	data := readData(dataFile)
 	fmt.Println("- Loading request template")
-	requestTemplate := request.Read(fileName)
+	template := template.Read(fileName)
 	fmt.Println("- Generating requests")
-	requests, err := requestTemplate.CreateRequests(nRequests, data)
+	requests, err := template.BuildGenerators(nRequests, data)
 	if err != nil {
 		log.Fatalf("Error generating requests: %v\n", err)
 	}

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package request
+package template
 
 import (
 	"fmt"
@@ -56,37 +56,4 @@ func (g *Generator) Request() (*client.BRequest, error) {
 // Log generates a log message for the request
 func (g *Generator) Log() string {
 	return fmt.Sprintf("requestId: %v and data: %v", g.recordID, g.data)
-}
-
-// CreateRequests creates a slice with requests generators
-func (t *TRequest) CreateRequests(nRequests int, data *data.Data) ([]*Generator, error) {
-	return dynamicRequests(nRequests, t, data)
-}
-
-func dynamicRequests(nRequests int, tRequest *TRequest, data *data.Data) ([]*Generator, error) {
-	cRequest, err := tRequest.compile()
-	if err != nil {
-		return nil, err
-	}
-
-	generators := make([]*Generator, 0, nRequests)
-
-	for i := 1; i <= nRequests; i++ {
-		generator := &Generator{
-			data:     nextRecord(data),
-			recordID: i,
-			template: cRequest,
-		}
-		generators = append(generators, generator)
-	}
-
-	return generators, nil
-}
-
-func nextRecord(data *data.Data) *data.Record {
-	if data == nil {
-		return &emptyRecord
-	}
-
-	return data.Next()
 }

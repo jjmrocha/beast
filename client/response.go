@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,35 +14,19 @@
  * limitations under the License.
  */
 
-package report
+package client
 
 import (
-	"testing"
+	"fmt"
+	"time"
 )
 
-func TestSuccess(t *testing.T) {
-	// given
-	var tests = []struct {
-		input    int
-		expected bool
-	}{
-		{100, false},
-		{122, false},
-		{200, true},
-		{201, true},
-		{300, false},
-		{307, false},
-		{400, false},
-		{404, false},
-		{429, false},
-		{500, false},
-		{502, false},
-	}
-	// then
-	for _, test := range tests {
-		result := success(test.input)
-		if result != test.expected {
-			t.Errorf("got %v expected %v for status %v", result, test.expected, test.input)
-		}
-	}
+// BResponse contains the status code and the duration taken for execution of a request
+type BResponse struct {
+	StatusCode int
+	Duration   time.Duration
+}
+
+func (r *BResponse) String() string {
+	return fmt.Sprintf("%v - %v", r.StatusCode, r.Duration)
 }

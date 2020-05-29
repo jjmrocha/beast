@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,33 +16,17 @@
 
 package report
 
-import (
-	"testing"
-)
+type errorCode int
 
-func TestSuccess(t *testing.T) {
-	// given
-	var tests = []struct {
-		input    int
-		expected bool
-	}{
-		{100, false},
-		{122, false},
-		{200, true},
-		{201, true},
-		{300, false},
-		{307, false},
-		{400, false},
-		{404, false},
-		{429, false},
-		{500, false},
-		{502, false},
+func (e errorCode) String() string {
+	switch e {
+	case -100:
+		return "Request generation error"
+	case -400:
+		return "Request timeout"
+	case -500:
+		return "Unexpected error"
 	}
-	// then
-	for _, test := range tests {
-		result := success(test.input)
-		if result != test.expected {
-			t.Errorf("got %v expected %v for status %v", result, test.expected, test.input)
-		}
-	}
+
+	return ""
 }

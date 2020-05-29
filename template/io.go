@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-// Package request provide functions to read, write templates and generate requests
-package request
+package template
 
 import (
 	"encoding/json"
@@ -25,20 +24,6 @@ import (
 
 	"gopkg.in/yaml.v3"
 )
-
-// THeader represents an HTTP Header template
-type THeader struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
-// TRequest represents an HTTP request template
-type TRequest struct {
-	Method   string    `json:"method"`
-	Endpoint string    `json:"url"`
-	Headers  []THeader `json:"headers,omitempty"`
-	Body     string    `json:"body,omitempty"`
-}
 
 // Read reads an HTTP request template from a file
 func Read(fileName string) *TRequest {
