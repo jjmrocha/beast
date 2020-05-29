@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,59 +24,59 @@ import (
 	"github.com/jjmrocha/beast/client"
 )
 
-// BControl is used to control the execution of multiple goroutines
-type BControl struct {
+// Control is used to control the execution of multiple goroutines
+type Control struct {
 	wg         sync.WaitGroup
 	goSem      semaphore
 	runSem     semaphore
-	outputChan chan *client.BResponse
+	outputChan chan *client.Response
 }
 
-// New creates a BControle
-func New(nRequests, nParallel int) *BControl {
-	ctrl := &BControl{
+// New creates a control.Controle
+func New(nRequests, nParallel int) *Control {
+	ctrl := &Control{
 		goSem:      newSemaphore(nParallel * 2),
 		runSem:     newSemaphore(nParallel),
-		outputChan: make(chan *client.BResponse, nRequests),
+		outputChan: make(chan *client.Response, nRequests),
 	}
 	ctrl.wg.Add(nRequests)
 
 	return ctrl
 }
 
-// Push sends the BResponse to the client goroutine
-func (c *BControl) Push(response *client.BResponse) {
+// Push sends the client.Response to the client goroutine
+func (c *Control) Push(response *client.Response) {
 	c.outputChan <- response
 }
 
 // CloseWhenDone closes the OutputChannel when all goroutines finish execution
-func (c *BControl) CloseWhenDone() {
+func (c *Control) CloseWhenDone() {
 	c.wg.Wait()
 	close(c.outputChan)
 }
 
-// OutputChannel returns a channel for receiving the BResponse sent using Push
-func (c *BControl) OutputChannel() <-chan *client.BResponse {
+// OutputChannel returns a channel for receiving the client.Response sent using Push
+func (c *Control) OutputChannel() <-chan *client.Response {
 	return c.outputChan
 }
 
 // Finish should be used by a goroutine to indicate it finished processing
-func (c *BControl) Finish() {
+func (c *Control) Finish() {
 	defer c.wg.Done()
 	c.goSem.release()
 }
 
 // WaitForSlot blocks waiting for a execution slot to start a new goroutine
-func (c *BControl) WaitForSlot() {
+func (c *Control) WaitForSlot() {
 	c.goSem.acquire()
 }
 
 // WaitToExecute blocks waiting for a execution slot to start the test
-func (c *BControl) WaitToExecute() {
+func (c *Control) WaitToExecute() {
 	c.runSem.acquire()
 }
 
 // FinishExecution should be used by a goroutine to indicate it finished processing
-func (c *BControl) FinishExecution() {
+func (c *Control) FinishExecution() {
 	c.runSem.release()
 }

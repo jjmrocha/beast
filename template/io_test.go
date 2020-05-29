@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,83 +24,83 @@ import (
 
 func TestReadBasicGETforJSON(t *testing.T) {
 	// given
-	expected := &TRequest{
+	expected := &Template{
 		Method:   "GET",
 		Endpoint: "http://www.google.pt",
 	}
 	// when
-	template := Read("../testdata/basic_get.json")
+	tmpl := Read("../testdata/basic_get.json")
 	// then
-	if !reflect.DeepEqual(template, expected) {
-		t.Errorf("got %v expected %v", template, expected)
+	if !reflect.DeepEqual(tmpl, expected) {
+		t.Errorf("got %v expected %v", tmpl, expected)
 	}
 }
 
 func TestReadBasicGETforYAML(t *testing.T) {
 	// given
-	expected := &TRequest{
+	expected := &Template{
 		Method:   "GET",
 		Endpoint: "http://www.google.pt",
 	}
 	// when
-	template := Read("../testdata/basic_get.yaml")
+	tmpl := Read("../testdata/basic_get.yaml")
 	// then
-	if !reflect.DeepEqual(template, expected) {
-		t.Errorf("got %v expected %v", template, expected)
+	if !reflect.DeepEqual(tmpl, expected) {
+		t.Errorf("got %v expected %v", tmpl, expected)
 	}
 }
 
 func TestReadBasicPOSTforJSON(t *testing.T) {
 	// given
-	expected := &TRequest{
+	expected := &Template{
 		Method:   "POST",
 		Endpoint: "http://someendpoint.pt",
-		Headers: []THeader{
+		Headers: []Header{
 			{"Content-Type", "application/json"},
 		},
 		Body: "{\"id\": 1, \"value\": \"any\"}",
 	}
 	// when
-	template := Read("../testdata/basic_post.json")
+	tmpl := Read("../testdata/basic_post.json")
 	// then
-	if !reflect.DeepEqual(template, expected) {
-		t.Errorf("got %v expected %v", template, expected)
+	if !reflect.DeepEqual(tmpl, expected) {
+		t.Errorf("got %v expected %v", tmpl, expected)
 	}
 }
 
 func TestReadBasicPOSTforYAML(t *testing.T) {
 	// given
-	expected := &TRequest{
+	expected := &Template{
 		Method:   "POST",
 		Endpoint: "http://someendpoint.pt",
-		Headers: []THeader{
+		Headers: []Header{
 			{"Content-Type", "application/json"},
 		},
 		Body: "{\"id\": 1, \"value\": \"any\"}",
 	}
 	// when
-	template := Read("../testdata/basic_post.yaml")
+	tmpl := Read("../testdata/basic_post.yaml")
 	// then
-	if !reflect.DeepEqual(template, expected) {
-		t.Errorf("got %v expected %v", template, expected)
+	if !reflect.DeepEqual(tmpl, expected) {
+		t.Errorf("got %v expected %v", tmpl, expected)
 	}
 }
 
 func TestReadTemplatePOSTforJSON(t *testing.T) {
 	// given
-	expected := &TRequest{
+	expected := &Template{
 		Method:   "POST",
 		Endpoint: "http://someendpoint.pt/{{ .RequestID }}",
-		Headers: []THeader{
+		Headers: []Header{
 			{"Content-Type", "application/json"},
 		},
 		Body: "{\"id\": {{ .RequestID }}, \"value\": \"{{ .Data.A }}\"}",
 	}
 	// when
-	template := Read("../testdata/template_post.json")
+	tmpl := Read("../testdata/template_post.json")
 	// then
-	if !reflect.DeepEqual(template, expected) {
-		t.Errorf("got %v expected %v", template, expected)
+	if !reflect.DeepEqual(tmpl, expected) {
+		t.Errorf("got %v expected %v", tmpl, expected)
 	}
 }
 
@@ -108,50 +108,50 @@ func TestReadTemplatePOSTforYAML(t *testing.T) {
 	// given
 	expectedMethod := "POST"
 	expectedEndpoint := "http://someendpoint.pt/{{ .RequestID }}"
-	expectedHeaders := []THeader{
+	expectedHeaders := []Header{
 		{"Content-Type", "application/json"},
 	}
 	firstBodyField := "\"id\": {{ .RequestID }}"
 	secondBodyField := "\"value\": \"{{ .Data.A }}\""
 	// when
-	template := Read("../testdata/template_post.yaml")
+	tmpl := Read("../testdata/template_post.yaml")
 	// then
-	if template.Method != expectedMethod {
-		t.Errorf("got %v expected %v", template.Method, expectedMethod)
+	if tmpl.Method != expectedMethod {
+		t.Errorf("got %v expected %v", tmpl.Method, expectedMethod)
 	}
 
-	if template.Endpoint != expectedEndpoint {
-		t.Errorf("got %v expected %v", template.Endpoint, expectedEndpoint)
+	if tmpl.Endpoint != expectedEndpoint {
+		t.Errorf("got %v expected %v", tmpl.Endpoint, expectedEndpoint)
 	}
 
-	if !reflect.DeepEqual(template.Headers, expectedHeaders) {
-		t.Errorf("got %v expected %v", template.Headers, expectedHeaders)
+	if !reflect.DeepEqual(tmpl.Headers, expectedHeaders) {
+		t.Errorf("got %v expected %v", tmpl.Headers, expectedHeaders)
 	}
 
-	if !strings.Contains(template.Body, firstBodyField) {
-		t.Errorf("body %v should contain %v", template.Body, firstBodyField)
+	if !strings.Contains(tmpl.Body, firstBodyField) {
+		t.Errorf("body %v should contain %v", tmpl.Body, firstBodyField)
 	}
 
-	if !strings.Contains(template.Body, secondBodyField) {
-		t.Errorf("body %v should contain %v", template.Body, secondBodyField)
+	if !strings.Contains(tmpl.Body, secondBodyField) {
+		t.Errorf("body %v should contain %v", tmpl.Body, secondBodyField)
 	}
 }
 
 func TestReadTemplatePOSTWithExternalBody(t *testing.T) {
 	// given
-	expected := &TRequest{
+	expected := &Template{
 		Method:   "POST",
 		Endpoint: "http://someendpoint.pt/{{ .RequestID }}",
-		Headers: []THeader{
+		Headers: []Header{
 			{"Content-Type", "application/json"},
 		},
 		Body: "{\"id\": {{ .RequestID }}, \"value\": \"{{ .Data.A }}\"}",
 	}
 	// when
-	template := Read("../testdata/template_post_external.json")
+	tmpl := Read("../testdata/template_post_external.json")
 	// then
-	if !reflect.DeepEqual(template, expected) {
-		t.Errorf("got %v expected %v", template, expected)
+	if !reflect.DeepEqual(tmpl, expected) {
+		t.Errorf("got %v expected %v", tmpl, expected)
 	}
 }
 
@@ -206,7 +206,7 @@ func TestIsJSON(t *testing.T) {
 
 func TestHeaderConvertion(t *testing.T) {
 	// given
-	tHeader := []THeader{
+	tHeader := []Header{
 		{
 			Key:   "Key_1",
 			Value: "Value_1",
@@ -235,15 +235,15 @@ func TestHeaderConvertion(t *testing.T) {
 
 func TestRequestConvertion(t *testing.T) {
 	// given
-	tRequest := &TRequest{
+	tRequest := &Template{
 		Method:   "Use Http method: GET/POST/PUT/DELETE",
 		Endpoint: "Http URL to be invoked",
-		Headers: []THeader{
+		Headers: []Header{
 			{Key: "User-Agent", Value: "Beast/1"},
 		},
 		Body: "Optional, enter body to send with POST or PUT",
 	}
-	yRequest := &yamlRequest{
+	yRequest := &templateY{
 		Method:   "Use Http method: GET/POST/PUT/DELETE",
 		Endpoint: "Http URL to be invoked",
 		Headers: map[string]string{
@@ -252,8 +252,8 @@ func TestRequestConvertion(t *testing.T) {
 		Body: "Optional, enter body to send with POST or PUT",
 	}
 	// when
-	yResult := toYamlRequest(tRequest)
-	tResult := fromYamlRequest(yRequest)
+	yResult := toYamlTemplate(tRequest)
+	tResult := fromYamlTemplate(yRequest)
 	// then
 	if !reflect.DeepEqual(yResult, yRequest) {
 		t.Errorf("got %v expected %v", yResult, yRequest)
@@ -266,17 +266,17 @@ func TestRequestConvertion(t *testing.T) {
 
 func TestPartialRequestConvertion(t *testing.T) {
 	// given
-	tRequest := &TRequest{
+	tRequest := &Template{
 		Method:   "Use Http method: GET/POST/PUT/DELETE",
 		Endpoint: "Http URL to be invoked",
 	}
-	yRequest := &yamlRequest{
+	yRequest := &templateY{
 		Method:   "Use Http method: GET/POST/PUT/DELETE",
 		Endpoint: "Http URL to be invoked",
 	}
 	// then
-	yResult := toYamlRequest(tRequest)
-	tResult := fromYamlRequest(yRequest)
+	yResult := toYamlTemplate(tRequest)
+	tResult := fromYamlTemplate(yRequest)
 	// then
 	if !reflect.DeepEqual(yResult, yRequest) {
 		t.Errorf("got %v expected %v", yResult, yRequest)

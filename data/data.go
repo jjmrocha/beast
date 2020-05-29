@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ func Read(fileName string) *Data {
 
 	defer csvfile.Close()
 	reader := csv.NewReader(csvfile)
-	data := Data{
+	dt := Data{
 		records: make([]Record, 0),
 	}
 
@@ -78,8 +78,8 @@ func Read(fileName string) *Data {
 			log.Fatalf("Error reading data file %s: %v\n", fileName, err)
 		}
 
-		data.add(record)
+		dt.add(record)
 	}
 
-	return &data
+	return &dt
 }

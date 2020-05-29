@@ -25,23 +25,23 @@ import (
 
 func TestCompileAndExecute(t *testing.T) {
 	// given
-	data := data.Read("../testdata/data.csv")
-	request := Read("../testdata/template_post.json")
-	expected := &TRequest{
+	dt := data.Read("../testdata/data.csv")
+	tmpl := Read("../testdata/template_post.json")
+	expected := &Template{
 		Method:   "POST",
 		Endpoint: "http://someendpoint.pt/1",
-		Headers: []THeader{
+		Headers: []Header{
 			{"Content-Type", "application/json"},
 		},
 		Body: "{\"id\": 1, \"value\": \"a1\"}",
 	}
 	// when
-	cRequest, err := request.compile()
+	tmplc, err := tmpl.compile()
 	if err != nil {
 		t.Error(err)
 	}
 
-	result, err := cRequest.executeTemplate(1, data.Next())
+	result, err := tmplc.executeTemplate(1, dt.Next())
 	if err != nil {
 		t.Error(err)
 	}
@@ -53,22 +53,22 @@ func TestCompileAndExecute(t *testing.T) {
 
 func BenchmarkFromTemplateToClient(b *testing.B) {
 	// given
-	data := data.Read("../testdata/data.csv")
-	request := Read("../testdata/template_post.json")
+	dt := data.Read("../testdata/data.csv")
+	tmpl := Read("../testdata/template_post.json")
 	// then
 	b.ResetTimer()
 
-	cRequest, err := request.compile()
+	tmplc, err := tmpl.compile()
 	if err != nil {
 		b.Error(err)
 	}
 
-	finalRequest, err := cRequest.executeTemplate(1, data.Next())
+	tmplf, err := tmplc.executeTemplate(1, dt.Next())
 	if err != nil {
 		b.Error(err)
 	}
 
-	_, err = finalRequest.request()
+	_, err = tmplf.request()
 	if err != nil {
 		b.Error(err)
 	}

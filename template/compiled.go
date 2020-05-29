@@ -18,24 +18,24 @@ package template
 
 import (
 	"bytes"
-	"text/template"
+	txt "text/template"
 
 	"github.com/jjmrocha/beast/data"
 )
 
-type cHeader struct {
+type headerC struct {
 	key   string
-	value *template.Template
+	value *txt.Template
 }
 
-type cRequest struct {
+type templateC struct {
 	method   string
-	endpoint *template.Template
-	headers  []cHeader
-	body     *template.Template
+	endpoint *txt.Template
+	headers  []headerC
+	body     *txt.Template
 }
 
-func (c *cRequest) executeTemplate(requestID int, record *data.Record) (*TRequest, error) {
+func (c *templateC) executeTemplate(requestID int, record *data.Record) (*Template, error) {
 	var context = struct {
 		RequestID int
 		Data      *data.Record
@@ -44,27 +44,27 @@ func (c *cRequest) executeTemplate(requestID int, record *data.Record) (*TReques
 		Data:      record,
 	}
 
-	tRequest := TRequest{
+	tmplf := Template{
 		Method:  c.method,
-		Headers: make([]THeader, 0, len(c.headers)),
+		Headers: make([]Header, 0, len(c.headers)),
 	}
 
 	var endpoint bytes.Buffer
 	if err := c.endpoint.Execute(&endpoint, context); err != nil {
 		return nil, err
 	}
-	tRequest.Endpoint = endpoint.String()
+	tmplf.Endpoint = endpoint.String()
 
 	for _, header := range c.headers {
 		var headerValue bytes.Buffer
 		if err := header.value.Execute(&headerValue, context); err != nil {
 			return nil, err
 		}
-		tHeader := THeader{
+		hdf := Header{
 			Key:   header.key,
 			Value: headerValue.String(),
 		}
-		tRequest.Headers = append(tRequest.Headers, tHeader)
+		tmplf.Headers = append(tmplf.Headers, hdf)
 	}
 
 	if c.body != nil {
@@ -72,8 +72,8 @@ func (c *cRequest) executeTemplate(requestID int, record *data.Record) (*TReques
 		if err := c.body.Execute(&body, context); err != nil {
 			return nil, err
 		}
-		tRequest.Body = body.String()
+		tmplf.Body = body.String()
 	}
 
-	return &tRequest, nil
+	return &tmplf, nil
 }

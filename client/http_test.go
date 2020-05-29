@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ func TestHTTPTimeout(t *testing.T) {
 	for _, test := range tests {
 		config := config.Default()
 		config.RequestTimeout = test.input
-		result := HTTP(config)
+		result := NewClient(config)
 		if client, ok := result.native.(*http.Client); ok && client.Timeout != test.expected {
 			t.Errorf("got %v expected %v for RequestTimeout", client.Timeout, test.expected)
 		}
@@ -67,10 +67,10 @@ func (t timeoutMockedClient) Do(r *http.Request) (*http.Response, error) {
 
 func TestExecuteTimeout(t *testing.T) {
 	// given
-	client := &BClient{native: timeoutMockedClient(true)}
+	client := &Client{native: timeoutMockedClient(true)}
 	expected := -400
 	// when
-	result := client.Execute(&BRequest{})
+	result := client.Execute(&Request{})
 	// then
 	if result.StatusCode != expected {
 		t.Errorf("got %v expected %v", result.StatusCode, expected)
@@ -79,10 +79,10 @@ func TestExecuteTimeout(t *testing.T) {
 
 func TestExecuteGeneric(t *testing.T) {
 	// given
-	client := &BClient{native: timeoutMockedClient(false)}
+	client := &Client{native: timeoutMockedClient(false)}
 	expected := -500
 	// when
-	result := client.Execute(&BRequest{})
+	result := client.Execute(&Request{})
 	// then
 	if result.StatusCode != expected {
 		t.Errorf("got %v expected %v", result.StatusCode, expected)

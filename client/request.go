@@ -21,16 +21,16 @@ import (
 	"net/http"
 )
 
-// BRequest represents an HTTP request
-type BRequest struct {
+// Request represents an HTTP request
+type Request struct {
 	native *http.Request
 }
 
-// MakeRequest creates a BRequest using a http.Request
-func MakeRequest(req *http.Request) *BRequest {
-	return &BRequest{native: req}
+// BuildRequest creates a client.Request using a http.Request
+func BuildRequest(req *http.Request) *Request {
+	return &Request{native: req}
 }
 
-func (r *BRequest) String() string {
+func (r *Request) String() string {
 	return fmt.Sprintf("%s %s", r.native.Method, r.native.URL)
 }

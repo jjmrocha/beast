@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import (
 	"github.com/jjmrocha/beast/template"
 )
 
-var errorGeneratingRequestResponse = &client.BResponse{
+var errorGeneratingRequestResponse = &client.Response{
 	StatusCode: -100,
 }
 
@@ -38,34 +38,34 @@ func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
 	printSystem()
 	printTest(fileName, configFile, dataFile, nRequests, nParallel)
 	fmt.Printf("===== Preparing =====\n")
-	control := control.New(nRequests, nParallel)
-	http := createHTTPClient(configFile)
+	ctrl := control.New(nRequests, nParallel)
+	httpClient := createHTTPClient(configFile)
 	generators := createRequestGenerators(fileName, dataFile, nRequests)
 	fmt.Printf("===== Executing =====\n")
 
 	go func() {
-		for _, generator := range generators {
-			control.WaitForSlot()
+		for _, gnt := range generators {
+			ctrl.WaitForSlot()
 			go func(g *template.Generator) {
-				defer control.Finish()
+				defer ctrl.Finish()
 				request, err := g.Request()
 				if err != nil {
 					log.Printf("Error generating request for %s: %v\n", g.Log(), err)
-					control.Push(errorGeneratingRequestResponse)
+					ctrl.Push(errorGeneratingRequestResponse)
 					return
 				}
-				control.WaitToExecute()
-				defer control.FinishExecution()
-				control.Push(http.Execute(request))
-			}(generator)
+				ctrl.WaitToExecute()
+				defer ctrl.FinishExecution()
+				ctrl.Push(httpClient.Execute(request))
+			}(gnt)
 		}
 	}()
 
-	go control.CloseWhenDone()
+	go ctrl.CloseWhenDone()
 	stats := report.NewStats(nParallel)
 	progress := report.NewBar(nRequests)
 
-	for response := range control.OutputChannel() {
+	for response := range ctrl.OutputChannel() {
 		stats.Update(response)
 		progress.Update()
 	}
@@ -96,9 +96,9 @@ func printTest(fileName, configFile, dataFile string, nRequests, nParallel int) 
 	fmt.Printf("Number of concurrent requests: %v\n", nParallel)
 }
 
-func createHTTPClient(configFile string) *client.BClient {
-	config := readConfig(configFile)
-	return client.HTTP(config)
+func createHTTPClient(configFile string) *client.Client {
+	cfg := readConfig(configFile)
+	return client.NewClient(cfg)
 }
 
 func readConfig(configFile string) *config.Config {
@@ -122,11 +122,11 @@ func readData(dataFile string) *data.Data {
 func createRequestGenerators(fileName, dataFile string, nRequests int) []*template.Generator {
 	data := readData(dataFile)
 	fmt.Println("- Loading request template")
-	template := template.Read(fileName)
+	tmpl := template.Read(fileName)
 	fmt.Println("- Generating requests")
-	requests, err := template.BuildGenerators(nRequests, data)
+	generators, err := tmpl.BuildGenerators(nRequests, data)
 	if err != nil {
 		log.Fatalf("Error generating requests: %v\n", err)
 	}
-	return requests
+	return generators
 }

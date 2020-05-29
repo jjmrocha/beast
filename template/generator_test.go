@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,20 +20,19 @@ import (
 	"testing"
 
 	"github.com/jjmrocha/beast/client"
-
 	"github.com/jjmrocha/beast/data"
 )
 
 func TestLog(t *testing.T) {
 	// given
-	data := data.Read("../testdata/data.csv")
-	generator := &Generator{
+	dt := data.Read("../testdata/data.csv")
+	gnt := &Generator{
 		recordID: 1,
-		data:     data.Next(),
+		data:     dt.Next(),
 	}
 	expected := "requestId: 1 and data: {A: a1, B: b1}"
 	// when
-	result := generator.Log()
+	result := gnt.Log()
 	// then
 	if result != expected {
 		t.Errorf("got %v expected %v", result, expected)
@@ -42,12 +41,12 @@ func TestLog(t *testing.T) {
 
 func TestRequestForStatic(t *testing.T) {
 	// given
-	expected := &client.BRequest{}
-	generator := &Generator{
+	expected := &client.Request{}
+	gnt := &Generator{
 		final: expected,
 	}
 	// when
-	result, err := generator.Request()
+	result, err := gnt.Request()
 	// then
 	if err != nil {
 		t.Errorf("Error not expected: %v", err)
@@ -60,17 +59,17 @@ func TestRequestForStatic(t *testing.T) {
 
 func TestRequestForDynamic(t *testing.T) {
 	// given
-	data := data.Read("../testdata/data.csv")
-	request := Read("../testdata/template_post.json")
-	cRequest, _ := request.compile()
-	generator := &Generator{
-		data:     data.Next(),
+	dt := data.Read("../testdata/data.csv")
+	tmpl := Read("../testdata/template_post.json")
+	tmplc, _ := tmpl.compile()
+	gnt := &Generator{
+		data:     dt.Next(),
 		recordID: 1,
-		template: cRequest,
+		template: tmplc,
 	}
 	expected := "POST http://someendpoint.pt/1"
 	// when
-	result, err := generator.Request()
+	result, err := gnt.Request()
 	// then
 	if err != nil {
 		t.Errorf("Error not expected: %v", err)
@@ -83,17 +82,17 @@ func TestRequestForDynamic(t *testing.T) {
 
 func BenchmarkRequest(b *testing.B) {
 	// given
-	data := data.Read("../testdata/data.csv")
-	request := Read("../testdata/template_post.json")
-	cRequest, _ := request.compile()
-	generator := &Generator{
-		data:     data.Next(),
+	dt := data.Read("../testdata/data.csv")
+	tmpl := Read("../testdata/template_post.json")
+	tmplc, _ := tmpl.compile()
+	gnt := &Generator{
+		data:     dt.Next(),
 		recordID: 1,
-		template: cRequest,
+		template: tmplc,
 	}
 	// when
 	b.ResetTimer()
-	_, err := generator.Request()
+	_, err := gnt.Request()
 	// then
 	if err != nil {
 		b.Error(err)

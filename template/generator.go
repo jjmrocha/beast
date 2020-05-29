@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,34 +23,31 @@ import (
 	"github.com/jjmrocha/beast/data"
 )
 
-// emptyRecord contains a empty record to be used when no data is provided
-var emptyRecord = data.NewRecord()
-
 // Generator generates BRequests
 type Generator struct {
-	final    *client.BRequest
-	template *cRequest
+	final    *client.Request
+	template *templateC
 	recordID int
 	data     *data.Record
 }
 
 // Request uses that template and a record and returns a BRequests
-func (g *Generator) Request() (*client.BRequest, error) {
+func (g *Generator) Request() (*client.Request, error) {
 	if g.final != nil {
 		return g.final, nil
 	}
 
-	dRequest, err := g.template.executeTemplate(g.recordID, g.data)
+	tmplf, err := g.template.executeTemplate(g.recordID, g.data)
 	if err != nil {
 		return nil, err
 	}
 
-	bRequest, err := dRequest.request()
+	req, err := tmplf.request()
 	if err != nil {
 		return nil, err
 	}
 
-	return bRequest, nil
+	return req, nil
 }
 
 // Log generates a log message for the request

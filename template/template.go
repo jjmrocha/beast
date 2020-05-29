@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,21 +27,24 @@ import (
 	"github.com/jjmrocha/beast/data"
 )
 
-// THeader represents an HTTP Header template
-type THeader struct {
+// emptyRecord contains a empty record to be used when no data is provided
+var emptyRecord = data.NewRecord()
+
+// Header represents an HTTP Header template
+type Header struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
 
-// TRequest represents an HTTP request template
-type TRequest struct {
-	Method   string    `json:"method"`
-	Endpoint string    `json:"url"`
-	Headers  []THeader `json:"headers,omitempty"`
-	Body     string    `json:"body,omitempty"`
+// Template represents an HTTP request template
+type Template struct {
+	Method   string   `json:"method"`
+	Endpoint string   `json:"url"`
+	Headers  []Header `json:"headers,omitempty"`
+	Body     string   `json:"body,omitempty"`
 }
 
-func (t *TRequest) request() (*client.BRequest, error) {
+func (t *Template) request() (*client.Request, error) {
 	req, err := http.NewRequest(t.Method, t.Endpoint, bodyReader(t.Body))
 	if err != nil {
 		return nil, err
@@ -51,7 +54,7 @@ func (t *TRequest) request() (*client.BRequest, error) {
 		req.Header.Add(header.Key, header.Value)
 	}
 
-	return client.MakeRequest(req), nil
+	return client.BuildRequest(req), nil
 }
 
 func bodyReader(body string) io.Reader {
@@ -62,23 +65,23 @@ func bodyReader(body string) io.Reader {
 	return strings.NewReader(body)
 }
 
-func (t *TRequest) compile() (*cRequest, error) {
+func (t *Template) compile() (*templateC, error) {
 	tEndpoint, err := template.New("endpoint").Parse(t.Endpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	tHeaders := make([]cHeader, 0, len(t.Headers))
+	tHeaders := make([]headerC, 0, len(t.Headers))
 	for _, header := range t.Headers {
 		tValue, err := template.New("headerValue").Parse(header.Value)
 		if err != nil {
 			return nil, err
 		}
-		cHeader := cHeader{
+		hdc := headerC{
 			key:   header.Key,
 			value: tValue,
 		}
-		tHeaders = append(tHeaders, cHeader)
+		tHeaders = append(tHeaders, hdc)
 	}
 
 	var tBody *template.Template
@@ -89,18 +92,18 @@ func (t *TRequest) compile() (*cRequest, error) {
 		}
 	}
 
-	cRequest := cRequest{
+	tmplc := templateC{
 		method:   t.Method,
 		endpoint: tEndpoint,
 		headers:  tHeaders,
 		body:     tBody,
 	}
-	return &cRequest, nil
+	return &tmplc, nil
 }
 
 // BuildGenerators creates a slice with requests generators
-func (t *TRequest) BuildGenerators(nRequests int, data *data.Data) ([]*Generator, error) {
-	cRequest, err := t.compile()
+func (t *Template) BuildGenerators(nRequests int, data *data.Data) ([]*Generator, error) {
+	tmplc, err := t.compile()
 	if err != nil {
 		return nil, err
 	}
@@ -108,12 +111,12 @@ func (t *TRequest) BuildGenerators(nRequests int, data *data.Data) ([]*Generator
 	generators := make([]*Generator, 0, nRequests)
 
 	for i := 1; i <= nRequests; i++ {
-		generator := &Generator{
+		gnt := &Generator{
 			data:     nextRecord(data),
 			recordID: i,
-			template: cRequest,
+			template: tmplc,
 		}
-		generators = append(generators, generator)
+		generators = append(generators, gnt)
 	}
 
 	return generators, nil

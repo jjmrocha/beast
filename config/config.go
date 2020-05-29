@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,27 +52,27 @@ func Read(fileName string) *Config {
 		log.Fatalf("Error reading config file %s: %v\n", fileName, err)
 	}
 
-	config := Default()
-	json.Unmarshal(data, config)
-	checkConfig(config)
-	return config
+	cfg := Default()
+	json.Unmarshal(data, cfg)
+	checkConfig(cfg)
+	return cfg
 }
 
-func checkConfig(config *Config) {
-	if config.MaxConnections < 0 {
+func checkConfig(cfg *Config) {
+	if cfg.MaxConnections < 0 {
 		log.Fatalln("Invalid config, 'max-connections' must be zero or positive")
 	}
 
-	if config.RequestTimeout < 0 {
+	if cfg.RequestTimeout < 0 {
 		log.Fatalln("Invalid config, 'timeout' must be zero or positive")
 	}
 }
 
 // Write writes a configuration to a file
-func Write(fileName string, config *Config) {
-	data, err := json.MarshalIndent(config, "", "\t")
+func Write(fileName string, cfg *Config) {
+	data, err := json.MarshalIndent(cfg, "", "\t")
 	if err != nil {
-		log.Printf("Error encoding config %v to JSON: %v\n", config, err)
+		log.Printf("Error encoding config %v to JSON: %v\n", cfg, err)
 	}
 
 	err = ioutil.WriteFile(fileName, data, 0666)

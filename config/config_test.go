@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ func TestRead(t *testing.T) {
 	// given
 	expectedConfig := Default()
 	// when
-	config := Read("../testdata/empty.json")
+	cfg := Read("../testdata/empty.json")
 	// then
-	if !reflect.DeepEqual(config, expectedConfig) {
-		t.Errorf("got %v expected %v", config, expectedConfig)
+	if !reflect.DeepEqual(cfg, expectedConfig) {
+		t.Errorf("got %v expected %v", cfg, expectedConfig)
 	}
 }

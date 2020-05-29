@@ -45,7 +45,7 @@ func NewStats(nParallel int) *Stats {
 }
 
 // Update receives results and update the stats accordingly
-func (s *Stats) Update(r *client.BResponse) {
+func (s *Stats) Update(r *client.Response) {
 	s.requests++
 	s.duration += r.Duration
 

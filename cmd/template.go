@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,39 +26,39 @@ import (
 // Template implements the `beast template ... <fileName>` command
 func Template(method, url, fileName string) {
 	if url == "" {
-		writeTemplate(fileName)
+		createTemplateExample(fileName)
 	} else {
-		writeRequest(method, url, fileName)
+		createTemplate(method, url, fileName)
 	}
 }
 
-func writeTemplate(fileName string) {
-	req := template.TRequest{
+func createTemplateExample(fileName string) {
+	tmpl := template.Template{
 		Method:   "Use Http method: GET/POST/PUT/DELETE",
 		Endpoint: "Http URL to be invoked",
-		Headers: []template.THeader{
+		Headers: []template.Header{
 			{Key: "User-Agent", Value: "Beast/1"},
 		},
 		Body: "Optional, enter body to send with POST or PUT",
 	}
-	template.Write(fileName, &req)
+	template.Write(fileName, &tmpl)
 	fmt.Printf("File %s was created, please edit before use\n", fileName)
 }
 
-func writeRequest(method, url, fileName string) {
-	req := template.TRequest{
+func createTemplate(method, url, fileName string) {
+	tmpl := template.Template{
 		Method:   method,
 		Endpoint: url,
-		Headers: []template.THeader{
+		Headers: []template.Header{
 			{Key: "User-Agent", Value: "Beast/1"},
 		},
 	}
 
 	if usesBody(method) {
-		req.Body = "Optional, enter body to send with POST or PUT"
+		tmpl.Body = "Optional, enter body to send with POST or PUT"
 	}
 
-	template.Write(fileName, &req)
+	template.Write(fileName, &tmpl)
 	fmt.Printf("File %s was created for '%s %s'\n", fileName, method, url)
 }
 

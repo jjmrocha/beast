@@ -21,12 +21,12 @@ import (
 	"time"
 )
 
-// BResponse contains the status code and the duration taken for execution of a request
-type BResponse struct {
+// Response contains the status code and the duration taken for execution of a request
+type Response struct {
 	StatusCode int
 	Duration   time.Duration
 }
 
-func (r *BResponse) String() string {
+func (r *Response) String() string {
 	return fmt.Sprintf("%v - %v", r.StatusCode, r.Duration)
 }

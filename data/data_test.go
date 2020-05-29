@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@ func TestRead(t *testing.T) {
 		},
 	}
 	// when
-	data := Read("../testdata/data.csv")
+	result := Read("../testdata/data.csv")
 	// then
-	if !reflect.DeepEqual(data, expectedData) {
-		t.Errorf("got %v expected %v", data, expectedData)
+	if !reflect.DeepEqual(result, expectedData) {
+		t.Errorf("got %v expected %v", result, expectedData)
 	}
 }
 
@@ -48,14 +48,14 @@ func TestNext(t *testing.T) {
 		"A": "a2",
 		"B": "b2",
 	}
-	data := &Data{
+	dt := &Data{
 		fields:  []string{"A", "B"},
 		records: []Record{expectedFirstRecord, expectedSecondRecord},
 	}
 	// when
-	firstRecord := data.Next()
-	secondRecord := data.Next()
-	thirdRecord := data.Next()
+	firstRecord := dt.Next()
+	secondRecord := dt.Next()
+	thirdRecord := dt.Next()
 	// then
 	if !reflect.DeepEqual(firstRecord, &expectedFirstRecord) {
 		t.Errorf("got %v expected %v", firstRecord, &expectedFirstRecord)

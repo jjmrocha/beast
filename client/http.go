@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
+ * Copyright 2019-20 Joaquim Rocha <jrocha@gmailbox.org> and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,40 +33,40 @@ type httpClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
-// BClient represents an HTTP client
-type BClient struct {
+// Client represents an HTTP client
+type Client struct {
 	native httpClient
 }
 
-// HTTP creates a BClient based on the provided configuration
-func HTTP(config *config.Config) *BClient {
+// NewClient creates a client.Client based on the provided configuration
+func NewClient(cfg *config.Config) *Client {
 	tls := &tls.Config{
-		InsecureSkipVerify: config.DisableCertificateCheck,
+		InsecureSkipVerify: cfg.DisableCertificateCheck,
 	}
 	transport := &http.Transport{
-		DisableCompression: config.DisableCompression,
-		DisableKeepAlives:  config.DisableKeepAlives,
-		MaxConnsPerHost:    config.MaxConnections,
+		DisableCompression: cfg.DisableCompression,
+		DisableKeepAlives:  cfg.DisableKeepAlives,
+		MaxConnsPerHost:    cfg.MaxConnections,
 		TLSClientConfig:    tls,
 	}
-	client := &http.Client{
+	native := &http.Client{
 		Transport: transport,
-		Timeout:   time.Duration(time.Second.Nanoseconds() * int64(config.RequestTimeout)),
+		Timeout:   time.Duration(time.Second.Nanoseconds() * int64(cfg.RequestTimeout)),
 	}
 
-	if config.DisableRedirects {
-		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+	if cfg.DisableRedirects {
+		native.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		}
 	}
 
-	return &BClient{
-		native: client,
+	return &Client{
+		native: native,
 	}
 }
 
-// Execute executes the request measuring the time taken to execute and return a BResponse
-func (c *BClient) Execute(request *BRequest) *BResponse {
+// Execute executes the request measuring the time taken to execute and return a client.Response
+func (c *Client) Execute(request *Request) *Response {
 	start := time.Now()
 	resp, err := c.native.Do(request.native)
 	duration := time.Since(start)
@@ -74,14 +74,14 @@ func (c *BClient) Execute(request *BRequest) *BResponse {
 	if err != nil {
 		var urlErr *url.Error
 		if ok := errors.As(err, &urlErr); ok && urlErr.Timeout() {
-			return &BResponse{
+			return &Response{
 				StatusCode: -400,
 				Duration:   duration,
 			}
 		}
 
 		log.Printf("Error executing request '%v': %v\n", request, err)
-		return &BResponse{
+		return &Response{
 			StatusCode: -500,
 			Duration:   duration,
 		}
@@ -89,7 +89,7 @@ func (c *BClient) Execute(request *BRequest) *BResponse {
 
 	defer resp.Body.Close()
 
-	return &BResponse{
+	return &Response{
 		StatusCode: resp.StatusCode,
 		Duration:   duration,
 	}
