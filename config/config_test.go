@@ -31,3 +31,24 @@ func TestRead(t *testing.T) {
 		t.Errorf("got %v expected %v", cfg, expectedConfig)
 	}
 }
+
+func TestGetMaxIdleConnections(t *testing.T) {
+	// given
+	cfg := Default()
+	parallelConns := 100
+	var tests = []struct {
+		maxIdleConnections int
+		expected           int
+	}{
+		{0, parallelConns},
+		{5, 5},
+	}
+	// then
+	for _, test := range tests {
+		cfg.MaxIdleConnections = test.maxIdleConnections
+		result := cfg.GetMaxIdleConnections(parallelConns)
+		if result != test.expected {
+			t.Errorf("got %v expected %v", result, test.expected)
+		}
+	}
+}

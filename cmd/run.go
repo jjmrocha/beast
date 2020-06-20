@@ -39,7 +39,7 @@ func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
 	printTest(fileName, configFile, dataFile, nRequests, nParallel)
 	fmt.Printf("===== Preparing =====\n")
 	ctrl := control.New(nRequests, nParallel)
-	httpClient := createHTTPClient(configFile)
+	httpClient := createHTTPClient(configFile, nParallel)
 	generators := createRequestGenerators(fileName, dataFile, nRequests)
 	fmt.Printf("===== Executing =====\n")
 
@@ -96,9 +96,9 @@ func printTest(fileName, configFile, dataFile string, nRequests, nParallel int) 
 	fmt.Printf("Number of concurrent requests: %v\n", nParallel)
 }
 
-func createHTTPClient(configFile string) *client.Client {
+func createHTTPClient(configFile string, nParallel int) *client.Client {
 	cfg := readConfig(configFile)
-	return client.NewClient(cfg)
+	return client.NewClient(cfg, nParallel)
 }
 
 func readConfig(configFile string) *config.Config {

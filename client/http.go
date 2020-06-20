@@ -20,6 +20,8 @@ package client
 import (
 	"crypto/tls"
 	"errors"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -39,15 +41,18 @@ type Client struct {
 }
 
 // NewClient creates a client.Client based on the provided configuration
-func NewClient(cfg *config.Config) *Client {
+func NewClient(cfg *config.Config, parallelConns int) *Client {
 	tls := &tls.Config{
 		InsecureSkipVerify: cfg.DisableCertificateCheck,
 	}
+	maxIdleConns := cfg.GetMaxIdleConnections(parallelConns)
 	transport := &http.Transport{
-		DisableCompression: cfg.DisableCompression,
-		DisableKeepAlives:  cfg.DisableKeepAlives,
-		MaxConnsPerHost:    cfg.MaxConnections,
-		TLSClientConfig:    tls,
+		DisableCompression:  cfg.DisableCompression,
+		DisableKeepAlives:   cfg.DisableKeepAlives,
+		MaxConnsPerHost:     cfg.MaxConnections,
+		MaxIdleConns:        maxIdleConns,
+		MaxIdleConnsPerHost: maxIdleConns,
+		TLSClientConfig:     tls,
 	}
 	native := &http.Client{
 		Transport: transport,
@@ -88,6 +93,7 @@ func (c *Client) Execute(request *Request) *Response {
 	}
 
 	defer resp.Body.Close()
+	io.Copy(ioutil.Discard, resp.Body)
 
 	return &Response{
 		StatusCode: resp.StatusCode,

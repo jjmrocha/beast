@@ -28,9 +28,18 @@ type Config struct {
 	DisableCompression      bool `json:"disable-compression"`
 	DisableKeepAlives       bool `json:"disable-keep-alives"`
 	MaxConnections          int  `json:"max-connections"`
+	MaxIdleConnections      int  `json:"max-idle-connections"`
 	RequestTimeout          int  `json:"request-timeout"`
 	DisableCertificateCheck bool `json:"disable-certificate-check"`
 	DisableRedirects        bool `json:"disable-redirects"`
+}
+
+// GetMaxIdleConnections if Config.MaxIdleConnections is zero resturns parallelConns else will return Config.MaxIdleConnections
+func (c Config) GetMaxIdleConnections(parallelConns int) int {
+	if c.MaxIdleConnections == 0 {
+		return parallelConns
+	}
+	return c.MaxIdleConnections
 }
 
 // Default return the default configuration
@@ -39,6 +48,7 @@ func Default() *Config {
 		DisableCompression:      true,
 		DisableKeepAlives:       false,
 		MaxConnections:          0,
+		MaxIdleConnections:      0,
 		RequestTimeout:          30,
 		DisableCertificateCheck: false,
 		DisableRedirects:        true,
@@ -61,6 +71,10 @@ func Read(fileName string) *Config {
 func checkConfig(cfg *Config) {
 	if cfg.MaxConnections < 0 {
 		log.Fatalln("Invalid config, 'max-connections' must be zero or positive")
+	}
+
+	if cfg.MaxIdleConnections < 0 {
+		log.Fatalln("Invalid config, 'max-idle-connections' must be zero or positive")
 	}
 
 	if cfg.RequestTimeout < 0 {
