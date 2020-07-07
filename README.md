@@ -48,59 +48,60 @@ Where:
 Execution Output
 ----------------
 ```bash
-$ beast run -n 100 -c 5 -config config.json test.yaml
+$ beast run -n 100000 -c 100 -config config.json -data ../test_data.csv apps_get.yaml
 ===== System =====
 Operating System: darwin
 System Architecture: amd64
-Logical CPUs: 4
+Logical CPUs: 12
 ===== Test =====
-Request template: test.json
+Request template: apps_get.yaml
+Sample Data: ../test_data.csv
 Configuration: config.json
-Number of requests: 100
-Number of concurrent requests: 5
+Number of requests: 100000
+Number of concurrent requests: 100
 ===== Preparing =====
 - Reading configuration
+- Loading data file
 - Loading request template
 - Generating requests
 ===== Executing =====
-2019/10/29 21:39:22 [#...................] 5%
-2019/10/29 21:39:24 [##..................] 10%
-2019/10/29 21:39:26 [###.................] 15%
-2019/10/29 21:39:28 [####................] 20%
-2019/10/29 21:39:30 [#####...............] 25%
-2019/10/29 21:39:32 [######..............] 30%
-2019/10/29 21:39:35 [#######.............] 35%
-2019/10/29 21:39:37 [########............] 40%
-2019/10/29 21:39:39 [#########...........] 45%
-2019/10/29 21:39:41 [##########..........] 50%
-2019/10/29 21:39:43 [###########.........] 55%
-2019/10/29 21:39:45 [############........] 60%
-2019/10/29 21:39:47 [#############.......] 65%
-2019/10/29 21:39:50 [##############......] 70%
-2019/10/29 21:39:52 [###############.....] 75%
-2019/10/29 21:39:54 [################....] 80%
-2019/10/29 21:39:56 [#################...] 85%
-2019/10/29 21:39:58 [##################..] 90%
-2019/10/29 21:40:01 [###################.] 95%
-2019/10/29 21:40:04 [####################] 100%
+2020/07/07 23:03:33 [#...................] 5%
+2020/07/07 23:03:37 [##..................] 10%
+2020/07/07 23:03:40 [###.................] 15%
+2020/07/07 23:03:44 [####................] 20%
+2020/07/07 23:03:47 [#####...............] 25%
+2020/07/07 23:03:49 [######..............] 30%
+2020/07/07 23:03:52 [#######.............] 35%
+2020/07/07 23:03:54 [########............] 40%
+2020/07/07 23:03:56 [#########...........] 45%
+2020/07/07 23:03:59 [##########..........] 50%
+2020/07/07 23:04:01 [###########.........] 55%
+2020/07/07 23:04:04 [############........] 60%
+2020/07/07 23:04:06 [#############.......] 65%
+2020/07/07 23:04:09 [##############......] 70%
+2020/07/07 23:04:11 [###############.....] 75%
+2020/07/07 23:04:14 [################....] 80%
+2020/07/07 23:04:16 [#################...] 85%
+2020/07/07 23:04:19 [##################..] 90%
+2020/07/07 23:04:21 [###################.] 95%
+2020/07/07 23:04:23 [####################] 100%
 ===== Stats =====
-Executed requests: 100
-Time taken to complete: 1m17.630595087s
-Requests per second: 6.4408
-Avg response time: 776.30595ms
+Executed requests: 100000
+Time taken to complete: 55.167930783s
+Requests per second: 1860.9974
+Avg response time: 53.734627ms
 ===== Status 200 =====
-40 requests, with avg response time of 1.48163871s
+100000 requests, with avg response time of 53.734627ms
 And the following distribution:
-- The fastest request took 849.443863ms
-- 20% of requests under 1.05389514s
-- 40% of requests under 1.192986887s
-- 60% of requests under 1.590280578s
-- 80% of requests under 1.95515696s
-- The slowest request took 2.43441918s
-===== Non Success Status =====
-Status 429: 50 requests
-===== Errors =====
-- Request timeout: 10 errors
+- The fastest request took 6.988515ms
+- 20% of requests under 30.239955ms
+- 40% of requests under 40.23343ms
+- 60% of requests under 52.59765ms
+- 80% of requests under 72.891344ms
+- 90% of requests under 91.691174ms
+- 95% of requests under 110.193479ms
+- 99% of requests under 152.862198ms
+- The slowest request took 311.154579ms
 ```
 
 License
