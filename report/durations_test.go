@@ -43,6 +43,7 @@ func TestPercentage(t *testing.T) {
 		{40, time.Duration(3)},
 		{60, time.Duration(5)},
 		{80, time.Duration(7)},
+		{90, time.Duration(8)},
 	}
 	// then
 	for _, test := range tests {

@@ -120,6 +120,15 @@ func (s *Stats) PrintStats() {
 			fmt.Printf("- 40%% of requests under %v\n", durations.percentage(40))
 			fmt.Printf("- 60%% of requests under %v\n", durations.percentage(60))
 			fmt.Printf("- 80%% of requests under %v\n", durations.percentage(80))
+			if count >= 10 {
+				fmt.Printf("- 90%% of requests under %v\n", durations.percentage(90))
+				if count >= 20 {
+					fmt.Printf("- 95%% of requests under %v\n", durations.percentage(95))
+					if count >= 100 {
+						fmt.Printf("- 99%% of requests under %v\n", durations.percentage(99))
+					}
+				}
+			}
 			fmt.Printf("- The slowest request took %v\n", durations.last())
 		}
 	}
