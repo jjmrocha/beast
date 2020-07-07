@@ -24,6 +24,11 @@ import (
 	"github.com/jjmrocha/beast/client"
 )
 
+// Progress defines the progress indicator interface used by stats collector to inform user of the execution progress
+type Progress interface {
+	Update()
+}
+
 // Stats collects statistics about the results of the execution
 type Stats struct {
 	concurrent     int
@@ -33,16 +38,18 @@ type Stats struct {
 	successMap     map[int]durationSlice
 	statusMap      map[int]int
 	errorMap       map[errorCode]int
+	progress       Progress
 }
 
 // NewStats creates a new Stats
-func NewStats(nParallel int) *Stats {
+func NewStats(nParallel int, progress Progress) *Stats {
 	return &Stats{
 		concurrent:     nParallel,
 		executionStart: time.Now(),
 		successMap:     make(map[int]durationSlice),
 		statusMap:      make(map[int]int),
 		errorMap:       make(map[errorCode]int),
+		progress:       progress,
 	}
 }
 
@@ -64,6 +71,8 @@ func (s *Stats) Update(r *client.Response) {
 	} else {
 		s.statusMap[r.StatusCode]++
 	}
+
+	s.progress.Update()
 }
 
 func success(statusCode int) bool {
@@ -90,8 +99,8 @@ func avg(duration time.Duration, requests int) time.Duration {
 	return time.Duration(duration.Nanoseconds() / int64(requests))
 }
 
-// Print displays the stats
-func (s *Stats) Print() {
+// PrintStats displays the stats
+func (s *Stats) PrintStats() {
 	fmt.Printf("===== Stats =====\n")
 	fmt.Printf("Executed requests: %v\n", s.requests)
 	fmt.Printf("Time taken to complete: %v\n", s.executionDuration())

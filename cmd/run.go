@@ -62,15 +62,13 @@ func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
 	}()
 
 	go ctrl.CloseWhenDone()
-	stats := report.NewStats(nParallel)
-	progress := report.NewBar(nRequests)
+	stats := report.NewStats(nParallel, report.NewBar(nRequests))
 
 	for response := range ctrl.OutputChannel() {
 		stats.Update(response)
-		progress.Update()
 	}
 
-	stats.Print()
+	stats.PrintStats()
 }
 
 func printSystem() {
