@@ -26,21 +26,23 @@ import (
 
 // Stats collects statistics about the results of the execution
 type Stats struct {
-	concurrent int
-	requests   int
-	duration   time.Duration
-	successMap map[int]durationSlice
-	statusMap  map[int]int
-	errorMap   map[errorCode]int
+	concurrent     int
+	requests       int
+	executionStart time.Time
+	duration       time.Duration
+	successMap     map[int]durationSlice
+	statusMap      map[int]int
+	errorMap       map[errorCode]int
 }
 
 // NewStats creates a new Stats
 func NewStats(nParallel int) *Stats {
 	return &Stats{
-		concurrent: nParallel,
-		successMap: make(map[int]durationSlice),
-		statusMap:  make(map[int]int),
-		errorMap:   make(map[errorCode]int),
+		concurrent:     nParallel,
+		executionStart: time.Now(),
+		successMap:     make(map[int]durationSlice),
+		statusMap:      make(map[int]int),
+		errorMap:       make(map[errorCode]int),
 	}
 }
 
@@ -80,6 +82,10 @@ func (s *Stats) avg() time.Duration {
 	return avg(s.duration, s.requests)
 }
 
+func (s *Stats) executionDuration() time.Duration {
+	return time.Since(s.executionStart)
+}
+
 func avg(duration time.Duration, requests int) time.Duration {
 	return time.Duration(duration.Nanoseconds() / int64(requests))
 }
@@ -88,7 +94,7 @@ func avg(duration time.Duration, requests int) time.Duration {
 func (s *Stats) Print() {
 	fmt.Printf("===== Stats =====\n")
 	fmt.Printf("Executed requests: %v\n", s.requests)
-	fmt.Printf("Time taken to complete: %v\n", s.duration)
+	fmt.Printf("Time taken to complete: %v\n", s.executionDuration())
 	fmt.Printf("Requests per second: %.4f\n", s.tps())
 	fmt.Printf("Avg response time: %v\n", s.avg())
 
