@@ -25,8 +25,9 @@ Usage:
    beast [help]
    beast config <configFile>
    beast template [-m <http method>] [url] <templateFile>
-   beast run [-n <number of requests>] [-c <number of concurrent requests>] 
-             [-config <configFile>] [-data <dataFile>] <templateFile>
+   beast run [-n <number of requests>] [-c <number of concurrent requests>]
+             [-config <configFile>] [-data <dataFile>]
+             [-output <outputFile>] <templateFile>
 
 Where:
    config   Creates a file with the default parameters to setup HTTP connections
@@ -42,13 +43,14 @@ Where:
             -n           int    Number of requests (default 1)
             -config      string Config file to setup HTTP client
             -data        string CSV file with data for request generation
+            -output      string CVS file with detailed execution results
             templateFile string JSON/YAML file with details about the request to test 
 ```
 
 Execution Output
 ----------------
 ```bash
-$ beast run -n 100000 -c 100 -config config.json -data ../test_data.csv apps_get.yaml
+$ beast run -n 100000 -c 100 -config config.json -data ../test_data.csv -output get_100.csv apps_get.yaml
 ===== System =====
 Operating System: darwin
 System Architecture: amd64
@@ -102,6 +104,8 @@ And the following distribution:
 - 95% of requests under 110.193479ms
 - 99% of requests under 152.862198ms
 - The slowest request took 311.154579ms
+===== Output File =====
+Output file 'get_100.csv' was successfully generated
 ```
 
 License

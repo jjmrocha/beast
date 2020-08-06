@@ -18,7 +18,7 @@ package cmd
 
 import "fmt"
 
-const version = "v2.4.2"
+const version = "v2.5.0"
 const help = `the Beast %v - Stress testing for RESTful APIs
 
 Usage:
@@ -26,7 +26,8 @@ Usage:
    beast config <configFile>
    beast template [-m <http method>] [url] <templateFile>
    beast run [-n <number of requests>] [-c <number of concurrent requests>] 
-             [-config <configFile>] [-data <dataFile>] <templateFile>
+             [-config <configFile>] [-data <dataFile>]
+             [-output <outputFile>] <templateFile>
 
 Where:
    config   Creates a file with the default parameters to setup HTTP connections
@@ -42,6 +43,7 @@ Where:
             -n           int    Number of requests (default 1)
             -config      string Config file to setup HTTP client
             -data        string CSV file with data for request generation
+            -output      string CVS file with detailed execution results
             templateFile string JSON/YAML file with details about the request to test 
 
 `

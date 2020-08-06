@@ -23,10 +23,36 @@ import (
 
 // Response contains the status code and the duration taken for execution of a request
 type Response struct {
+	Timestamp  time.Time
+	Request    string
 	StatusCode int
 	Duration   time.Duration
 }
 
 func (r *Response) String() string {
 	return fmt.Sprintf("%v - %v", r.StatusCode, r.Duration)
+}
+
+// IsSuccess return true for statusCodes matchs 2xx
+func (r *Response) IsSuccess() bool {
+	return r.StatusCode >= 200 && r.StatusCode < 300
+}
+
+// IsClientError returns true if we didn't receive an awnser from the endpoint
+func (r *Response) IsClientError() bool {
+	return r.StatusCode < 0
+}
+
+// ClientError returns the descriprion for the client error
+func (r *Response) ClientError() string {
+	switch r.StatusCode {
+	case -100:
+		return "Request generation error"
+	case -400:
+		return "Request timeout"
+	case -500:
+		return "Unexpected error"
+	}
+
+	return ""
 }

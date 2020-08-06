@@ -59,6 +59,7 @@ func runCmd(args []string) {
 	nParallel := runOption.Int("c", 1, "Number of concurrent requests")
 	configFile := runOption.String("config", "", "Config file to setup HTTP client")
 	dataFile := runOption.String("data", "", "CSV file with data for request generation")
+	outputFile := runOption.String("output", "", "CVS file with detailed execution results")
 	runOption.Parse(args)
 	nonFlagArgs := runOption.Args()
 
@@ -73,7 +74,7 @@ func runCmd(args []string) {
 	}
 
 	fileName := nonFlagArgs[0]
-	cmd.Run(*nRequests, *nParallel, fileName, *configFile, *dataFile)
+	cmd.Run(*nRequests, *nParallel, fileName, *configFile, *dataFile, *outputFile)
 }
 
 func templateCmd(args []string) {

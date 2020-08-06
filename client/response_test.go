@@ -14,19 +14,38 @@
  * limitations under the License.
  */
 
-package report
+package client
 
-type errorCode int
+import (
+	"testing"
+)
 
-func (e errorCode) String() string {
-	switch e {
-	case -100:
-		return "Request generation error"
-	case -400:
-		return "Request timeout"
-	case -500:
-		return "Unexpected error"
+func TestIsSuccess(t *testing.T) {
+	// given
+	var tests = []struct {
+		input    int
+		expected bool
+	}{
+		{100, false},
+		{122, false},
+		{200, true},
+		{201, true},
+		{300, false},
+		{307, false},
+		{400, false},
+		{404, false},
+		{429, false},
+		{500, false},
+		{502, false},
 	}
-
-	return ""
+	// then
+	for _, test := range tests {
+		response := &Response{
+			StatusCode: test.input,
+		}
+		result := response.IsSuccess()
+		if result != test.expected {
+			t.Errorf("got %v expected %v for status %v", result, test.expected, test.input)
+		}
+	}
 }

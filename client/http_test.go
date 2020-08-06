@@ -39,7 +39,7 @@ func TestHTTPTimeout(t *testing.T) {
 	for _, test := range tests {
 		config := config.Default()
 		config.RequestTimeout = test.input
-		result := NewClient(config)
+		result := NewClient(config, 10)
 		if client, ok := result.native.(*http.Client); ok && client.Timeout != test.expected {
 			t.Errorf("got %v expected %v for RequestTimeout", client.Timeout, test.expected)
 		}

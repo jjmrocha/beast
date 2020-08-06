@@ -32,5 +32,9 @@ func BuildRequest(req *http.Request) *Request {
 }
 
 func (r *Request) String() string {
+	if r.native == nil {
+		return "--"
+	}
+
 	return fmt.Sprintf("%s %s", r.native.Method, r.native.URL)
 }

@@ -37,61 +37,56 @@ type Stats struct {
 	duration       time.Duration
 	successMap     map[int]durationSlice
 	statusMap      map[int]int
-	errorMap       map[errorCode]int
+	errorMap       map[string]int
 	progress       Progress
+	output         Output
 }
 
 // NewStats creates a new Stats
-func NewStats(nParallel int, progress Progress) *Stats {
-	return &Stats{
+func NewStats(nParallel int, progress Progress, outputFile string) Stats {
+	return Stats{
 		concurrent:     nParallel,
 		executionStart: time.Now(),
 		successMap:     make(map[int]durationSlice),
 		statusMap:      make(map[int]int),
-		errorMap:       make(map[errorCode]int),
+		errorMap:       make(map[string]int),
 		progress:       progress,
+		output:         NewOutput(outputFile),
 	}
 }
 
 // Update receives results and update the stats accordingly
-func (s *Stats) Update(r *client.Response) {
+func (s Stats) Update(r *client.Response) {
 	s.requests++
 	s.duration += r.Duration
 
-	if success(r.StatusCode) {
+	if r.IsSuccess() {
 		durations, present := s.successMap[r.StatusCode]
 		if !present {
 			durations = make(durationSlice, 0)
 		}
 
 		s.successMap[r.StatusCode] = append(durations, r.Duration)
-	} else if error(r.StatusCode) {
-		errorCode := errorCode(r.StatusCode)
-		s.errorMap[errorCode]++
+	} else if r.IsClientError() {
+		errorDesc := r.ClientError()
+		s.errorMap[errorDesc]++
 	} else {
 		s.statusMap[r.StatusCode]++
 	}
 
 	s.progress.Update()
+	s.output.Write(r)
 }
 
-func success(statusCode int) bool {
-	return statusCode >= 200 && statusCode < 300
-}
-
-func error(statusCode int) bool {
-	return statusCode < 0
-}
-
-func (s *Stats) tps() float64 {
+func (s Stats) tps() float64 {
 	return float64(s.concurrent) * (float64(s.requests) / s.duration.Seconds())
 }
 
-func (s *Stats) avg() time.Duration {
+func (s Stats) avg() time.Duration {
 	return avg(s.duration, s.requests)
 }
 
-func (s *Stats) executionDuration() time.Duration {
+func (s Stats) executionDuration() time.Duration {
 	return time.Since(s.executionStart)
 }
 
@@ -100,7 +95,7 @@ func avg(duration time.Duration, requests int) time.Duration {
 }
 
 // PrintStats displays the stats
-func (s *Stats) PrintStats() {
+func (s Stats) PrintStats() {
 	fmt.Printf("===== Stats =====\n")
 	fmt.Printf("Executed requests: %v\n", s.requests)
 	fmt.Printf("Time taken to complete: %v\n", s.executionDuration())
@@ -148,4 +143,6 @@ func (s *Stats) PrintStats() {
 			fmt.Printf("- %v: %v errors\n", key, value)
 		}
 	}
+
+	s.output.Close()
 }

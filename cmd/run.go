@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"time"
 
 	"github.com/jjmrocha/beast/client"
 	"github.com/jjmrocha/beast/config"
@@ -29,12 +30,8 @@ import (
 	"github.com/jjmrocha/beast/template"
 )
 
-var errorGeneratingRequestResponse = &client.Response{
-	StatusCode: -100,
-}
-
 // Run implements the `beast run ...` command
-func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
+func Run(nRequests, nParallel int, fileName, configFile, dataFile string, outputFile string) {
 	printSystem()
 	printTest(fileName, configFile, dataFile, nRequests, nParallel)
 	fmt.Printf("===== Preparing =====\n")
@@ -51,7 +48,10 @@ func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
 				request, err := g.Request()
 				if err != nil {
 					log.Printf("Error generating request for %s: %v\n", g.Log(), err)
-					ctrl.Push(errorGeneratingRequestResponse)
+					ctrl.Push(&client.Response{
+						Timestamp:  time.Now(),
+						StatusCode: -100,
+					})
 					return
 				}
 				ctrl.WaitToExecute()
@@ -62,7 +62,7 @@ func Run(nRequests, nParallel int, fileName, configFile, dataFile string) {
 	}()
 
 	go ctrl.CloseWhenDone()
-	stats := report.NewStats(nParallel, report.NewBar(nRequests))
+	stats := report.NewStats(nParallel, report.NewBar(nRequests), outputFile)
 
 	for response := range ctrl.OutputChannel() {
 		stats.Update(response)

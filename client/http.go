@@ -80,6 +80,8 @@ func (c *Client) Execute(request *Request) *Response {
 		var urlErr *url.Error
 		if ok := errors.As(err, &urlErr); ok && urlErr.Timeout() {
 			return &Response{
+				Timestamp:  start,
+				Request:    request.String(),
 				StatusCode: -400,
 				Duration:   duration,
 			}
@@ -87,6 +89,8 @@ func (c *Client) Execute(request *Request) *Response {
 
 		log.Printf("Error executing request '%v': %v\n", request, err)
 		return &Response{
+			Timestamp:  start,
+			Request:    request.String(),
 			StatusCode: -500,
 			Duration:   duration,
 		}
@@ -96,6 +100,8 @@ func (c *Client) Execute(request *Request) *Response {
 	io.Copy(ioutil.Discard, resp.Body)
 
 	return &Response{
+		Timestamp:  start,
+		Request:    request.String(),
 		StatusCode: resp.StatusCode,
 		Duration:   duration,
 	}
