@@ -43,8 +43,8 @@ type Stats struct {
 }
 
 // NewStats creates a new Stats
-func NewStats(nParallel int, progress Progress, outputFile string) Stats {
-	return Stats{
+func NewStats(nParallel int, progress Progress, outputFile string) *Stats {
+	return &Stats{
 		concurrent:     nParallel,
 		executionStart: time.Now(),
 		successMap:     make(map[int]durationSlice),
@@ -56,7 +56,7 @@ func NewStats(nParallel int, progress Progress, outputFile string) Stats {
 }
 
 // Update receives results and update the stats accordingly
-func (s Stats) Update(r *client.Response) {
+func (s *Stats) Update(r *client.Response) {
 	s.requests++
 	s.duration += r.Duration
 
@@ -78,15 +78,15 @@ func (s Stats) Update(r *client.Response) {
 	s.output.Write(r)
 }
 
-func (s Stats) tps() float64 {
+func (s *Stats) tps() float64 {
 	return float64(s.concurrent) * (float64(s.requests) / s.duration.Seconds())
 }
 
-func (s Stats) avg() time.Duration {
+func (s *Stats) avg() time.Duration {
 	return avg(s.duration, s.requests)
 }
 
-func (s Stats) executionDuration() time.Duration {
+func (s *Stats) executionDuration() time.Duration {
 	return time.Since(s.executionStart)
 }
 
@@ -95,7 +95,7 @@ func avg(duration time.Duration, requests int) time.Duration {
 }
 
 // PrintStats displays the stats
-func (s Stats) PrintStats() {
+func (s *Stats) PrintStats() {
 	fmt.Printf("===== Stats =====\n")
 	fmt.Printf("Executed requests: %v\n", s.requests)
 	fmt.Printf("Time taken to complete: %v\n", s.executionDuration())
