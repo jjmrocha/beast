@@ -39,21 +39,21 @@ type Control struct {
 
 // New creates a control.Controle
 func New(nRequests, tDuration, nParallel int) *Control {
-	ctrl := Control{
+	ctrl := &Control{
 		generatorChannel:   make(chan *template.Generator, nParallel),
 		outputChannel:      make(chan *client.Response, nParallel),
 		requestCount:       nRequests,
 		executionDuration:  tDuration,
 		concurrentRoutines: nParallel,
 	}
-	ctrl.wg.Add(nRequests)
+	ctrl.wg.Add(nParallel)
 
 	go func() {
 		ctrl.wg.Wait()
 		close(ctrl.outputChannel)
 	}()
 
-	return &ctrl
+	return ctrl
 }
 
 // OutputChannel returns a channel for receiving the client.Response sent using Push
