@@ -18,14 +18,15 @@ package cmd
 
 import "fmt"
 
-const version = "v2.5.0"
+const version = "v2.6.0"
 const help = `the Beast %v - Stress testing for RESTful APIs
 
 Usage:
    beast [help]
    beast config <configFile>
    beast template [-m <http method>] [url] <templateFile>
-   beast run [-n <number of requests>] [-c <number of concurrent requests>] 
+   beast run (-n <number of requests> | -t <test duration>)
+             [-c <number of concurrent requests>] 
              [-config <configFile>] [-data <dataFile>]
              [-output <outputFile>] <templateFile>
 
@@ -40,7 +41,8 @@ Where:
 
    run      Executes a script and presents a report with execution results
             -c           int    Number of concurrent requests (default 1)
-            -n           int    Number of requests (default 1)
+            -n           int    Number of requests (can't be used with "-t")
+            -t           int    Duration of the test in seconds (can't be used with "-n")
             -config      string Config file to setup HTTP client
             -data        string CSV file with data for request generation
             -output      string CVS file with detailed execution results

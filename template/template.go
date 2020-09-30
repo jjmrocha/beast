@@ -24,11 +24,7 @@ import (
 	"text/template"
 
 	"github.com/jjmrocha/beast/client"
-	"github.com/jjmrocha/beast/data"
 )
-
-// emptyRecord contains a empty record to be used when no data is provided
-var emptyRecord = data.NewRecord()
 
 // Header represents an HTTP Header template
 type Header struct {
@@ -65,19 +61,20 @@ func bodyReader(body string) io.Reader {
 	return strings.NewReader(body)
 }
 
-func (t *Template) compile() (*templateC, error) {
+// Compile returns a compiled version of the template
+func (t *Template) Compile() (*CompiledTemplate, error) {
 	tEndpoint, err := template.New("endpoint").Parse(t.Endpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	tHeaders := make([]headerC, 0, len(t.Headers))
+	tHeaders := make([]compiledHeader, 0, len(t.Headers))
 	for _, header := range t.Headers {
 		tValue, err := template.New("headerValue").Parse(header.Value)
 		if err != nil {
 			return nil, err
 		}
-		hdc := headerC{
+		hdc := compiledHeader{
 			key:   header.Key,
 			value: tValue,
 		}
@@ -92,40 +89,11 @@ func (t *Template) compile() (*templateC, error) {
 		}
 	}
 
-	tmplc := templateC{
+	tmplc := CompiledTemplate{
 		method:   t.Method,
 		endpoint: tEndpoint,
 		headers:  tHeaders,
 		body:     tBody,
 	}
 	return &tmplc, nil
-}
-
-// BuildGenerators creates a slice with requests generators
-func (t *Template) BuildGenerators(nRequests int, data *data.Data) ([]*Generator, error) {
-	tmplc, err := t.compile()
-	if err != nil {
-		return nil, err
-	}
-
-	generators := make([]*Generator, 0, nRequests)
-
-	for i := 1; i <= nRequests; i++ {
-		gnt := &Generator{
-			data:     nextRecord(data),
-			recordID: i,
-			template: tmplc,
-		}
-		generators = append(generators, gnt)
-	}
-
-	return generators, nil
-}
-
-func nextRecord(data *data.Data) *data.Record {
-	if data == nil {
-		return &emptyRecord
-	}
-
-	return data.Next()
 }

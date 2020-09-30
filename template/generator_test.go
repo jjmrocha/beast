@@ -19,39 +19,20 @@ package template
 import (
 	"testing"
 
-	"github.com/jjmrocha/beast/client"
 	"github.com/jjmrocha/beast/data"
 )
 
 func TestLog(t *testing.T) {
 	// given
-	dt := data.Read("../testdata/data.csv")
+	dt := data.Read("../testdata/simple.csv")
 	gnt := &Generator{
-		recordID: 1,
-		data:     dt.Next(),
+		RecordID: 1,
+		Data:     dt.Next(),
 	}
-	expected := "requestId: 1 and data: {A: a1, B: b1}"
+	expected := "requestId: 1 and data: {A: a1}"
 	// when
 	result := gnt.Log()
 	// then
-	if result != expected {
-		t.Errorf("got %v expected %v", result, expected)
-	}
-}
-
-func TestRequestForStatic(t *testing.T) {
-	// given
-	expected := &client.Request{}
-	gnt := &Generator{
-		final: expected,
-	}
-	// when
-	result, err := gnt.Request()
-	// then
-	if err != nil {
-		t.Errorf("Error not expected: %v", err)
-	}
-
 	if result != expected {
 		t.Errorf("got %v expected %v", result, expected)
 	}
@@ -61,11 +42,11 @@ func TestRequestForDynamic(t *testing.T) {
 	// given
 	dt := data.Read("../testdata/data.csv")
 	tmpl := Read("../testdata/template_post.json")
-	tmplc, _ := tmpl.compile()
+	tmplc, _ := tmpl.Compile()
 	gnt := &Generator{
-		data:     dt.Next(),
-		recordID: 1,
-		template: tmplc,
+		Data:     dt.Next(),
+		RecordID: 1,
+		Template: tmplc,
 	}
 	expected := "POST http://someendpoint.pt/1"
 	// when
@@ -84,11 +65,11 @@ func BenchmarkRequest(b *testing.B) {
 	// given
 	dt := data.Read("../testdata/data.csv")
 	tmpl := Read("../testdata/template_post.json")
-	tmplc, _ := tmpl.compile()
+	tmplc, _ := tmpl.Compile()
 	gnt := &Generator{
-		data:     dt.Next(),
-		recordID: 1,
-		template: tmplc,
+		Data:     dt.Next(),
+		RecordID: 1,
+		Template: tmplc,
 	}
 	// when
 	b.ResetTimer()

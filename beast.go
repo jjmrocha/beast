@@ -55,7 +55,8 @@ func configCmd(args []string) {
 
 func runCmd(args []string) {
 	runOption := flag.NewFlagSet("run", flag.ExitOnError)
-	nRequests := runOption.Int("n", 1, "Number of requests")
+	nRequests := runOption.Int("n", 0, "Number of requests")
+	tDuration := runOption.Int("t", 0, "Duration of the test in seconds")
 	nParallel := runOption.Int("c", 1, "Number of concurrent requests")
 	configFile := runOption.String("config", "", "Config file to setup HTTP client")
 	dataFile := runOption.String("data", "", "CSV file with data for request generation")
@@ -68,13 +69,18 @@ func runCmd(args []string) {
 		return
 	}
 
-	if *nRequests == 0 || *nParallel == 0 {
+	if *nRequests < 0 || *nParallel <= 0 || *tDuration < 0 {
+		cmd.Help()
+		return
+	}
+
+	if (*nRequests == 0 && *tDuration == 0) || (*nRequests > 0 && *tDuration > 0) {
 		cmd.Help()
 		return
 	}
 
 	fileName := nonFlagArgs[0]
-	cmd.Run(*nRequests, *nParallel, fileName, *configFile, *dataFile, *outputFile)
+	cmd.Run(*nRequests, *tDuration, *nParallel, fileName, *configFile, *dataFile, *outputFile)
 }
 
 func templateCmd(args []string) {

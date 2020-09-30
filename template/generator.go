@@ -25,19 +25,14 @@ import (
 
 // Generator generates BRequests
 type Generator struct {
-	final    *client.Request
-	template *templateC
-	recordID int
-	data     *data.Record
+	Template *CompiledTemplate
+	RecordID int
+	Data     *data.Record
 }
 
 // Request uses that template and a record and returns a BRequests
 func (g *Generator) Request() (*client.Request, error) {
-	if g.final != nil {
-		return g.final, nil
-	}
-
-	tmplf, err := g.template.executeTemplate(g.recordID, g.data)
+	tmplf, err := g.Template.executeTemplate(g.RecordID, g.Data)
 	if err != nil {
 		return nil, err
 	}
@@ -52,5 +47,5 @@ func (g *Generator) Request() (*client.Request, error) {
 
 // Log generates a log message for the request
 func (g *Generator) Log() string {
-	return fmt.Sprintf("requestId: %v and data: %v", g.recordID, g.data)
+	return fmt.Sprintf("requestId: %v and data: %v", g.RecordID, g.Data)
 }

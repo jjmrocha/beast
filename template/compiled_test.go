@@ -36,7 +36,7 @@ func TestCompileAndExecute(t *testing.T) {
 		Body: "{\"id\": 1, \"value\": \"a1\"}",
 	}
 	// when
-	tmplc, err := tmpl.compile()
+	tmplc, err := tmpl.Compile()
 	if err != nil {
 		t.Error(err)
 	}
@@ -58,7 +58,7 @@ func BenchmarkFromTemplateToClient(b *testing.B) {
 	// then
 	b.ResetTimer()
 
-	tmplc, err := tmpl.compile()
+	tmplc, err := tmpl.Compile()
 	if err != nil {
 		b.Error(err)
 	}

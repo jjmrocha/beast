@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"log"
 	"runtime"
-	"time"
 
 	"github.com/jjmrocha/beast/client"
 	"github.com/jjmrocha/beast/config"
@@ -31,67 +30,42 @@ import (
 )
 
 // Run implements the `beast run ...` command
-func Run(nRequests, nParallel int, fileName, configFile, dataFile string, outputFile string) {
-	printSystem()
-	printTest(fileName, configFile, dataFile, nRequests, nParallel)
+func Run(nRequests, tDuration int, nParallel int, fileName, configFile, dataFile string, outputFile string) {
+	fmt.Printf("===== System =====\n")
+	fmt.Printf("Operating System: %v\n", runtime.GOOS)
+	fmt.Printf("System Architecture: %v\n", runtime.GOARCH)
+	fmt.Printf("Logical CPUs: %v\n", runtime.NumCPU())
+
+	fmt.Printf("===== Test =====\n")
+	fmt.Printf("Request template: %v\n", fileName)
+	if dataFile != "" {
+		fmt.Printf("Sample Data: %v\n", dataFile)
+	}
+	if configFile != "" {
+		fmt.Printf("Configuration: %v\n", configFile)
+	}
+	if nRequests > 0 {
+		fmt.Printf("Number of requests: %v\n", nRequests)
+	} else {
+		fmt.Printf("Test duration: %v seconds\n", tDuration)
+	}
+	fmt.Printf("Number of concurrent requests: %v\n", nParallel)
+
 	fmt.Printf("===== Preparing =====\n")
-	ctrl := control.New(nRequests, nParallel)
 	httpClient := createHTTPClient(configFile, nParallel)
-	generators := createRequestGenerators(fileName, dataFile, nRequests)
+	tmpl := readTemplate(fileName)
+	data := readData(dataFile)
+
 	fmt.Printf("===== Executing =====\n")
+	ctrl := control.New(nRequests, tDuration, nParallel)
+	ctrl.AsyncExecute(httpClient, tmpl, data)
 
-	go func() {
-		for _, gnt := range generators {
-			ctrl.WaitForSlot()
-			go func(g *template.Generator) {
-				defer ctrl.Finish()
-				request, err := g.Request()
-				if err != nil {
-					log.Printf("Error generating request for %s: %v\n", g.Log(), err)
-					ctrl.Push(&client.Response{
-						Timestamp:  time.Now(),
-						StatusCode: -100,
-					})
-					return
-				}
-				ctrl.WaitToExecute()
-				defer ctrl.FinishExecution()
-				ctrl.Push(httpClient.Execute(request))
-			}(gnt)
-		}
-	}()
-
-	go ctrl.CloseWhenDone()
-	stats := report.NewStats(nParallel, report.NewBar(nRequests), outputFile)
-
+	stats := report.NewStats(nParallel, report.NewBar(nRequests, tDuration), outputFile)
 	for response := range ctrl.OutputChannel() {
 		stats.Update(response)
 	}
 
 	stats.PrintStats()
-}
-
-func printSystem() {
-	fmt.Printf("===== System =====\n")
-	fmt.Printf("Operating System: %v\n", runtime.GOOS)
-	fmt.Printf("System Architecture: %v\n", runtime.GOARCH)
-	fmt.Printf("Logical CPUs: %v\n", runtime.NumCPU())
-}
-
-func printTest(fileName, configFile, dataFile string, nRequests, nParallel int) {
-	fmt.Printf("===== Test =====\n")
-	fmt.Printf("Request template: %v\n", fileName)
-
-	if dataFile != "" {
-		fmt.Printf("Sample Data: %v\n", dataFile)
-	}
-
-	if configFile != "" {
-		fmt.Printf("Configuration: %v\n", configFile)
-	}
-
-	fmt.Printf("Number of requests: %v\n", nRequests)
-	fmt.Printf("Number of concurrent requests: %v\n", nParallel)
 }
 
 func createHTTPClient(configFile string, nParallel int) *client.Client {
@@ -117,14 +91,12 @@ func readData(dataFile string) *data.Data {
 	return data.Read(dataFile)
 }
 
-func createRequestGenerators(fileName, dataFile string, nRequests int) []*template.Generator {
-	data := readData(dataFile)
+func readTemplate(fileName string) *template.CompiledTemplate {
 	fmt.Println("- Loading request template")
 	tmpl := template.Read(fileName)
-	fmt.Println("- Generating requests")
-	generators, err := tmpl.BuildGenerators(nRequests, data)
+	tmplC, err := tmpl.Compile()
 	if err != nil {
-		log.Fatalf("Error generating requests: %v\n", err)
+		log.Fatalf("Error compiling template: %v\n", err)
 	}
-	return generators
+	return tmplC
 }

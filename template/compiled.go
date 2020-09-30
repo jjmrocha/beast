@@ -23,19 +23,20 @@ import (
 	"github.com/jjmrocha/beast/data"
 )
 
-type headerC struct {
+type compiledHeader struct {
 	key   string
 	value *txt.Template
 }
 
-type templateC struct {
+// CompiledTemplate is the compiled version of a Template
+type CompiledTemplate struct {
 	method   string
 	endpoint *txt.Template
-	headers  []headerC
+	headers  []compiledHeader
 	body     *txt.Template
 }
 
-func (c *templateC) executeTemplate(requestID int, record *data.Record) (*Template, error) {
+func (c *CompiledTemplate) executeTemplate(requestID int, record *data.Record) (*Template, error) {
 	var context = struct {
 		RequestID int
 		Data      *data.Record
