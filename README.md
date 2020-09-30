@@ -25,14 +25,15 @@ Usage:
    beast [help]
    beast config <configFile>
    beast template [-m <http method>] [url] <templateFile>
-   beast run [-n <number of requests>] [-c <number of concurrent requests>]
+   beast run (-n <number of requests> | -t <test duration>)
+             [-c <number of concurrent requests>]
              [-config <configFile>] [-data <dataFile>]
              [-output <outputFile>] <templateFile>
 
 Where:
    config   Creates a file with the default parameters to setup HTTP connections
             configFile   string Name of the file to be created
-			 			
+
    template Creates a request template file, using user-provided parameters
             -m           string HTTP method (default "GET")
             url          string Endpoint to be tested
@@ -40,11 +41,12 @@ Where:
 
    run      Executes a script and presents a report with execution results
             -c           int    Number of concurrent requests (default 1)
-            -n           int    Number of requests (default 1)
+            -n           int    Number of requests (can't be used with "-t")
+            -t           int    Duration of the test in seconds (can't be used with "-n")
             -config      string Config file to setup HTTP client
             -data        string CSV file with data for request generation
             -output      string CVS file with detailed execution results
-            templateFile string JSON/YAML file with details about the request to test 
+            templateFile string JSON/YAML file with details about the request to test
 ```
 
 Execution Output
@@ -59,13 +61,12 @@ Logical CPUs: 12
 Request template: apps_get.yaml
 Sample Data: ../test_data.csv
 Configuration: config.json
-Number of requests: 100000
+Number of requests: 10000
 Number of concurrent requests: 100
 ===== Preparing =====
 - Reading configuration
-- Loading data file
 - Loading request template
-- Generating requests
+- Loading data file
 ===== Executing =====
 2020/07/07 23:03:33 [#...................] 5%
 2020/07/07 23:03:37 [##..................] 10%
