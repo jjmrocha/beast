@@ -17,109 +17,90 @@
 package report
 
 import (
-	"encoding/csv"
 	"fmt"
-	"log"
-	"os"
-	"strconv"
 
 	"github.com/jjmrocha/beast/client"
+	"github.com/jjmrocha/beast/control"
 )
 
 const datetimeFormat = "2006-01-02 15:04:05.999"
 
 // Output is the handler for CVS output
 type Output struct {
-	outputFile string
-	file       *os.File
-	writer     *csv.Writer
+	csvReport     *csvReport
+	outputChannel chan *client.Response
+	buffer        *control.Fifo
+	closeFile     *control.WaitCompletion
 }
 
 // NewOutput creates new Output handler
 func NewOutput(fileName string) Output {
 	if fileName == "" {
-		return Output{
-			outputFile: fileName,
-		}
+		return Output{}
 	}
 
-	fileHandler, err := os.Create(fileName)
-	if err != nil {
-		log.Fatalf("Error creating output file %s: %v\n", fileName, err)
+	output := Output{
+		csvReport:     newCsvReport(fileName),
+		outputChannel: make(chan *client.Response, 1024),
+		buffer:        control.NewFifo(),
+		closeFile:     control.NewWaitCompletion(),
 	}
 
-	csvWriter := csv.NewWriter(fileHandler)
-	csvWriter.Write(csvHeader())
-
-	return Output{
-		outputFile: fileName,
-		file:       fileHandler,
-		writer:     csvWriter,
-	}
+	go asyncWrite(output)
+	return output
 }
 
 // Write appends the response to the output file
-func (o Output) Write(r *client.Response) {
-	if o.outputFile == "" {
+func (o Output) Write(response *client.Response) {
+	if !o.isInUse() {
 		return
 	}
 
-	record := encode(r)
-	o.writer.Write(record)
+	o.outputChannel <- response
 }
 
 // Close closes the CSV file
 func (o Output) Close() {
-	if o.outputFile == "" {
+	if !o.isInUse() {
 		return
 	}
 
-	defer o.file.Close()
-	o.writer.Flush()
-
+	o.closeFile.Request()
 	fmt.Printf("===== Output File =====\n")
-	fmt.Printf("Output file '%s' was successfully generated\n", o.outputFile)
+	fmt.Printf("Output file '%s' was successfully generated\n", o.csvReport.FileName)
 }
 
-func csvHeader() []string {
-	return []string{
-		"Timestamp",
-		"Request",
-		"Result",
-		"StatusCode",
-		"IsSuccess",
-		"Duration",
-	}
-}
+func asyncWrite(o Output) {
+	defer func() {
+		defer o.closeFile.Completed()
+		o.csvReport.flush()
+		close(o.outputChannel)
+	}()
 
-func encode(r *client.Response) []string {
-	var timestamp = r.Timestamp.Format(datetimeFormat)
-	var request = r.Request
-	var result = "Executed"
-	var statusCode = ""
-	var isSuccess = "false"
-	var duration = ""
+	var msgIn, msgOut bool
+	run := true
 
-	if r.Duration.Nanoseconds() > 0 {
-		duration = strconv.FormatInt(r.Duration.Milliseconds(), 10)
-	}
+	for run {
+		msgIn = false
+		msgOut = false
 
-	if r.IsClientError() {
-		result = r.ClientError()
-	} else {
-		statusCode = strconv.Itoa(r.StatusCode)
-
-		if r.IsSuccess() {
-			isSuccess = "true"
+		select {
+		case response, ok := <-o.outputChannel:
+			if ok {
+				o.buffer.Push(response)
+				msgIn = true
+			}
+		default:
+			if element := o.buffer.Pop(); element != nil {
+				o.csvReport.write(element.Value)
+				msgOut = true
+			}
 		}
-	}
 
-	return []string{
-		timestamp,
-		request,
-		result,
-		statusCode,
-		isSuccess,
-		duration,
+		run = msgIn || msgOut || !o.closeFile.WasRequested()
 	}
+}
+
+func (o Output) isInUse() bool {
+	return o.csvReport != nil
 }

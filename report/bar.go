@@ -47,6 +47,10 @@ func (b *Bar) Update() {
 	b.executedRequestsCount++
 	percentage := b.percentage()
 
+	if percentage > 100 {
+		percentage = 100
+	}
+
 	if percentage != b.lastPercentageDisplayed && percentage%5 == 0 {
 		b.lastPercentageDisplayed = percentage
 		bar := drawBar(percentage)

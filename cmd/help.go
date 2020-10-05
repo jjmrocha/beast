@@ -18,7 +18,7 @@ package cmd
 
 import "fmt"
 
-const version = "v2.6.0"
+const version = "v2.6.1"
 const help = `the Beast %v - Stress testing for RESTful APIs
 
 Usage:

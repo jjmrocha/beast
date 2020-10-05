@@ -56,26 +56,26 @@ func NewStats(nParallel int, progress Progress, outputFile string) *Stats {
 }
 
 // Update receives results and update the stats accordingly
-func (s *Stats) Update(r *client.Response) {
+func (s *Stats) Update(response *client.Response) {
 	s.requests++
-	s.duration += r.Duration
+	s.duration += response.Duration
 
-	if r.IsSuccess() {
-		durations, present := s.successMap[r.StatusCode]
+	if response.IsSuccess() {
+		durations, present := s.successMap[response.StatusCode]
 		if !present {
 			durations = make(durationSlice, 0)
 		}
 
-		s.successMap[r.StatusCode] = append(durations, r.Duration)
-	} else if r.IsClientError() {
-		errorDesc := r.ClientError()
+		s.successMap[response.StatusCode] = append(durations, response.Duration)
+	} else if response.IsClientError() {
+		errorDesc := response.ClientError()
 		s.errorMap[errorDesc]++
 	} else {
-		s.statusMap[r.StatusCode]++
+		s.statusMap[response.StatusCode]++
 	}
 
 	s.progress.Update()
-	s.output.Write(r)
+	s.output.Write(response)
 }
 
 func (s *Stats) tps() float64 {
