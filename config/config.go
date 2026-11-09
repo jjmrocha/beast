@@ -19,8 +19,8 @@ package config
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
+	"os"
 )
 
 // Config defines the structure a configuration file
@@ -57,7 +57,7 @@ func Default() *Config {
 
 // Read reads the configuration from a file
 func Read(fileName string) *Config {
-	data, err := ioutil.ReadFile(fileName)
+	data, err := os.ReadFile(fileName)
 	if err != nil {
 		log.Fatalf("Error reading config file %s: %v\n", fileName, err)
 	}
@@ -89,7 +89,7 @@ func Write(fileName string, cfg *Config) {
 		log.Printf("Error encoding config %v to JSON: %v\n", cfg, err)
 	}
 
-	err = ioutil.WriteFile(fileName, data, 0666)
+	err = os.WriteFile(fileName, data, 0666)
 	if err != nil {
 		log.Printf("Error writing configuration to file %s: %v\n", fileName, err)
 	}
