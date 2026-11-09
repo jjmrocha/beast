@@ -20,7 +20,7 @@ import (
 	"bytes"
 	txt "text/template"
 
-	"github.com/jjmrocha/beast/data"
+	"github.com/jjmrocha/beast/internal/data"
 )
 
 type compiledHeader struct {

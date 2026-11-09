@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package cmd
+package command
 
 import (
 	"fmt"
 
-	"github.com/jjmrocha/beast/config"
+	"github.com/jjmrocha/beast/internal/config"
 )
 
 // Config implements the `beast config <fileName>` command

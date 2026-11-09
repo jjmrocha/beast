@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package cmd
+package command
 
 import (
 	"fmt"
 	"strings"
 
-	"github.com/jjmrocha/beast/template"
+	"github.com/jjmrocha/beast/internal/template"
 )
 
 // Template implements the `beast template ... <fileName>` command

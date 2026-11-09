@@ -22,7 +22,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/jjmrocha/beast/client"
+	"github.com/jjmrocha/beast/internal/client"
 )
 
 type csvReport struct {

@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jjmrocha/beast/config"
+	"github.com/jjmrocha/beast/internal/config"
 	"github.com/stretchr/testify/assert"
 )
 

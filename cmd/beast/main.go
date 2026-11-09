@@ -20,18 +20,18 @@ import (
 	"flag"
 	"os"
 
-	"github.com/jjmrocha/beast/cmd"
+	"github.com/jjmrocha/beast/internal/command"
 )
 
 func main() {
 	if len(os.Args) == 1 {
-		cmd.Help()
+		command.Help()
 		return
 	}
 
 	switch os.Args[1] {
 	case "help":
-		cmd.Help()
+		command.Help()
 	case "config":
 		configCmd(os.Args[2:])
 	case "run":
@@ -39,18 +39,18 @@ func main() {
 	case "template":
 		templateCmd(os.Args[2:])
 	default:
-		cmd.Help()
+		command.Help()
 	}
 }
 
 func configCmd(args []string) {
 	if len(args) != 1 {
-		cmd.Help()
+		command.Help()
 		return
 	}
 
 	fileName := args[0]
-	cmd.Config(fileName)
+	command.Config(fileName)
 }
 
 func runCmd(args []string) {
@@ -65,22 +65,22 @@ func runCmd(args []string) {
 	nonFlagArgs := runOption.Args()
 
 	if len(nonFlagArgs) != 1 {
-		cmd.Help()
+		command.Help()
 		return
 	}
 
 	if *nRequests < 0 || *nParallel <= 0 || *tDuration < 0 {
-		cmd.Help()
+		command.Help()
 		return
 	}
 
 	if (*nRequests == 0 && *tDuration == 0) || (*nRequests > 0 && *tDuration > 0) {
-		cmd.Help()
+		command.Help()
 		return
 	}
 
 	fileName := nonFlagArgs[0]
-	cmd.Run(*nRequests, *tDuration, *nParallel, fileName, *configFile, *dataFile, *outputFile)
+	command.Run(*nRequests, *tDuration, *nParallel, fileName, *configFile, *dataFile, *outputFile)
 }
 
 func templateCmd(args []string) {
@@ -98,9 +98,9 @@ func templateCmd(args []string) {
 		url = nonFlagArgs[0]
 		fileName = nonFlagArgs[1]
 	default:
-		cmd.Help()
+		command.Help()
 		return
 	}
 
-	cmd.Template(*method, url, fileName)
+	command.Template(*method, url, fileName)
 }

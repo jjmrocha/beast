@@ -26,7 +26,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/jjmrocha/beast/config"
+	"github.com/jjmrocha/beast/internal/config"
 )
 
 // This interface exists to allow the mocking of the client

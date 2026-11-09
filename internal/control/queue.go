@@ -16,7 +16,7 @@
 
 package control
 
-import "github.com/jjmrocha/beast/client"
+import "github.com/jjmrocha/beast/internal/client"
 
 // Element is a value on the queue
 type Element struct {

@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package cmd
+package command
 
 import (
 	"fmt"
 	"log"
 	"runtime"
 
-	"github.com/jjmrocha/beast/client"
-	"github.com/jjmrocha/beast/config"
-	"github.com/jjmrocha/beast/control"
-	"github.com/jjmrocha/beast/data"
-	"github.com/jjmrocha/beast/report"
-	"github.com/jjmrocha/beast/template"
+	"github.com/jjmrocha/beast/internal/client"
+	"github.com/jjmrocha/beast/internal/config"
+	"github.com/jjmrocha/beast/internal/control"
+	"github.com/jjmrocha/beast/internal/data"
+	"github.com/jjmrocha/beast/internal/report"
+	"github.com/jjmrocha/beast/internal/template"
 )
 
 // Run implements the `beast run ...` command

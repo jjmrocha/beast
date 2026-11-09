@@ -23,7 +23,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/jjmrocha/beast/client"
+	"github.com/jjmrocha/beast/internal/client"
 )
 
 // Header represents an HTTP Header template

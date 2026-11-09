@@ -22,9 +22,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jjmrocha/beast/client"
-	"github.com/jjmrocha/beast/data"
-	"github.com/jjmrocha/beast/template"
+	"github.com/jjmrocha/beast/internal/client"
+	"github.com/jjmrocha/beast/internal/data"
+	"github.com/jjmrocha/beast/internal/template"
 )
 
 // Control is used to control the execution of multiple goroutines

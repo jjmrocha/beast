@@ -31,7 +31,7 @@ import (
 func TestRead(t *testing.T) {
 	t.Run("empty file gives the defaults", func(t *testing.T) {
 		// given
-		fileName := "../testdata/empty.json"
+		fileName := "../../testdata/empty.json"
 		// when
 		result := Read(fileName)
 		// then
@@ -40,7 +40,7 @@ func TestRead(t *testing.T) {
 
 	t.Run("reads every v2.6.1 key", func(t *testing.T) {
 		// given
-		fileName := "../testdata/config_full.json"
+		fileName := "../../testdata/config_full.json"
 		// when
 		result := Read(fileName)
 		// then

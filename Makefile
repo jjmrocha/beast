@@ -16,7 +16,7 @@ help:
 	@echo "CI runs on GitHub Actions (.github/workflows/ci.yml)."
 
 build:
-	go build -o bin/beast .
+	go build -o bin/beast ./cmd/beast
 
 clean:
 	rm -rf bin

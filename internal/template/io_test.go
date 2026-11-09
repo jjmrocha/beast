@@ -41,32 +41,27 @@ func TestRead(t *testing.T) {
 	}{
 		{
 			name:     "basic GET in JSON",
-			input:    "../testdata/basic_get.json",
+			input:    "../../testdata/basic_get.json",
 			expected: &Template{Method: "GET", Endpoint: "http://www.google.pt"},
 		},
 		{
 			name:     "basic GET in YAML",
-			input:    "../testdata/basic_get.yaml",
+			input:    "../../testdata/basic_get.yaml",
 			expected: &Template{Method: "GET", Endpoint: "http://www.google.pt"},
 		},
 		{
 			name:     "basic POST in JSON",
-			input:    "../testdata/basic_post.json",
+			input:    "../../testdata/basic_post.json",
 			expected: &Template{Method: "POST", Endpoint: "http://someendpoint.pt", Headers: jsonContentType, Body: staticBody},
 		},
 		{
 			name:     "basic POST in YAML",
-			input:    "../testdata/basic_post.yaml",
+			input:    "../../testdata/basic_post.yaml",
 			expected: &Template{Method: "POST", Endpoint: "http://someendpoint.pt", Headers: jsonContentType, Body: staticBody},
 		},
 		{
 			name:     "templated POST in JSON",
-			input:    "../testdata/template_post.json",
-			expected: &Template{Method: "POST", Endpoint: templatedEndpoint, Headers: jsonContentType, Body: templatedBody},
-		},
-		{
-			name:     "JSON with an external body file",
-			input:    "../testdata/template_post_external.json",
+			input:    "../../testdata/template_post.json",
 			expected: &Template{Method: "POST", Endpoint: templatedEndpoint, Headers: jsonContentType, Body: templatedBody},
 		},
 	}
@@ -85,9 +80,22 @@ func TestRead(t *testing.T) {
 		})
 	}
 
+	t.Run("JSON with an external body file", func(t *testing.T) {
+		// given
+		t.Chdir("..")
+		input := "../testdata/template_post_external.json"
+		// when
+		result := Read(input)
+		// then
+		assert.Equal(t, "POST", result.Method)
+		assert.Equal(t, templatedEndpoint, result.Endpoint)
+		assert.ElementsMatch(t, jsonContentType, result.Headers)
+		assert.Equal(t, templatedBody, result.Body)
+	})
+
 	t.Run("templated POST in YAML", func(t *testing.T) {
 		// given
-		input := "../testdata/template_post.yaml"
+		input := "../../testdata/template_post.yaml"
 		// when
 		result := Read(input)
 		// then
@@ -155,7 +163,7 @@ func TestWrite(t *testing.T) {
 func TestExternalBody(t *testing.T) {
 	t.Run("reads the file named after @", func(t *testing.T) {
 		// given
-		body := "@../testdata/body.json"
+		body := "@../../testdata/body.json"
 		// when
 		result, found := externalBody(body)
 		// then
@@ -180,8 +188,8 @@ func TestIsJSON(t *testing.T) {
 		input    string
 		expected bool
 	}{
-		{name: "relative JSON path", input: "../testdata/basic_get.json", expected: true},
-		{name: "relative YAML path", input: "../testdata/basic_get.yaml", expected: false},
+		{name: "relative JSON path", input: "../../testdata/basic_get.json", expected: true},
+		{name: "relative YAML path", input: "../../testdata/basic_get.yaml", expected: false},
 		{name: "JSON file name", input: "template_post_external.json", expected: true},
 		{name: "YAML file name", input: "template_post_external.yaml", expected: false},
 		{name: "upper case extension", input: "SOME_FILE.JSON", expected: true},

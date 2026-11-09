@@ -21,7 +21,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/jjmrocha/beast/client"
+	"github.com/jjmrocha/beast/internal/client"
 )
 
 // Progress defines the progress indicator interface used by stats collector to inform user of the execution progress

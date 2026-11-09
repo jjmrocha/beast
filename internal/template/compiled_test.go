@@ -19,7 +19,7 @@ package template
 import (
 	"testing"
 
-	"github.com/jjmrocha/beast/data"
+	"github.com/jjmrocha/beast/internal/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,8 +27,8 @@ import (
 func TestExecuteTemplate(t *testing.T) {
 	t.Run("fills the URL, headers and body", func(t *testing.T) {
 		// given
-		tmplc := mustCompile(t, "../testdata/template_post.json")
-		record := data.Read("../testdata/data.csv").Next()
+		tmplc := mustCompile(t, "../../testdata/template_post.json")
+		record := data.Read("../../testdata/data.csv").Next()
 		// when
 		result, err := tmplc.executeTemplate(1, record)
 		// then
@@ -44,7 +44,7 @@ func TestExecuteTemplate(t *testing.T) {
 
 	t.Run("keeps an empty body when the template has none", func(t *testing.T) {
 		// given
-		tmplc := mustCompile(t, "../testdata/basic_get.json")
+		tmplc := mustCompile(t, "../../testdata/basic_get.json")
 		record := data.NewRecord()
 		// when
 		result, err := tmplc.executeTemplate(1, &record)
@@ -68,8 +68,8 @@ func TestExecuteTemplate(t *testing.T) {
 }
 
 func BenchmarkFromTemplateToClient(b *testing.B) {
-	tmpl := Read("../testdata/template_post.json")
-	record := data.Read("../testdata/data.csv").Next()
+	tmpl := Read("../../testdata/template_post.json")
+	record := data.Read("../../testdata/data.csv").Next()
 
 	for b.Loop() {
 		tmplc, err := tmpl.Compile()

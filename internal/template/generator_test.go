@@ -19,7 +19,7 @@ package template
 import (
 	"testing"
 
-	"github.com/jjmrocha/beast/data"
+	"github.com/jjmrocha/beast/internal/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +28,7 @@ func TestLog(t *testing.T) {
 	// given
 	gnt := &Generator{
 		RecordID: 1,
-		Data:     data.Read("../testdata/simple.csv").Next(),
+		Data:     data.Read("../../testdata/simple.csv").Next(),
 	}
 	// when
 	result := gnt.Log()
@@ -41,9 +41,9 @@ func TestRequest(t *testing.T) {
 	t.Run("builds the request from the rendered template", func(t *testing.T) {
 		// given
 		gnt := &Generator{
-			Template: mustCompile(t, "../testdata/template_post.json"),
+			Template: mustCompile(t, "../../testdata/template_post.json"),
 			RecordID: 1,
-			Data:     data.Read("../testdata/data.csv").Next(),
+			Data:     data.Read("../../testdata/data.csv").Next(),
 		}
 		// when
 		result, err := gnt.Request()
@@ -70,9 +70,9 @@ func TestRequest(t *testing.T) {
 
 func BenchmarkRequest(b *testing.B) {
 	gnt := &Generator{
-		Template: mustCompile(b, "../testdata/template_post.json"),
+		Template: mustCompile(b, "../../testdata/template_post.json"),
 		RecordID: 1,
-		Data:     data.Read("../testdata/data.csv").Next(),
+		Data:     data.Read("../../testdata/data.csv").Next(),
 	}
 
 	for b.Loop() {

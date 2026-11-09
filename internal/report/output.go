@@ -19,8 +19,8 @@ package report
 import (
 	"fmt"
 
-	"github.com/jjmrocha/beast/client"
-	"github.com/jjmrocha/beast/control"
+	"github.com/jjmrocha/beast/internal/client"
+	"github.com/jjmrocha/beast/internal/control"
 )
 
 const datetimeFormat = "2006-01-02 15:04:05.999"

@@ -19,8 +19,8 @@ package template
 import (
 	"fmt"
 
-	"github.com/jjmrocha/beast/client"
-	"github.com/jjmrocha/beast/data"
+	"github.com/jjmrocha/beast/internal/client"
+	"github.com/jjmrocha/beast/internal/data"
 )
 
 // Generator generates BRequests

@@ -8,7 +8,7 @@ Binaries are available on [releases](https://github.com/jjmrocha/beast/releases)
 
 Or you can download the code and compile yourself:
 ```
-$ go get -u github.com/jjmrocha/beast
+$ go install github.com/jjmrocha/beast/cmd/beast@latest
 ```
 
 Documentation

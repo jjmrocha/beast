@@ -33,7 +33,7 @@ var (
 func TestRead(t *testing.T) {
 	t.Run("uses the first line as column names and returns the rows in file order", func(t *testing.T) {
 		// given
-		fileName := "../testdata/data.csv"
+		fileName := "../../testdata/data.csv"
 		// when
 		result := Read(fileName)
 		// then
@@ -55,7 +55,7 @@ func TestRead(t *testing.T) {
 func TestNext(t *testing.T) {
 	t.Run("starts again at the first row after the last", func(t *testing.T) {
 		// given
-		dt := Read("../testdata/data.csv")
+		dt := Read("../../testdata/data.csv")
 		dt.Next()
 		dt.Next()
 		// when

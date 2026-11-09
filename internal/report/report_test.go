@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jjmrocha/beast/client"
+	"github.com/jjmrocha/beast/internal/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
