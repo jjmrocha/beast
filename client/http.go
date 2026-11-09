@@ -21,7 +21,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -97,7 +96,7 @@ func (c *Client) Execute(request *Request) *Response {
 	}
 
 	defer resp.Body.Close()
-	io.Copy(ioutil.Discard, resp.Body)
+	io.Copy(io.Discard, resp.Body)
 
 	return &Response{
 		Timestamp:  start,

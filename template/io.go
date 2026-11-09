@@ -18,8 +18,8 @@ package template
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -35,7 +35,7 @@ func Read(fileName string) *Template {
 }
 
 func readFile(fileName string) []byte {
-	data, err := ioutil.ReadFile(fileName)
+	data, err := os.ReadFile(fileName)
 
 	if err != nil {
 		log.Fatalf("Error reading template file %s: %v\n", fileName, err)
@@ -54,7 +54,7 @@ func Write(fileName string, tmpl *Template) {
 }
 
 func writeFile(data []byte, fileName string) {
-	if err := ioutil.WriteFile(fileName, data, 0666); err != nil {
+	if err := os.WriteFile(fileName, data, 0666); err != nil {
 		log.Printf("Error writing template to file %s: %v\n", fileName, err)
 	}
 }
@@ -84,7 +84,7 @@ func readJSON(fileName string) *Template {
 func externalBody(body string) (string, bool) {
 	if strings.HasPrefix(body, "@") {
 		fileName := body[1:]
-		data, err := ioutil.ReadFile(fileName)
+		data, err := os.ReadFile(fileName)
 		if err != nil {
 			log.Fatalf("Error reading external body file %s: %v\n", fileName, err)
 		}
