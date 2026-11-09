@@ -17,39 +17,35 @@
 package report
 
 import (
+	"fmt"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPercentage(t *testing.T) {
-	// given
-	ds := durationSlice{
-		time.Duration(0),
-		time.Duration(1),
-		time.Duration(2),
-		time.Duration(3),
-		time.Duration(4),
-		time.Duration(5),
-		time.Duration(6),
-		time.Duration(7),
-		time.Duration(8),
-		time.Duration(9),
-	}
-	var tests = []struct {
+	ds := durationSlice{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+	tests := []struct {
 		input    int
 		expected time.Duration
 	}{
-		{20, time.Duration(1)},
-		{40, time.Duration(3)},
-		{60, time.Duration(5)},
-		{80, time.Duration(7)},
-		{90, time.Duration(8)},
+		{20, 1},
+		{40, 3},
+		{60, 5},
+		{80, 7},
+		{90, 8},
 	}
-	// then
-	for _, test := range tests {
-		result := ds.percentage(test.input)
-		if result != test.expected {
-			t.Errorf("got %v expected %v for percentage %v", result, test.expected, test.input)
-		}
+
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("%d percent of ten", tc.input), func(t *testing.T) {
+			// given
+			percentage := tc.input
+			// when
+			result := ds.percentage(percentage)
+			// then
+			assert.Equal(t, tc.expected, result)
+		})
 	}
 }

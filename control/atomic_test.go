@@ -18,43 +18,52 @@ package control
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestInit(t *testing.T) {
-	// given
-	var tests = []struct {
+func TestNewAtomicBool(t *testing.T) {
+	tests := []struct {
+		name     string
 		input    bool
 		expected bool
 	}{
-		{true, true},
-		{false, false},
+		{name: "starts true", input: true, expected: true},
+		{name: "starts false", input: false, expected: false},
 	}
-	// then
-	for _, test := range tests {
-		underTest := NewAtomicBool(test.input)
-		result := underTest.Get()
-		if result != test.expected {
-			t.Errorf("got %v expected %v", result, test.expected)
-		}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			input := tc.input
+			// when
+			result := NewAtomicBool(input)
+			// then
+			assert.Equal(t, tc.expected, result.Get())
+		})
 	}
 }
 
-func TestSetGet(t *testing.T) {
-	// given
-	var tests = []struct {
+func TestSet(t *testing.T) {
+	tests := []struct {
+		name     string
+		initial  bool
 		input    bool
 		expected bool
 	}{
-		{true, true},
-		{false, false},
+		{name: "false to true", initial: false, input: true, expected: true},
+		{name: "true to false", initial: true, input: false, expected: false},
+		{name: "true stays true", initial: true, input: true, expected: true},
 	}
-	underTest := NewAtomicBool(false)
-	// then
-	for _, test := range tests {
-		underTest.Set(test.input)
-		result := underTest.Get()
-		if result != test.expected {
-			t.Errorf("got %v expected %v", result, test.expected)
-		}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			atomicBool := NewAtomicBool(tc.initial)
+			// when
+			atomicBool.Set(tc.input)
+			// then
+			assert.Equal(t, tc.expected, atomicBool.Get())
+		})
 	}
 }

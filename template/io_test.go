@@ -17,272 +17,290 @@
 package template
 
 import (
-	"reflect"
-	"strings"
+	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestReadBasicGETforJSON(t *testing.T) {
-	// given
-	expected := &Template{
-		Method:   "GET",
-		Endpoint: "http://www.google.pt",
-	}
-	// when
-	tmpl := Read("../testdata/basic_get.json")
-	// then
-	if !reflect.DeepEqual(tmpl, expected) {
-		t.Errorf("got %v expected %v", tmpl, expected)
-	}
-}
+const (
+	templatedEndpoint = "http://someendpoint.pt/{{ .RequestID }}"
+	templatedBody     = "{\"id\": {{ .RequestID }}, \"value\": \"{{ .Data.A }}\"}"
+	staticBody        = "{\"id\": 1, \"value\": \"any\"}"
+)
 
-func TestReadBasicGETforYAML(t *testing.T) {
-	// given
-	expected := &Template{
-		Method:   "GET",
-		Endpoint: "http://www.google.pt",
-	}
-	// when
-	tmpl := Read("../testdata/basic_get.yaml")
-	// then
-	if !reflect.DeepEqual(tmpl, expected) {
-		t.Errorf("got %v expected %v", tmpl, expected)
-	}
-}
+var jsonContentType = []Header{{Key: "Content-Type", Value: "application/json"}}
 
-func TestReadBasicPOSTforJSON(t *testing.T) {
-	// given
-	expected := &Template{
-		Method:   "POST",
-		Endpoint: "http://someendpoint.pt",
-		Headers: []Header{
-			{"Content-Type", "application/json"},
+func TestRead(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected *Template
+	}{
+		{
+			name:     "basic GET in JSON",
+			input:    "../testdata/basic_get.json",
+			expected: &Template{Method: "GET", Endpoint: "http://www.google.pt"},
 		},
-		Body: "{\"id\": 1, \"value\": \"any\"}",
-	}
-	// when
-	tmpl := Read("../testdata/basic_post.json")
-	// then
-	if !reflect.DeepEqual(tmpl, expected) {
-		t.Errorf("got %v expected %v", tmpl, expected)
-	}
-}
-
-func TestReadBasicPOSTforYAML(t *testing.T) {
-	// given
-	expected := &Template{
-		Method:   "POST",
-		Endpoint: "http://someendpoint.pt",
-		Headers: []Header{
-			{"Content-Type", "application/json"},
+		{
+			name:     "basic GET in YAML",
+			input:    "../testdata/basic_get.yaml",
+			expected: &Template{Method: "GET", Endpoint: "http://www.google.pt"},
 		},
-		Body: "{\"id\": 1, \"value\": \"any\"}",
-	}
-	// when
-	tmpl := Read("../testdata/basic_post.yaml")
-	// then
-	if !reflect.DeepEqual(tmpl, expected) {
-		t.Errorf("got %v expected %v", tmpl, expected)
-	}
-}
-
-func TestReadTemplatePOSTforJSON(t *testing.T) {
-	// given
-	expected := &Template{
-		Method:   "POST",
-		Endpoint: "http://someendpoint.pt/{{ .RequestID }}",
-		Headers: []Header{
-			{"Content-Type", "application/json"},
+		{
+			name:     "basic POST in JSON",
+			input:    "../testdata/basic_post.json",
+			expected: &Template{Method: "POST", Endpoint: "http://someendpoint.pt", Headers: jsonContentType, Body: staticBody},
 		},
-		Body: "{\"id\": {{ .RequestID }}, \"value\": \"{{ .Data.A }}\"}",
-	}
-	// when
-	tmpl := Read("../testdata/template_post.json")
-	// then
-	if !reflect.DeepEqual(tmpl, expected) {
-		t.Errorf("got %v expected %v", tmpl, expected)
-	}
-}
-
-func TestReadTemplatePOSTforYAML(t *testing.T) {
-	// given
-	expectedMethod := "POST"
-	expectedEndpoint := "http://someendpoint.pt/{{ .RequestID }}"
-	expectedHeaders := []Header{
-		{"Content-Type", "application/json"},
-	}
-	firstBodyField := "\"id\": {{ .RequestID }}"
-	secondBodyField := "\"value\": \"{{ .Data.A }}\""
-	// when
-	tmpl := Read("../testdata/template_post.yaml")
-	// then
-	if tmpl.Method != expectedMethod {
-		t.Errorf("got %v expected %v", tmpl.Method, expectedMethod)
-	}
-
-	if tmpl.Endpoint != expectedEndpoint {
-		t.Errorf("got %v expected %v", tmpl.Endpoint, expectedEndpoint)
-	}
-
-	if !reflect.DeepEqual(tmpl.Headers, expectedHeaders) {
-		t.Errorf("got %v expected %v", tmpl.Headers, expectedHeaders)
-	}
-
-	if !strings.Contains(tmpl.Body, firstBodyField) {
-		t.Errorf("body %v should contain %v", tmpl.Body, firstBodyField)
-	}
-
-	if !strings.Contains(tmpl.Body, secondBodyField) {
-		t.Errorf("body %v should contain %v", tmpl.Body, secondBodyField)
-	}
-}
-
-func TestReadTemplatePOSTWithExternalBody(t *testing.T) {
-	// given
-	expected := &Template{
-		Method:   "POST",
-		Endpoint: "http://someendpoint.pt/{{ .RequestID }}",
-		Headers: []Header{
-			{"Content-Type", "application/json"},
+		{
+			name:     "basic POST in YAML",
+			input:    "../testdata/basic_post.yaml",
+			expected: &Template{Method: "POST", Endpoint: "http://someendpoint.pt", Headers: jsonContentType, Body: staticBody},
 		},
-		Body: "{\"id\": {{ .RequestID }}, \"value\": \"{{ .Data.A }}\"}",
+		{
+			name:     "templated POST in JSON",
+			input:    "../testdata/template_post.json",
+			expected: &Template{Method: "POST", Endpoint: templatedEndpoint, Headers: jsonContentType, Body: templatedBody},
+		},
+		{
+			name:     "JSON with an external body file",
+			input:    "../testdata/template_post_external.json",
+			expected: &Template{Method: "POST", Endpoint: templatedEndpoint, Headers: jsonContentType, Body: templatedBody},
+		},
 	}
-	// when
-	tmpl := Read("../testdata/template_post_external.json")
-	// then
-	if !reflect.DeepEqual(tmpl, expected) {
-		t.Errorf("got %v expected %v", tmpl, expected)
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			input := tc.input
+			// when
+			result := Read(input)
+			// then
+			assert.Equal(t, tc.expected.Method, result.Method)
+			assert.Equal(t, tc.expected.Endpoint, result.Endpoint)
+			assert.ElementsMatch(t, tc.expected.Headers, result.Headers)
+			assert.Equal(t, tc.expected.Body, result.Body)
+		})
 	}
+
+	t.Run("templated POST in YAML", func(t *testing.T) {
+		// given
+		input := "../testdata/template_post.yaml"
+		// when
+		result := Read(input)
+		// then
+		assert.Equal(t, "POST", result.Method)
+		assert.Equal(t, templatedEndpoint, result.Endpoint)
+		assert.ElementsMatch(t, jsonContentType, result.Headers)
+		assert.Contains(t, result.Body, "\"id\": {{ .RequestID }}")
+		assert.Contains(t, result.Body, "\"value\": \"{{ .Data.A }}\"")
+	})
 }
 
-func TestExternalBodyWithExternalBody(t *testing.T) {
-	// given
-	body := "@../testdata/body.json"
-	expected := "{\"id\": {{ .RequestID }}, \"value\": \"{{ .Data.A }}\"}"
-	// when
-	response, found := externalBody(body)
-	// then
-	if found != true {
-		t.Errorf("got %v expected %v for found", found, true)
+func TestWrite(t *testing.T) {
+	tmpl := &Template{
+		Method:   "PUT",
+		Endpoint: templatedEndpoint,
+		Headers:  []Header{{Key: "User-Agent", Value: "Beast/1"}},
+		Body:     templatedBody,
 	}
 
-	if response != expected {
-		t.Errorf("got %v expected %v for response", response, expected)
-	}
+	t.Run("JSON file reads back as the same template", func(t *testing.T) {
+		// given
+		fileName := filepath.Join(t.TempDir(), "request.json")
+		// when
+		Write(fileName, tmpl)
+		// then
+		result := Read(fileName)
+		assert.Equal(t, tmpl, result)
+	})
+
+	t.Run("JSON file uses the v2.6.1 key names", func(t *testing.T) {
+		// given
+		fileName := filepath.Join(t.TempDir(), "request.json")
+		// when
+		Write(fileName, tmpl)
+		// then
+		result := mustReadFile(t, fileName)
+		for _, key := range []string{`"method"`, `"url"`, `"headers"`, `"key"`, `"value"`, `"body"`} {
+			assert.Contains(t, result, key)
+		}
+	})
+
+	t.Run("YAML file reads back as the same template", func(t *testing.T) {
+		// given
+		fileName := filepath.Join(t.TempDir(), "request.yaml")
+		// when
+		Write(fileName, tmpl)
+		// then
+		result := Read(fileName)
+		assert.Equal(t, tmpl, result)
+	})
+
+	t.Run("YAML file uses the v2.6.1 key names", func(t *testing.T) {
+		// given
+		fileName := filepath.Join(t.TempDir(), "request.yaml")
+		// when
+		Write(fileName, tmpl)
+		// then
+		result := mustReadFile(t, fileName)
+		for _, key := range []string{"method:", "endpoint:", "headers:", "User-Agent:", "request-body:"} {
+			assert.Contains(t, result, key)
+		}
+	})
 }
 
-func TestExternalBodyWithoutExternalBody(t *testing.T) {
-	// given
-	body := "{\"id\": {{ .RequestID }}, \"value\": \"{{ .Data.A }}\"}"
-	// when
-	_, found := externalBody(body)
-	// then
-	if found != false {
-		t.Errorf("got %v expected %v", found, false)
-	}
+func TestExternalBody(t *testing.T) {
+	t.Run("reads the file named after @", func(t *testing.T) {
+		// given
+		body := "@../testdata/body.json"
+		// when
+		result, found := externalBody(body)
+		// then
+		assert.True(t, found)
+		assert.Equal(t, templatedBody, result)
+	})
+
+	t.Run("ignores a body without @", func(t *testing.T) {
+		// given
+		body := templatedBody
+		// when
+		result, found := externalBody(body)
+		// then
+		assert.False(t, found)
+		assert.Empty(t, result)
+	})
 }
 
 func TestIsJSON(t *testing.T) {
-	// given
-	var tests = []struct {
+	tests := []struct {
+		name     string
 		input    string
 		expected bool
 	}{
-		{"../testdata/basic_get.json", true},
-		{"../testdata/basic_get.yaml", false},
-		{"template_post_external.json", true},
-		{"template_post_external.yaml", false},
-		{"SOME_FILE.JSON", true},
-		{"/json/not_ajson", false},
+		{name: "relative JSON path", input: "../testdata/basic_get.json", expected: true},
+		{name: "relative YAML path", input: "../testdata/basic_get.yaml", expected: false},
+		{name: "JSON file name", input: "template_post_external.json", expected: true},
+		{name: "YAML file name", input: "template_post_external.yaml", expected: false},
+		{name: "upper case extension", input: "SOME_FILE.JSON", expected: true},
+		{name: "json only in a folder name", input: "/json/not_ajson", expected: false},
 	}
-	// then
-	for _, test := range tests {
-		result := isJSON(test.input)
-		if result != test.expected {
-			t.Errorf("got %v expected %v", result, test.expected)
-		}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			input := tc.input
+			// when
+			result := isJSON(input)
+			// then
+			assert.Equal(t, tc.expected, result)
+		})
 	}
 }
 
-func TestHeaderConvertion(t *testing.T) {
-	// given
-	tHeader := []Header{
-		{
-			Key:   "Key_1",
-			Value: "Value_1",
-		},
-		{
-			Key:   "Key_2",
-			Value: "Value_2",
-		},
-	}
-	yHeader := map[string]string{
-		"Key_1": "Value_1",
-		"Key_2": "Value_2",
-	}
-	// when
-	yResult := toHeaderMap(tHeader)
-	tResult := fromHeaderMap(yHeader)
-	// then
-	if !reflect.DeepEqual(yResult, yHeader) {
-		t.Errorf("got %v expected %v", yResult, yHeader)
-	}
+func TestToHeaderMap(t *testing.T) {
+	t.Run("turns the header list into a map", func(t *testing.T) {
+		// given
+		headers := []Header{{Key: "Key_1", Value: "Value_1"}, {Key: "Key_2", Value: "Value_2"}}
+		// when
+		result := toHeaderMap(headers)
+		// then
+		expected := map[string]string{"Key_1": "Value_1", "Key_2": "Value_2"}
+		assert.Equal(t, expected, result)
+	})
 
-	if !reflect.DeepEqual(tResult, tHeader) {
-		t.Errorf("got %v expected %v", tResult, tHeader)
+	t.Run("keeps no headers as nil", func(t *testing.T) {
+		// when
+		result := toHeaderMap(nil)
+		// then
+		assert.Nil(t, result)
+	})
+}
+
+func TestFromHeaderMap(t *testing.T) {
+	t.Run("turns the header map into a list", func(t *testing.T) {
+		// given
+		headers := map[string]string{"Key_1": "Value_1", "Key_2": "Value_2"}
+		// when
+		result := fromHeaderMap(headers)
+		// then
+		expected := []Header{{Key: "Key_1", Value: "Value_1"}, {Key: "Key_2", Value: "Value_2"}}
+		assert.ElementsMatch(t, expected, result)
+	})
+
+	t.Run("keeps no headers as nil", func(t *testing.T) {
+		// when
+		result := fromHeaderMap(nil)
+		// then
+		assert.Nil(t, result)
+	})
+}
+
+func TestToYamlTemplate(t *testing.T) {
+	t.Run("full template", func(t *testing.T) {
+		// given
+		tmpl := exampleTemplate()
+		// when
+		result := toYamlTemplate(tmpl)
+		// then
+		assert.Equal(t, exampleYamlTemplate(), result)
+	})
+
+	t.Run("template without headers or body", func(t *testing.T) {
+		// given
+		tmpl := &Template{Method: "GET", Endpoint: "http://www.google.pt"}
+		// when
+		result := toYamlTemplate(tmpl)
+		// then
+		expected := &templateY{Method: "GET", Endpoint: "http://www.google.pt"}
+		assert.Equal(t, expected, result)
+	})
+}
+
+func TestFromYamlTemplate(t *testing.T) {
+	t.Run("full template", func(t *testing.T) {
+		// given
+		tmply := exampleYamlTemplate()
+		// when
+		result := fromYamlTemplate(tmply)
+		// then
+		assert.Equal(t, exampleTemplate(), result)
+	})
+
+	t.Run("template without headers or body", func(t *testing.T) {
+		// given
+		tmply := &templateY{Method: "GET", Endpoint: "http://www.google.pt"}
+		// when
+		result := fromYamlTemplate(tmply)
+		// then
+		expected := &Template{Method: "GET", Endpoint: "http://www.google.pt"}
+		assert.Equal(t, expected, result)
+	})
+}
+
+func exampleTemplate() *Template {
+	return &Template{
+		Method:   "Use Http method: GET/POST/PUT/DELETE",
+		Endpoint: "Http URL to be invoked",
+		Headers:  []Header{{Key: "User-Agent", Value: "Beast/1"}},
+		Body:     "Optional, enter body to send with POST or PUT",
 	}
 }
 
-func TestRequestConvertion(t *testing.T) {
-	// given
-	tRequest := &Template{
+func exampleYamlTemplate() *templateY {
+	return &templateY{
 		Method:   "Use Http method: GET/POST/PUT/DELETE",
 		Endpoint: "Http URL to be invoked",
-		Headers: []Header{
-			{Key: "User-Agent", Value: "Beast/1"},
-		},
-		Body: "Optional, enter body to send with POST or PUT",
-	}
-	yRequest := &templateY{
-		Method:   "Use Http method: GET/POST/PUT/DELETE",
-		Endpoint: "Http URL to be invoked",
-		Headers: map[string]string{
-			"User-Agent": "Beast/1",
-		},
-		Body: "Optional, enter body to send with POST or PUT",
-	}
-	// when
-	yResult := toYamlTemplate(tRequest)
-	tResult := fromYamlTemplate(yRequest)
-	// then
-	if !reflect.DeepEqual(yResult, yRequest) {
-		t.Errorf("got %v expected %v", yResult, yRequest)
-	}
-
-	if !reflect.DeepEqual(tResult, tRequest) {
-		t.Errorf("got %v expected %v", tResult, tRequest)
+		Headers:  map[string]string{"User-Agent": "Beast/1"},
+		Body:     "Optional, enter body to send with POST or PUT",
 	}
 }
 
-func TestPartialRequestConvertion(t *testing.T) {
-	// given
-	tRequest := &Template{
-		Method:   "Use Http method: GET/POST/PUT/DELETE",
-		Endpoint: "Http URL to be invoked",
-	}
-	yRequest := &templateY{
-		Method:   "Use Http method: GET/POST/PUT/DELETE",
-		Endpoint: "Http URL to be invoked",
-	}
-	// then
-	yResult := toYamlTemplate(tRequest)
-	tResult := fromYamlTemplate(yRequest)
-	// then
-	if !reflect.DeepEqual(yResult, yRequest) {
-		t.Errorf("got %v expected %v", yResult, yRequest)
-	}
-
-	if !reflect.DeepEqual(tResult, tRequest) {
-		t.Errorf("got %v expected %v", tResult, tRequest)
-	}
+func mustReadFile(t testing.TB, fileName string) string {
+	t.Helper()
+	data, err := os.ReadFile(fileName)
+	require.NoError(t, err)
+	return string(data)
 }

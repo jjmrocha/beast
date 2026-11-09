@@ -18,34 +18,89 @@ package client
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIsSuccess(t *testing.T) {
-	// given
-	var tests = []struct {
+	tests := []struct {
+		name     string
 		input    int
 		expected bool
 	}{
-		{100, false},
-		{122, false},
-		{200, true},
-		{201, true},
-		{300, false},
-		{307, false},
-		{400, false},
-		{404, false},
-		{429, false},
-		{500, false},
-		{502, false},
+		{name: "100 continue", input: 100, expected: false},
+		{name: "122", input: 122, expected: false},
+		{name: "199 just below 2xx", input: 199, expected: false},
+		{name: "200 ok", input: 200, expected: true},
+		{name: "201 created", input: 201, expected: true},
+		{name: "299 last 2xx", input: 299, expected: true},
+		{name: "300 multiple choices", input: 300, expected: false},
+		{name: "307 temporary redirect", input: 307, expected: false},
+		{name: "400 bad request", input: 400, expected: false},
+		{name: "404 not found", input: 404, expected: false},
+		{name: "429 too many requests", input: 429, expected: false},
+		{name: "500 internal error", input: 500, expected: false},
+		{name: "502 bad gateway", input: 502, expected: false},
+		{name: "-400 client timeout", input: -400, expected: false},
 	}
-	// then
-	for _, test := range tests {
-		response := &Response{
-			StatusCode: test.input,
-		}
-		result := response.IsSuccess()
-		if result != test.expected {
-			t.Errorf("got %v expected %v for status %v", result, test.expected, test.input)
-		}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			response := &Response{StatusCode: tc.input}
+			// when
+			result := response.IsSuccess()
+			// then
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestIsClientError(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    int
+		expected bool
+	}{
+		{name: "-500 unexpected error", input: -500, expected: true},
+		{name: "-1 smallest negative", input: -1, expected: true},
+		{name: "0 no status", input: 0, expected: false},
+		{name: "200 ok", input: 200, expected: false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			response := &Response{StatusCode: tc.input}
+			// when
+			result := response.IsClientError()
+			// then
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestClientError(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    int
+		expected string
+	}{
+		{name: "-100 generation error", input: -100, expected: "Request generation error"},
+		{name: "-400 timeout", input: -400, expected: "Request timeout"},
+		{name: "-500 unexpected error", input: -500, expected: "Unexpected error"},
+		{name: "-1 unknown client error", input: -1, expected: ""},
+		{name: "200 not a client error", input: 200, expected: ""},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			response := &Response{StatusCode: tc.input}
+			// when
+			result := response.ClientError()
+			// then
+			assert.Equal(t, tc.expected, result)
+		})
 	}
 }

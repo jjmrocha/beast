@@ -17,59 +17,80 @@
 package template
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/jjmrocha/beast/data"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestCompileAndExecute(t *testing.T) {
-	// given
-	dt := data.Read("../testdata/data.csv")
-	tmpl := Read("../testdata/template_post.json")
-	expected := &Template{
-		Method:   "POST",
-		Endpoint: "http://someendpoint.pt/1",
-		Headers: []Header{
-			{"Content-Type", "application/json"},
-		},
-		Body: "{\"id\": 1, \"value\": \"a1\"}",
-	}
-	// when
-	tmplc, err := tmpl.Compile()
-	if err != nil {
-		t.Error(err)
-	}
+func TestExecuteTemplate(t *testing.T) {
+	t.Run("fills the URL, headers and body", func(t *testing.T) {
+		// given
+		tmplc := mustCompile(t, "../testdata/template_post.json")
+		record := data.Read("../testdata/data.csv").Next()
+		// when
+		result, err := tmplc.executeTemplate(1, record)
+		// then
+		require.NoError(t, err)
+		expected := &Template{
+			Method:   "POST",
+			Endpoint: "http://someendpoint.pt/1",
+			Headers:  jsonContentType,
+			Body:     "{\"id\": 1, \"value\": \"a1\"}",
+		}
+		assert.Equal(t, expected, result)
+	})
 
-	result, err := tmplc.executeTemplate(1, dt.Next())
-	if err != nil {
-		t.Error(err)
-	}
-	// then
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("got %v expected %v", result, expected)
-	}
+	t.Run("keeps an empty body when the template has none", func(t *testing.T) {
+		// given
+		tmplc := mustCompile(t, "../testdata/basic_get.json")
+		record := data.NewRecord()
+		// when
+		result, err := tmplc.executeTemplate(1, &record)
+		// then
+		require.NoError(t, err)
+		assert.Empty(t, result.Body)
+	})
+
+	t.Run("returns an error when the template fails while running", func(t *testing.T) {
+		// given
+		tmpl := &Template{Method: "GET", Endpoint: "http://someendpoint.pt/{{ .Data.A.B }}"}
+		tmplc, err := tmpl.Compile()
+		require.NoError(t, err)
+		record := data.Record{"A": "a1"}
+		// when
+		result, err := tmplc.executeTemplate(1, &record)
+		// then
+		assert.Error(t, err)
+		assert.Nil(t, result)
+	})
 }
 
 func BenchmarkFromTemplateToClient(b *testing.B) {
-	// given
-	dt := data.Read("../testdata/data.csv")
 	tmpl := Read("../testdata/template_post.json")
-	// then
-	b.ResetTimer()
+	record := data.Read("../testdata/data.csv").Next()
 
-	tmplc, err := tmpl.Compile()
-	if err != nil {
-		b.Error(err)
+	for b.Loop() {
+		tmplc, err := tmpl.Compile()
+		if err != nil {
+			b.Fatal(err)
+		}
+		tmplf, err := tmplc.executeTemplate(1, record)
+		if err != nil {
+			b.Fatal(err)
+		}
+		if _, err := tmplf.request(); err != nil {
+			b.Fatal(err)
+		}
 	}
+}
 
-	tmplf, err := tmplc.executeTemplate(1, dt.Next())
+func mustCompile(t testing.TB, fileName string) *CompiledTemplate {
+	t.Helper()
+	tmplc, err := Read(fileName).Compile()
 	if err != nil {
-		b.Error(err)
+		t.Fatalf("Compile(%s): unexpected error: %v", fileName, err)
 	}
-
-	_, err = tmplf.request()
-	if err != nil {
-		b.Error(err)
-	}
+	return tmplc
 }

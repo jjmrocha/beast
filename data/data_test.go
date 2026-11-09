@@ -17,55 +17,68 @@
 package data
 
 import (
-	"reflect"
+	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+var (
+	firstRow  = Record{"A": "a1", "B": "b1"}
+	secondRow = Record{"A": "a2", "B": "b2"}
 )
 
 func TestRead(t *testing.T) {
-	// given
-	expectedData := &Data{
-		fields: []string{"A", "B"},
-		records: []Record{
-			{"A": "a1", "B": "b1"},
-			{"A": "a2", "B": "b2"},
-		},
-	}
-	// when
-	result := Read("../testdata/data.csv")
-	// then
-	if !reflect.DeepEqual(result, expectedData) {
-		t.Errorf("got %v expected %v", result, expectedData)
-	}
+	t.Run("uses the first line as column names and returns the rows in file order", func(t *testing.T) {
+		// given
+		fileName := "../testdata/data.csv"
+		// when
+		result := Read(fileName)
+		// then
+		assert.Equal(t, &firstRow, result.Next())
+		assert.Equal(t, &secondRow, result.Next())
+	})
+
+	t.Run("keeps a quoted value with a comma as one value", func(t *testing.T) {
+		// given
+		fileName := writeCSV(t, "NAME,URL\n\"Smith, John\",http://a.pt\n")
+		// when
+		result := Read(fileName)
+		// then
+		expected := &Record{"NAME": "Smith, John", "URL": "http://a.pt"}
+		assert.Equal(t, expected, result.Next())
+	})
 }
 
 func TestNext(t *testing.T) {
-	// given
-	expectedFirstRecord := Record{
-		"A": "a1",
-		"B": "b1",
-	}
-	expectedSecondRecord := Record{
-		"A": "a2",
-		"B": "b2",
-	}
-	dt := &Data{
-		fields:  []string{"A", "B"},
-		records: []Record{expectedFirstRecord, expectedSecondRecord},
-	}
-	// when
-	firstRecord := dt.Next()
-	secondRecord := dt.Next()
-	thirdRecord := dt.Next()
-	// then
-	if !reflect.DeepEqual(firstRecord, &expectedFirstRecord) {
-		t.Errorf("got %v expected %v", firstRecord, &expectedFirstRecord)
-	}
+	t.Run("starts again at the first row after the last", func(t *testing.T) {
+		// given
+		dt := Read("../testdata/data.csv")
+		dt.Next()
+		dt.Next()
+		// when
+		result := dt.Next()
+		// then
+		assert.Equal(t, &firstRow, result)
+	})
 
-	if !reflect.DeepEqual(secondRecord, &expectedSecondRecord) {
-		t.Errorf("got %v expected %v", secondRecord, &expectedSecondRecord)
-	}
+	t.Run("returns the only row every time", func(t *testing.T) {
+		// given
+		dt := Read(writeCSV(t, "A\na1\n"))
+		dt.Next()
+		// when
+		result := dt.Next()
+		// then
+		expected := &Record{"A": "a1"}
+		assert.Equal(t, expected, result)
+	})
+}
 
-	if !reflect.DeepEqual(thirdRecord, &expectedFirstRecord) {
-		t.Errorf("got %v expected %v", thirdRecord, &expectedFirstRecord)
-	}
+func writeCSV(t testing.TB, content string) string {
+	t.Helper()
+	fileName := filepath.Join(t.TempDir(), "data.csv")
+	require.NoError(t, os.WriteFile(fileName, []byte(content), 0o600))
+	return fileName
 }

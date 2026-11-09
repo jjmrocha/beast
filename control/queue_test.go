@@ -20,170 +20,133 @@ import (
 	"testing"
 
 	"github.com/jjmrocha/beast/client"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestNewFiFo(t *testing.T) {
-	underTest := NewFifo()
-
-	if underTest.len != 0 {
-		t.Errorf("len must be 0")
-	}
-
-	if underTest.first != nil {
-		t.Errorf("first must be nil")
-	}
-
-	if underTest.last != nil {
-		t.Errorf("last must be nil")
-	}
+func TestNewFifo(t *testing.T) {
+	// when
+	result := NewFifo()
+	// then
+	assert.Equal(t, 0, result.Len())
+	assert.Nil(t, result.Pop())
 }
 
 func TestPush(t *testing.T) {
-	// given
-	underTest := NewFifo()
-	var tests = []struct {
-		status        int
-		expectedLen   int
-		expectedFirst int
-		expectedLast  int
-	}{
-		{1, 1, 1, 1},
-		{2, 2, 1, 2},
-		{3, 3, 1, 3},
-	}
-	// then
-	for _, test := range tests {
-		underTest.Push(buildResponse(test.status))
+	t.Run("adds to an empty queue", func(t *testing.T) {
+		// given
+		q := NewFifo()
+		// when
+		q.Push(response(1))
+		// then
+		assert.Equal(t, 1, q.Len())
+	})
 
-		if underTest.len != test.expectedLen {
-			t.Errorf("len: got %v expected %v", underTest.len, test.expectedLen)
-		}
-
-		if underTest.first.Value.StatusCode != test.expectedFirst {
-			t.Errorf("first: got %v expected %v", underTest.first.Value.StatusCode, test.expectedFirst)
-		}
-
-		if underTest.last.Value.StatusCode != test.expectedLast {
-			t.Errorf("last: got %v expected %v", underTest.last.Value.StatusCode, test.expectedLast)
-		}
-	}
+	t.Run("adds at the end", func(t *testing.T) {
+		// given
+		q := NewFifo()
+		q.Push(response(1))
+		q.Push(response(2))
+		// when
+		q.Push(response(3))
+		// then
+		assert.Equal(t, 3, q.Len())
+		assert.Equal(t, []int{1, 2, 3}, drain(q))
+	})
 }
 
 func TestPop(t *testing.T) {
-	// given
-	underTest := NewFifo()
-	underTest.Push(buildResponse(1))
-	underTest.Push(buildResponse(2))
-	underTest.Push(buildResponse(3))
-	// then
+	t.Run("returns the first pushed element", func(t *testing.T) {
+		// given
+		q := NewFifo()
+		q.Push(response(1))
+		q.Push(response(2))
+		q.Push(response(3))
+		// when
+		result := q.Pop()
+		// then
+		require.NotNil(t, result)
+		assert.Equal(t, 1, result.Value.StatusCode)
+		assert.Equal(t, 2, q.Len())
+	})
 
-	// Remove first
-	result := underTest.Pop()
+	t.Run("returns the last element and leaves the queue empty", func(t *testing.T) {
+		// given
+		q := NewFifo()
+		q.Push(response(1))
+		// when
+		result := q.Pop()
+		// then
+		require.NotNil(t, result)
+		assert.Equal(t, 1, result.Value.StatusCode)
+		assert.Equal(t, 0, q.Len())
+		assert.Nil(t, q.Pop())
+	})
 
-	if result.Value.StatusCode != 1 {
-		t.Errorf("status: got %v expected %v", result, 1)
-	}
+	t.Run("returns nil on an empty queue", func(t *testing.T) {
+		// given
+		q := NewFifo()
+		// when
+		result := q.Pop()
+		// then
+		assert.Nil(t, result)
+		assert.Equal(t, 0, q.Len())
+	})
 
-	if underTest.len != 2 {
-		t.Errorf("len: got %v expected %v", underTest.len, 2)
-	}
-
-	if underTest.first.Value.StatusCode != 2 {
-		t.Errorf("first: got %v expected %v", underTest.first.Value.StatusCode, 2)
-	}
-
-	if underTest.last.Value.StatusCode != 3 {
-		t.Errorf("last: got %v expected %v", underTest.last.Value.StatusCode, 3)
-	}
-
-	// Remove second
-	result = underTest.Pop()
-
-	if result.Value.StatusCode != 2 {
-		t.Errorf("status: got %v expected %v", result, 2)
-	}
-
-	if underTest.len != 1 {
-		t.Errorf("len: got %v expected %v", underTest.len, 1)
-	}
-
-	if underTest.first.Value.StatusCode != 3 {
-		t.Errorf("first: got %v expected %v", underTest.first.Value.StatusCode, 3)
-	}
-
-	if underTest.last.Value.StatusCode != 3 {
-		t.Errorf("last: got %v expected %v", underTest.last.Value.StatusCode, 3)
-	}
-
-	// Remove last
-	result = underTest.Pop()
-
-	if result.Value.StatusCode != 3 {
-		t.Errorf("status: got %v expected %v", result, 3)
-	}
-
-	if underTest.len != 0 {
-		t.Errorf("len: got %v expected %v", underTest.len, 0)
-	}
-
-	if underTest.first != nil {
-		t.Errorf("first: got %v expected %v", underTest.first, nil)
-	}
-
-	if underTest.last != nil {
-		t.Errorf("last: got %v expected %v", underTest.last, nil)
-	}
-
-	// Nothing to return
-	result = underTest.Pop()
-
-	if result != nil {
-		t.Errorf("status: got %v expected %v", result, nil)
-	}
-
-	if underTest.len != 0 {
-		t.Errorf("len: got %v expected %v", underTest.len, 0)
-	}
-
-	if underTest.first != nil {
-		t.Errorf("first: got %v expected %v", underTest.first, nil)
-	}
-
-	if underTest.last != nil {
-		t.Errorf("last: got %v expected %v", underTest.last, nil)
-	}
+	t.Run("works again after the queue was emptied", func(t *testing.T) {
+		// given
+		q := NewFifo()
+		q.Push(response(1))
+		q.Pop()
+		q.Push(response(2))
+		// when
+		result := q.Pop()
+		// then
+		require.NotNil(t, result)
+		assert.Equal(t, 2, result.Value.StatusCode)
+	})
 }
 
 func TestLen(t *testing.T) {
-	// given
-	underTest := NewFifo()
-	var tests = []struct {
-		push     bool
+	tests := []struct {
+		name     string
+		pushes   int
+		pops     int
 		expected int
 	}{
-		{true, 1},
-		{true, 2},
-		{false, 1},
-		{false, 0},
+		{name: "new queue", pushes: 0, pops: 0, expected: 0},
+		{name: "after two pushes", pushes: 2, pops: 0, expected: 2},
+		{name: "after two pushes and one pop", pushes: 2, pops: 1, expected: 1},
+		{name: "after two pushes and two pops", pushes: 2, pops: 2, expected: 0},
+		{name: "pop on empty does not go below zero", pushes: 0, pops: 1, expected: 0},
 	}
-	// then
-	for _, test := range tests {
-		if test.push {
-			underTest.Push(buildResponse(1))
-		} else {
-			underTest.Pop()
-		}
 
-		result := underTest.Len()
-
-		if result != test.expected {
-			t.Errorf("got %v expected %v", result, test.expected)
-		}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
+			q := NewFifo()
+			for i := range tc.pushes {
+				q.Push(response(i))
+			}
+			for range tc.pops {
+				q.Pop()
+			}
+			// when
+			result := q.Len()
+			// then
+			assert.Equal(t, tc.expected, result)
+		})
 	}
 }
 
-func buildResponse(status int) *client.Response {
-	return &client.Response{
-		StatusCode: status,
+func response(status int) *client.Response {
+	return &client.Response{StatusCode: status}
+}
+
+func drain(q *Fifo) []int {
+	var result []int
+	for element := q.Pop(); element != nil; element = q.Pop() {
+		result = append(result, element.Value.StatusCode)
 	}
+	return result
 }

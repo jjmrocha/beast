@@ -17,74 +17,172 @@
 package client
 
 import (
-	"fmt"
 	"net/http"
-	"net/url"
+	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/jjmrocha/beast/config"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestHTTPTimeout(t *testing.T) {
-	// given
-	var tests = []struct {
-		input    int
-		expected time.Duration
-	}{
-		{1, 1 * time.Second},
-		{30, 30 * time.Second},
+const (
+	clientError       = -500
+	timeoutError      = -400
+	redirectPath      = "/old"
+	redirectTarget    = "/new"
+	slowHandlerMaxRun = 3 * time.Second
+)
+
+func TestNewClient(t *testing.T) {
+	t.Run("times out when the server is slower than request-timeout", func(t *testing.T) {
+		// given
+		server := newServer(t, func(w http.ResponseWriter, r *http.Request) {
+			select {
+			case <-r.Context().Done():
+			case <-time.After(slowHandlerMaxRun):
+			}
+		})
+		cfg := config.Default()
+		cfg.RequestTimeout = 1
+		c := NewClient(cfg, 1)
+		request := mustNewRequest(t, server.URL)
+		// when
+		result := c.Execute(request)
+		// then
+		assert.Equal(t, timeoutError, result.StatusCode)
+		assert.GreaterOrEqual(t, result.Duration, time.Second)
+	})
+
+	t.Run("does not follow redirects by default", func(t *testing.T) {
+		// given
+		server := newRedirectServer(t)
+		c := NewClient(config.Default(), 1)
+		request := mustNewRequest(t, server.URL+redirectPath)
+		// when
+		result := c.Execute(request)
+		// then
+		assert.Equal(t, http.StatusFound, result.StatusCode)
+	})
+
+	t.Run("follows redirects when disable-redirects is false", func(t *testing.T) {
+		// given
+		server := newRedirectServer(t)
+		cfg := config.Default()
+		cfg.DisableRedirects = false
+		c := NewClient(cfg, 1)
+		request := mustNewRequest(t, server.URL+redirectPath)
+		// when
+		result := c.Execute(request)
+		// then
+		assert.Equal(t, http.StatusOK, result.StatusCode)
+	})
+
+	t.Run("rejects a self-signed certificate by default", func(t *testing.T) {
+		// given
+		server := newTLSServer(t)
+		c := NewClient(config.Default(), 1)
+		request := mustNewRequest(t, server.URL)
+		// when
+		result := c.Execute(request)
+		// then
+		assert.Equal(t, clientError, result.StatusCode)
+	})
+
+	t.Run("accepts a self-signed certificate when disable-certificate-check is true", func(t *testing.T) {
+		// given
+		server := newTLSServer(t)
+		cfg := config.Default()
+		cfg.DisableCertificateCheck = true
+		c := NewClient(cfg, 1)
+		request := mustNewRequest(t, server.URL)
+		// when
+		result := c.Execute(request)
+		// then
+		assert.Equal(t, http.StatusOK, result.StatusCode)
+	})
+}
+
+func TestExecute(t *testing.T) {
+	t.Run("returns the status code, the request and the duration", func(t *testing.T) {
+		// given
+		server := newStatusServer(t, http.StatusOK)
+		c := NewClient(config.Default(), 1)
+		request := mustNewRequest(t, server.URL+"/apps")
+		// when
+		result := c.Execute(request)
+		// then
+		assert.Equal(t, http.StatusOK, result.StatusCode)
+		expectedRequest := "GET " + server.URL + "/apps"
+		assert.Equal(t, expectedRequest, result.Request)
+		assert.Positive(t, result.Duration)
+	})
+
+	t.Run("returns a non-success status as it is", func(t *testing.T) {
+		// given
+		server := newStatusServer(t, http.StatusServiceUnavailable)
+		c := NewClient(config.Default(), 1)
+		request := mustNewRequest(t, server.URL)
+		// when
+		result := c.Execute(request)
+		// then
+		assert.Equal(t, http.StatusServiceUnavailable, result.StatusCode)
+	})
+
+	t.Run("returns -500 when the server cannot be reached", func(t *testing.T) {
+		// given
+		server := httptest.NewServer(http.NotFoundHandler())
+		url := server.URL
+		server.Close()
+		c := NewClient(config.Default(), 1)
+		request := mustNewRequest(t, url)
+		// when
+		result := c.Execute(request)
+		// then
+		assert.Equal(t, clientError, result.StatusCode)
+		assert.Equal(t, "GET "+url, result.Request)
+	})
+}
+
+func mustNewRequest(t testing.TB, url string) *Request {
+	t.Helper()
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, url, nil)
+	if err != nil {
+		t.Fatalf("http.NewRequest(%s): unexpected error: %v", url, err)
 	}
-	// then
-	for _, test := range tests {
-		config := config.Default()
-		config.RequestTimeout = test.input
-		result := NewClient(config, 10)
-		if client, ok := result.native.(*http.Client); ok && client.Timeout != test.expected {
-			t.Errorf("got %v expected %v for RequestTimeout", client.Timeout, test.expected)
+	return BuildRequest(req)
+}
+
+func newServer(t testing.TB, handler http.HandlerFunc) *httptest.Server {
+	t.Helper()
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+	return server
+}
+
+func newStatusServer(t testing.TB, status int) *httptest.Server {
+	t.Helper()
+	return newServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(status)
+	})
+}
+
+func newRedirectServer(t testing.TB) *httptest.Server {
+	t.Helper()
+	return newServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == redirectPath {
+			http.Redirect(w, r, redirectTarget, http.StatusFound)
+			return
 		}
-	}
+		w.WriteHeader(http.StatusOK)
+	})
 }
 
-// Mocked error for generation of timeouts
-type timeoutMockedError bool
-
-func (t timeoutMockedError) Timeout() bool {
-	return bool(t)
-}
-
-func (t timeoutMockedError) Error() string {
-	return fmt.Sprintf("timeout = %v", bool(t))
-}
-
-// Mocked httpClient
-type timeoutMockedClient bool
-
-func (t timeoutMockedClient) Do(r *http.Request) (*http.Response, error) {
-	err := timeoutMockedError(t)
-	return nil, &url.Error{Err: &err}
-}
-
-func TestExecuteTimeout(t *testing.T) {
-	// given
-	client := &Client{native: timeoutMockedClient(true)}
-	expected := -400
-	// when
-	result := client.Execute(&Request{})
-	// then
-	if result.StatusCode != expected {
-		t.Errorf("got %v expected %v", result.StatusCode, expected)
-	}
-}
-
-func TestExecuteGeneric(t *testing.T) {
-	// given
-	client := &Client{native: timeoutMockedClient(false)}
-	expected := -500
-	// when
-	result := client.Execute(&Request{})
-	// then
-	if result.StatusCode != expected {
-		t.Errorf("got %v expected %v", result.StatusCode, expected)
-	}
+func newTLSServer(t testing.TB) *httptest.Server {
+	t.Helper()
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(server.Close)
+	return server
 }

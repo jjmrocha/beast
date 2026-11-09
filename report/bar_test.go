@@ -16,11 +16,15 @@
 
 package report
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestDrawBar(t *testing.T) {
-	// given
-	var tests = []struct {
+	tests := []struct {
 		input    int
 		expected string
 	}{
@@ -46,11 +50,15 @@ func TestDrawBar(t *testing.T) {
 		{95, "[###################.]"},
 		{100, "[####################]"},
 	}
-	// then
-	for _, test := range tests {
-		result := drawBar(test.input)
-		if result != test.expected {
-			t.Errorf("got %v expected %v", result, test.expected)
-		}
+
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("%d percent", tc.input), func(t *testing.T) {
+			// given
+			percentage := tc.input
+			// when
+			result := drawBar(percentage)
+			// then
+			assert.Equal(t, tc.expected, result)
+		})
 	}
 }

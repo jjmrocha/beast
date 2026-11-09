@@ -20,62 +20,64 @@ import (
 	"testing"
 
 	"github.com/jjmrocha/beast/data"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLog(t *testing.T) {
 	// given
-	dt := data.Read("../testdata/simple.csv")
 	gnt := &Generator{
 		RecordID: 1,
-		Data:     dt.Next(),
+		Data:     data.Read("../testdata/simple.csv").Next(),
 	}
-	expected := "requestId: 1 and data: {A: a1}"
 	// when
 	result := gnt.Log()
 	// then
-	if result != expected {
-		t.Errorf("got %v expected %v", result, expected)
-	}
+	expected := "requestId: 1 and data: {A: a1}"
+	assert.Equal(t, expected, result)
 }
 
-func TestRequestForDynamic(t *testing.T) {
-	// given
-	dt := data.Read("../testdata/data.csv")
-	tmpl := Read("../testdata/template_post.json")
-	tmplc, _ := tmpl.Compile()
-	gnt := &Generator{
-		Data:     dt.Next(),
-		RecordID: 1,
-		Template: tmplc,
-	}
-	expected := "POST http://someendpoint.pt/1"
-	// when
-	result, err := gnt.Request()
-	// then
-	if err != nil {
-		t.Errorf("Error not expected: %v", err)
-	}
+func TestRequest(t *testing.T) {
+	t.Run("builds the request from the rendered template", func(t *testing.T) {
+		// given
+		gnt := &Generator{
+			Template: mustCompile(t, "../testdata/template_post.json"),
+			RecordID: 1,
+			Data:     data.Read("../testdata/data.csv").Next(),
+		}
+		// when
+		result, err := gnt.Request()
+		// then
+		require.NoError(t, err)
+		expected := "POST http://someendpoint.pt/1"
+		assert.Equal(t, expected, result.String())
+	})
 
-	if result.String() != expected {
-		t.Errorf("got %v expected %v", result, expected)
-	}
+	t.Run("returns an error when the rendered URL is invalid", func(t *testing.T) {
+		// given
+		tmpl := &Template{Method: "GET", Endpoint: "http://[::1"}
+		tmplc, err := tmpl.Compile()
+		require.NoError(t, err)
+		record := data.NewRecord()
+		gnt := &Generator{Template: tmplc, RecordID: 1, Data: &record}
+		// when
+		result, err := gnt.Request()
+		// then
+		assert.Error(t, err)
+		assert.Nil(t, result)
+	})
 }
 
 func BenchmarkRequest(b *testing.B) {
-	// given
-	dt := data.Read("../testdata/data.csv")
-	tmpl := Read("../testdata/template_post.json")
-	tmplc, _ := tmpl.Compile()
 	gnt := &Generator{
-		Data:     dt.Next(),
+		Template: mustCompile(b, "../testdata/template_post.json"),
 		RecordID: 1,
-		Template: tmplc,
+		Data:     data.Read("../testdata/data.csv").Next(),
 	}
-	// when
-	b.ResetTimer()
-	_, err := gnt.Request()
-	// then
-	if err != nil {
-		b.Error(err)
+
+	for b.Loop() {
+		if _, err := gnt.Request(); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
