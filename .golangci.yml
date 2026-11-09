@@ -1,0 +1,49 @@
+version: "2"
+
+linters:
+  enable:
+    # --- Logic & Bugs ---
+    - errcheck       # unchecked errors
+    - govet          # suspicious constructs
+    - staticcheck    # advanced static analysis (vet on steroids)
+    - unused         # unused constants, variables, functions and types
+    - errorlint      # incorrect error wrapping (errors.Is / errors.As)
+    - wastedassign   # assignments whose value is never used
+    - recvcheck      # receiver type consistency across methods
+    - unconvert      # unnecessary type conversions
+    # --- Style & Maintenance ---
+    - revive         # fast & configurable replacement for golint
+    - goconst        # repeated strings that could be constants
+    - misspell       # commonly misspelled English words
+    - nolintlint     # ill-formed or unnecessary nolint directives
+    - gocritic       # bugs, performance and style diagnostics
+    - intrange       # for loops that could use integer range (Go 1.22+)
+    - modernize      # patterns simplifiable with newer Go stdlib
+    # --- Security ---
+    - gosec          # source code security problems
+
+  settings:
+    govet:
+      enable:
+        - shadow     # variable shadowing
+    revive:
+      severity: warning
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+
+  exclusions:
+    rules:
+      # gosec is intentionally suppressed in tests for controlled error paths
+      - path: _test\.go
+        linters:
+          - gosec
+
+formatters:
+  enable:
+    - gofmt
+    - goimports  # correct formatting and import ordering
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

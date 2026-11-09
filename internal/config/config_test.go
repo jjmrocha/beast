@@ -17,7 +17,9 @@
 package config
 
 import (
+	"bytes"
 	"encoding/json"
+	"log"
 	"maps"
 	"os"
 	"path/filepath"
@@ -36,6 +38,21 @@ func TestRead(t *testing.T) {
 		result := Read(fileName)
 		// then
 		assert.Equal(t, Default(), result)
+	})
+
+	t.Run("logs invalid JSON and keeps the defaults", func(t *testing.T) {
+		// given
+		fileName := filepath.Join(t.TempDir(), "config.json")
+		require.NoError(t, os.WriteFile(fileName, []byte("{"), 0o600))
+		var logged bytes.Buffer
+		original := log.Writer()
+		log.SetOutput(&logged)
+		t.Cleanup(func() { log.SetOutput(original) })
+		// when
+		result := Read(fileName)
+		// then
+		assert.Equal(t, Default(), result)
+		assert.Contains(t, logged.String(), "Invalid JSON config file "+fileName)
 	})
 
 	t.Run("reads every v2.6.1 key", func(t *testing.T) {
@@ -88,6 +105,18 @@ func TestWrite(t *testing.T) {
 		// then
 		result := Read(fileName)
 		assert.Equal(t, Default(), result)
+	})
+
+	t.Run("creates the file readable only by its owner", func(t *testing.T) {
+		// given
+		fileName := filepath.Join(t.TempDir(), "config.json")
+		// when
+		Write(fileName, Default())
+		// then
+		info, err := os.Stat(fileName)
+		require.NoError(t, err)
+		expected := os.FileMode(0o600)
+		assert.Equal(t, expected, info.Mode().Perm())
 	})
 
 	t.Run("file has exactly the v2.6.1 key names", func(t *testing.T) {

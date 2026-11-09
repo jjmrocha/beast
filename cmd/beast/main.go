@@ -61,7 +61,7 @@ func runCmd(args []string) {
 	configFile := runOption.String("config", "", "Config file to setup HTTP client")
 	dataFile := runOption.String("data", "", "CSV file with data for request generation")
 	outputFile := runOption.String("output", "", "CVS file with detailed execution results")
-	runOption.Parse(args)
+	_ = runOption.Parse(args)
 	nonFlagArgs := runOption.Args()
 
 	if len(nonFlagArgs) != 1 {
@@ -86,7 +86,7 @@ func runCmd(args []string) {
 func templateCmd(args []string) {
 	templateOption := flag.NewFlagSet("template", flag.ExitOnError)
 	method := templateOption.String("m", "GET", "HTTP method")
-	templateOption.Parse(args)
+	_ = templateOption.Parse(args)
 	nonFlagArgs := templateOption.Args()
 
 	var url, fileName string

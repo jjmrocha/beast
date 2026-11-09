@@ -59,7 +59,7 @@ func (q *Fifo) Push(value *client.Response) {
 	}
 
 	q.last = element
-	q.len = q.len + 1
+	q.len++
 }
 
 // Pop retrives the fisrt element of the queue
@@ -70,7 +70,7 @@ func (q *Fifo) Pop() *Element {
 
 	element := q.first
 	q.first = element.next
-	q.len = q.len - 1
+	q.len--
 
 	if q.len == 0 {
 		q.last = nil

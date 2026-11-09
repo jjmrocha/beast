@@ -57,13 +57,15 @@ func Default() *Config {
 
 // Read reads the configuration from a file
 func Read(fileName string) *Config {
-	data, err := os.ReadFile(fileName)
+	data, err := os.ReadFile(fileName) //nolint:gosec // reads the config file the user named
 	if err != nil {
 		log.Fatalf("Error reading config file %s: %v\n", fileName, err)
 	}
 
 	cfg := Default()
-	json.Unmarshal(data, cfg)
+	if err := json.Unmarshal(data, cfg); err != nil {
+		log.Printf("Invalid JSON config file %s: %v\n", fileName, err)
+	}
 	checkConfig(cfg)
 	return cfg
 }
@@ -89,7 +91,7 @@ func Write(fileName string, cfg *Config) {
 		log.Printf("Error encoding config %v to JSON: %v\n", cfg, err)
 	}
 
-	err = os.WriteFile(fileName, data, 0666)
+	err = os.WriteFile(fileName, data, 0o600)
 	if err != nil {
 		log.Printf("Error writing configuration to file %s: %v\n", fileName, err)
 	}

@@ -17,6 +17,7 @@
 package template
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/jjmrocha/beast/internal/data"
@@ -34,7 +35,7 @@ func TestExecuteTemplate(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		expected := &Template{
-			Method:   "POST",
+			Method:   http.MethodPost,
 			Endpoint: "http://someendpoint.pt/1",
 			Headers:  jsonContentType,
 			Body:     "{\"id\": 1, \"value\": \"a1\"}",
@@ -55,7 +56,7 @@ func TestExecuteTemplate(t *testing.T) {
 
 	t.Run("returns an error when the template fails while running", func(t *testing.T) {
 		// given
-		tmpl := &Template{Method: "GET", Endpoint: "http://someendpoint.pt/{{ .Data.A.B }}"}
+		tmpl := &Template{Method: http.MethodGet, Endpoint: "http://someendpoint.pt/{{ .Data.A.B }}"}
 		tmplc, err := tmpl.Compile()
 		require.NoError(t, err)
 		record := data.Record{"A": "a1"}

@@ -70,9 +70,9 @@ func (t *Template) Compile() (*CompiledTemplate, error) {
 
 	tHeaders := make([]compiledHeader, 0, len(t.Headers))
 	for _, header := range t.Headers {
-		tValue, err := template.New("headerValue").Parse(header.Value)
-		if err != nil {
-			return nil, err
+		tValue, headerErr := template.New("headerValue").Parse(header.Value)
+		if headerErr != nil {
+			return nil, headerErr
 		}
 		hdc := compiledHeader{
 			key:   header.Key,

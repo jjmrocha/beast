@@ -42,7 +42,7 @@ type Client struct {
 // NewClient creates a client.Client based on the provided configuration
 func NewClient(cfg *config.Config, parallelConns int) *Client {
 	tls := &tls.Config{
-		InsecureSkipVerify: cfg.DisableCertificateCheck,
+		InsecureSkipVerify: cfg.DisableCertificateCheck, //nolint:gosec // only when the user sets disable-certificate-check
 	}
 	maxIdleConns := cfg.GetMaxIdleConnections(parallelConns)
 	transport := &http.Transport{
@@ -95,8 +95,8 @@ func (c *Client) Execute(request *Request) *Response {
 		}
 	}
 
-	defer resp.Body.Close()
-	io.Copy(io.Discard, resp.Body)
+	defer func() { _ = resp.Body.Close() }()
+	_, _ = io.Copy(io.Discard, resp.Body)
 
 	return &Response{
 		Timestamp:  start,

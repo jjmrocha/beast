@@ -38,7 +38,7 @@ func (d *Data) add(columns []string) {
 		fieldsNumber := len(d.fields)
 		record := NewRecord()
 
-		for i := 0; i < fieldsNumber; i++ {
+		for i := range fieldsNumber {
 			record[d.fields[i]] = columns[i]
 		}
 
@@ -59,12 +59,12 @@ func (d *Data) Next() *Record {
 
 // Read reads the content of the CSV file
 func Read(fileName string) *Data {
-	csvfile, err := os.Open(fileName)
+	csvfile, err := os.Open(fileName) //nolint:gosec // reads the data file the user named
 	if err != nil {
 		log.Fatalf("Error reading data file %s: %v\n", fileName, err)
 	}
 
-	defer csvfile.Close()
+	defer func() { _ = csvfile.Close() }()
 	reader := csv.NewReader(csvfile)
 	dt := Data{
 		records: make([]Record, 0),

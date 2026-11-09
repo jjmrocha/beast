@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Package control provides functions that perform the paralel execution of requests
+// Package control provides functions that perform the parallel execution of requests
 package control
 
 import (
@@ -65,7 +65,7 @@ func (c *Control) OutputChannel() <-chan *client.Response {
 func (c *Control) AsyncExecute(httpClient *client.Client, tmplc *template.CompiledTemplate, rows *data.Data) {
 	go c.createGenerators(tmplc, rows)
 
-	for i := 0; i < c.concurrentRoutines; i++ {
+	for range c.concurrentRoutines {
 		requestChannel := make(chan *client.Request)
 		go c.makeRequest(requestChannel)
 		go c.executeRequest(requestChannel, httpClient)

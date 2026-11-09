@@ -32,6 +32,7 @@ import (
 const (
 	formattedTimestamp = "2026-11-09 10:30:15.123"
 	getRequest         = "GET http://someendpoint.pt/1"
+	notSuccess         = "false"
 )
 
 var timestamp = time.Date(2026, 11, 9, 10, 30, 15, 123_000_000, time.UTC)
@@ -49,22 +50,22 @@ var resultsOfEachKind = []struct {
 	{
 		name:     "non-success status",
 		input:    &client.Response{Timestamp: timestamp, Request: getRequest, StatusCode: 404, Duration: 20 * time.Millisecond},
-		expected: []string{formattedTimestamp, getRequest, "Executed", "404", "false", "20"},
+		expected: []string{formattedTimestamp, getRequest, "Executed", "404", notSuccess, "20"},
 	},
 	{
 		name:     "request generation error",
 		input:    &client.Response{Timestamp: timestamp, StatusCode: -100},
-		expected: []string{formattedTimestamp, "", "Request generation error", "", "false", ""},
+		expected: []string{formattedTimestamp, "", "Request generation error", "", notSuccess, ""},
 	},
 	{
 		name:     "request timeout",
 		input:    &client.Response{Timestamp: timestamp, Request: getRequest, StatusCode: -400, Duration: time.Second},
-		expected: []string{formattedTimestamp, getRequest, "Request timeout", "", "false", "1000"},
+		expected: []string{formattedTimestamp, getRequest, "Request timeout", "", notSuccess, "1000"},
 	},
 	{
 		name:     "unexpected error",
 		input:    &client.Response{Timestamp: timestamp, Request: getRequest, StatusCode: -500, Duration: 5 * time.Millisecond},
-		expected: []string{formattedTimestamp, getRequest, "Unexpected error", "", "false", "5"},
+		expected: []string{formattedTimestamp, getRequest, "Unexpected error", "", notSuccess, "5"},
 	},
 }
 
@@ -98,6 +99,29 @@ func TestCsvReport(t *testing.T) {
 			expected = append(expected, tc.expected)
 		}
 		assert.Equal(t, expected, result)
+	})
+
+	t.Run("keeps the error when the file cannot be written", func(t *testing.T) {
+		// given
+		fileName := filepath.Join(t.TempDir(), "output.csv")
+		report := newCsvReport(fileName)
+		require.NoError(t, report.file.Close())
+		report.write(resultsOfEachKind[0].input)
+		// when
+		report.flush()
+		// then
+		assert.Error(t, report.err)
+	})
+
+	t.Run("has no error when the file was written", func(t *testing.T) {
+		// given
+		fileName := filepath.Join(t.TempDir(), "output.csv")
+		report := newCsvReport(fileName)
+		report.write(resultsOfEachKind[0].input)
+		// when
+		report.flush()
+		// then
+		assert.NoError(t, report.err)
 	})
 
 	t.Run("quotes a request that contains a comma", func(t *testing.T) {

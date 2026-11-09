@@ -17,6 +17,7 @@
 package template
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/jjmrocha/beast/internal/data"
@@ -55,7 +56,7 @@ func TestRequest(t *testing.T) {
 
 	t.Run("returns an error when the rendered URL is invalid", func(t *testing.T) {
 		// given
-		tmpl := &Template{Method: "GET", Endpoint: "http://[::1"}
+		tmpl := &Template{Method: http.MethodGet, Endpoint: "http://[::1"}
 		tmplc, err := tmpl.Compile()
 		require.NoError(t, err)
 		record := data.NewRecord()

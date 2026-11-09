@@ -21,6 +21,22 @@ jobs:
       - name: Run tests
         run: go test -race ./...
 
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.14.0
+
   vuln:
     name: Vulnerability scan
     runs-on: ubuntu-latest

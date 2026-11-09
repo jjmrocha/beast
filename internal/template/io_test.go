@@ -17,6 +17,7 @@
 package template
 
 import (
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -29,6 +30,13 @@ const (
 	templatedEndpoint = "http://someendpoint.pt/{{ .RequestID }}"
 	templatedBody     = "{\"id\": {{ .RequestID }}, \"value\": \"{{ .Data.A }}\"}"
 	staticBody        = "{\"id\": 1, \"value\": \"any\"}"
+	userAgent         = "Beast/1"
+	headerKey1        = "Key_1"
+	headerKey2        = "Key_2"
+	headerValue1      = "Value_1"
+	headerValue2      = "Value_2"
+	userAgentHeader   = "User-Agent"
+	basicEndpoint     = "http://www.google.pt"
 )
 
 var jsonContentType = []Header{{Key: "Content-Type", Value: "application/json"}}
@@ -42,27 +50,27 @@ func TestRead(t *testing.T) {
 		{
 			name:     "basic GET in JSON",
 			input:    "../../testdata/basic_get.json",
-			expected: &Template{Method: "GET", Endpoint: "http://www.google.pt"},
+			expected: &Template{Method: http.MethodGet, Endpoint: basicEndpoint},
 		},
 		{
 			name:     "basic GET in YAML",
 			input:    "../../testdata/basic_get.yaml",
-			expected: &Template{Method: "GET", Endpoint: "http://www.google.pt"},
+			expected: &Template{Method: http.MethodGet, Endpoint: basicEndpoint},
 		},
 		{
 			name:     "basic POST in JSON",
 			input:    "../../testdata/basic_post.json",
-			expected: &Template{Method: "POST", Endpoint: "http://someendpoint.pt", Headers: jsonContentType, Body: staticBody},
+			expected: &Template{Method: http.MethodPost, Endpoint: "http://someendpoint.pt", Headers: jsonContentType, Body: staticBody},
 		},
 		{
 			name:     "basic POST in YAML",
 			input:    "../../testdata/basic_post.yaml",
-			expected: &Template{Method: "POST", Endpoint: "http://someendpoint.pt", Headers: jsonContentType, Body: staticBody},
+			expected: &Template{Method: http.MethodPost, Endpoint: "http://someendpoint.pt", Headers: jsonContentType, Body: staticBody},
 		},
 		{
 			name:     "templated POST in JSON",
 			input:    "../../testdata/template_post.json",
-			expected: &Template{Method: "POST", Endpoint: templatedEndpoint, Headers: jsonContentType, Body: templatedBody},
+			expected: &Template{Method: http.MethodPost, Endpoint: templatedEndpoint, Headers: jsonContentType, Body: templatedBody},
 		},
 	}
 
@@ -87,7 +95,7 @@ func TestRead(t *testing.T) {
 		// when
 		result := Read(input)
 		// then
-		assert.Equal(t, "POST", result.Method)
+		assert.Equal(t, http.MethodPost, result.Method)
 		assert.Equal(t, templatedEndpoint, result.Endpoint)
 		assert.ElementsMatch(t, jsonContentType, result.Headers)
 		assert.Equal(t, templatedBody, result.Body)
@@ -99,7 +107,7 @@ func TestRead(t *testing.T) {
 		// when
 		result := Read(input)
 		// then
-		assert.Equal(t, "POST", result.Method)
+		assert.Equal(t, http.MethodPost, result.Method)
 		assert.Equal(t, templatedEndpoint, result.Endpoint)
 		assert.ElementsMatch(t, jsonContentType, result.Headers)
 		assert.Contains(t, result.Body, "\"id\": {{ .RequestID }}")
@@ -111,7 +119,7 @@ func TestWrite(t *testing.T) {
 	tmpl := &Template{
 		Method:   "PUT",
 		Endpoint: templatedEndpoint,
-		Headers:  []Header{{Key: "User-Agent", Value: "Beast/1"}},
+		Headers:  []Header{{Key: userAgentHeader, Value: userAgent}},
 		Body:     templatedBody,
 	}
 
@@ -136,6 +144,20 @@ func TestWrite(t *testing.T) {
 			assert.Contains(t, result, key)
 		}
 	})
+
+	for _, name := range []string{"request.json", "request.yaml"} {
+		t.Run("creates "+name+" readable only by its owner", func(t *testing.T) {
+			// given
+			fileName := filepath.Join(t.TempDir(), name)
+			// when
+			Write(fileName, tmpl)
+			// then
+			info, err := os.Stat(fileName)
+			require.NoError(t, err)
+			expected := os.FileMode(0o600)
+			assert.Equal(t, expected, info.Mode().Perm())
+		})
+	}
 
 	t.Run("YAML file reads back as the same template", func(t *testing.T) {
 		// given
@@ -211,11 +233,11 @@ func TestIsJSON(t *testing.T) {
 func TestToHeaderMap(t *testing.T) {
 	t.Run("turns the header list into a map", func(t *testing.T) {
 		// given
-		headers := []Header{{Key: "Key_1", Value: "Value_1"}, {Key: "Key_2", Value: "Value_2"}}
+		headers := []Header{{Key: headerKey1, Value: headerValue1}, {Key: headerKey2, Value: headerValue2}}
 		// when
 		result := toHeaderMap(headers)
 		// then
-		expected := map[string]string{"Key_1": "Value_1", "Key_2": "Value_2"}
+		expected := map[string]string{headerKey1: headerValue1, headerKey2: headerValue2}
 		assert.Equal(t, expected, result)
 	})
 
@@ -230,11 +252,11 @@ func TestToHeaderMap(t *testing.T) {
 func TestFromHeaderMap(t *testing.T) {
 	t.Run("turns the header map into a list", func(t *testing.T) {
 		// given
-		headers := map[string]string{"Key_1": "Value_1", "Key_2": "Value_2"}
+		headers := map[string]string{headerKey1: headerValue1, headerKey2: headerValue2}
 		// when
 		result := fromHeaderMap(headers)
 		// then
-		expected := []Header{{Key: "Key_1", Value: "Value_1"}, {Key: "Key_2", Value: "Value_2"}}
+		expected := []Header{{Key: headerKey1, Value: headerValue1}, {Key: headerKey2, Value: headerValue2}}
 		assert.ElementsMatch(t, expected, result)
 	})
 
@@ -258,11 +280,11 @@ func TestToYamlTemplate(t *testing.T) {
 
 	t.Run("template without headers or body", func(t *testing.T) {
 		// given
-		tmpl := &Template{Method: "GET", Endpoint: "http://www.google.pt"}
+		tmpl := &Template{Method: http.MethodGet, Endpoint: basicEndpoint}
 		// when
 		result := toYamlTemplate(tmpl)
 		// then
-		expected := &templateY{Method: "GET", Endpoint: "http://www.google.pt"}
+		expected := &templateY{Method: http.MethodGet, Endpoint: basicEndpoint}
 		assert.Equal(t, expected, result)
 	})
 }
@@ -279,11 +301,11 @@ func TestFromYamlTemplate(t *testing.T) {
 
 	t.Run("template without headers or body", func(t *testing.T) {
 		// given
-		tmply := &templateY{Method: "GET", Endpoint: "http://www.google.pt"}
+		tmply := &templateY{Method: http.MethodGet, Endpoint: basicEndpoint}
 		// when
 		result := fromYamlTemplate(tmply)
 		// then
-		expected := &Template{Method: "GET", Endpoint: "http://www.google.pt"}
+		expected := &Template{Method: http.MethodGet, Endpoint: basicEndpoint}
 		assert.Equal(t, expected, result)
 	})
 }
@@ -292,7 +314,7 @@ func exampleTemplate() *Template {
 	return &Template{
 		Method:   "Use Http method: GET/POST/PUT/DELETE",
 		Endpoint: "Http URL to be invoked",
-		Headers:  []Header{{Key: "User-Agent", Value: "Beast/1"}},
+		Headers:  []Header{{Key: userAgentHeader, Value: userAgent}},
 		Body:     "Optional, enter body to send with POST or PUT",
 	}
 }
@@ -301,7 +323,7 @@ func exampleYamlTemplate() *templateY {
 	return &templateY{
 		Method:   "Use Http method: GET/POST/PUT/DELETE",
 		Endpoint: "Http URL to be invoked",
-		Headers:  map[string]string{"User-Agent": "Beast/1"},
+		Headers:  map[string]string{userAgentHeader: userAgent},
 		Body:     "Optional, enter body to send with POST or PUT",
 	}
 }

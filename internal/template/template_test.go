@@ -17,6 +17,7 @@
 package template
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,7 +28,7 @@ const unclosedAction = "{{ .RequestID"
 func TestCompile(t *testing.T) {
 	t.Run("compiles a valid template", func(t *testing.T) {
 		// given
-		tmpl := &Template{Method: "POST", Endpoint: templatedEndpoint, Headers: jsonContentType, Body: templatedBody}
+		tmpl := &Template{Method: http.MethodPost, Endpoint: templatedEndpoint, Headers: jsonContentType, Body: templatedBody}
 		// when
 		result, err := tmpl.Compile()
 		// then
@@ -41,15 +42,15 @@ func TestCompile(t *testing.T) {
 	}{
 		{
 			name:  "bad syntax in the URL",
-			input: &Template{Method: "GET", Endpoint: unclosedAction},
+			input: &Template{Method: http.MethodGet, Endpoint: unclosedAction},
 		},
 		{
 			name:  "bad syntax in a header value",
-			input: &Template{Method: "GET", Endpoint: templatedEndpoint, Headers: []Header{{Key: "X-Id", Value: unclosedAction}}},
+			input: &Template{Method: http.MethodGet, Endpoint: templatedEndpoint, Headers: []Header{{Key: "X-Id", Value: unclosedAction}}},
 		},
 		{
 			name:  "bad syntax in the body",
-			input: &Template{Method: "POST", Endpoint: templatedEndpoint, Body: unclosedAction},
+			input: &Template{Method: http.MethodPost, Endpoint: templatedEndpoint, Body: unclosedAction},
 		},
 	}
 

@@ -67,6 +67,10 @@ func (o Output) Close() {
 
 	o.closeFile.Request()
 	fmt.Printf("===== Output File =====\n")
+	if err := o.csvReport.err; err != nil {
+		fmt.Printf("Error writing output file '%s': %v\n", o.csvReport.FileName, err)
+		return
+	}
 	fmt.Printf("Output file '%s' was successfully generated\n", o.csvReport.FileName)
 }
 

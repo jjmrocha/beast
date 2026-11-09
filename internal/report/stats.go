@@ -60,17 +60,18 @@ func (s *Stats) Update(response *client.Response) {
 	s.requests++
 	s.duration += response.Duration
 
-	if response.IsSuccess() {
+	switch {
+	case response.IsSuccess():
 		durations, present := s.successMap[response.StatusCode]
 		if !present {
 			durations = make(durationSlice, 0)
 		}
 
 		s.successMap[response.StatusCode] = append(durations, response.Duration)
-	} else if response.IsClientError() {
+	case response.IsClientError():
 		errorDesc := response.ClientError()
 		s.errorMap[errorDesc]++
-	} else {
+	default:
 		s.statusMap[response.StatusCode]++
 	}
 
