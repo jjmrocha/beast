@@ -17,6 +17,7 @@
 package main
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -56,4 +57,13 @@ func TestRun(t *testing.T) {
 			assert.Equal(t, tc.expected, result)
 		})
 	}
+
+	t.Run("config that cannot write its file", func(t *testing.T) {
+		// given
+		args := []string{"config", filepath.Join(t.TempDir(), "missing", "config.json")}
+		// when
+		result := run(args)
+		// then
+		assert.Equal(t, 1, result)
+	})
 }

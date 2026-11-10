@@ -80,10 +80,6 @@ func (c *Control) AsyncExecute(httpClient *client.Client, tmplc *template.Compil
 
 // Consts
 var emptyRecord = data.NewRecord()
-var generateError = client.Response{
-	Timestamp:  time.Now(),
-	StatusCode: client.StatusGenerationError,
-}
 
 func (c *Control) createGenerators(tmplc *template.CompiledTemplate, rows *data.Data) {
 	requestCount := c.requestCount
@@ -128,7 +124,10 @@ func (c *Control) makeRequest(requestChannel chan<- *client.Request) {
 		req, err := generator.Request()
 		if err != nil {
 			log.Printf("Error generating request for %s: %v\n", generator.Log(), err)
-			c.outputChannel <- &generateError
+			c.outputChannel <- &client.Response{
+				Timestamp:  time.Now(),
+				StatusCode: client.StatusGenerationError,
+			}
 			continue
 		}
 

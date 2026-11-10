@@ -147,12 +147,22 @@ func TestWrite(t *testing.T) {
 		Body:     templatedBody,
 	}
 
+	t.Run("a missing folder returns an error", func(t *testing.T) {
+		// given
+		fileName := filepath.Join(t.TempDir(), "missing", "request.yaml")
+		// when
+		err := Write(fileName, tmpl)
+		// then
+		assert.ErrorIs(t, err, os.ErrNotExist)
+	})
+
 	t.Run("JSON file reads back as the same template", func(t *testing.T) {
 		// given
 		fileName := filepath.Join(t.TempDir(), "request.json")
 		// when
-		Write(fileName, tmpl)
+		err := Write(fileName, tmpl)
 		// then
+		require.NoError(t, err)
 		result := mustRead(t, fileName)
 		assert.Equal(t, tmpl, result)
 	})
@@ -161,8 +171,9 @@ func TestWrite(t *testing.T) {
 		// given
 		fileName := filepath.Join(t.TempDir(), "request.json")
 		// when
-		Write(fileName, tmpl)
+		err := Write(fileName, tmpl)
 		// then
+		require.NoError(t, err)
 		result := mustReadFile(t, fileName)
 		for _, key := range []string{`"method"`, `"url"`, `"headers"`, `"key"`, `"value"`, `"body"`} {
 			assert.Contains(t, result, key)
@@ -174,8 +185,9 @@ func TestWrite(t *testing.T) {
 			// given
 			fileName := filepath.Join(t.TempDir(), name)
 			// when
-			Write(fileName, tmpl)
+			err := Write(fileName, tmpl)
 			// then
+			require.NoError(t, err)
 			info, err := os.Stat(fileName)
 			require.NoError(t, err)
 			expected := os.FileMode(0o600)
@@ -187,8 +199,9 @@ func TestWrite(t *testing.T) {
 		// given
 		fileName := filepath.Join(t.TempDir(), "request.yaml")
 		// when
-		Write(fileName, tmpl)
+		err := Write(fileName, tmpl)
 		// then
+		require.NoError(t, err)
 		result := mustRead(t, fileName)
 		assert.Equal(t, tmpl.Method, result.Method)
 		assert.Equal(t, tmpl.Endpoint, result.Endpoint)
@@ -200,8 +213,9 @@ func TestWrite(t *testing.T) {
 		// given
 		fileName := filepath.Join(t.TempDir(), "request.yaml")
 		// when
-		Write(fileName, tmpl)
+		err := Write(fileName, tmpl)
 		// then
+		require.NoError(t, err)
 		result := mustReadFile(t, fileName)
 		for _, key := range []string{"method:", "endpoint:", "headers:", "User-Agent:", "request-body:"} {
 			assert.Contains(t, result, key)

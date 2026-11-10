@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"log"
 	"os"
 
 	"github.com/jjmrocha/beast/internal/command"
@@ -58,7 +59,10 @@ func configCmd(args []string) int {
 	}
 
 	fileName := args[0]
-	command.Config(fileName)
+	if err := command.Config(fileName); err != nil {
+		log.Printf("Error writing config file %s: %v\n", fileName, err) //nolint:gosec // the file name comes from the user's own command line
+		return 1
+	}
 	return 0
 }
 
@@ -120,6 +124,9 @@ func templateCmd(args []string) int {
 		return usageError
 	}
 
-	command.Template(command.TemplateOptions{Method: *method, URL: url, File: fileName})
+	if err := command.Template(command.TemplateOptions{Method: *method, URL: url, File: fileName}); err != nil {
+		log.Printf("Error writing template file %s: %v\n", fileName, err)
+		return 1
+	}
 	return 0
 }

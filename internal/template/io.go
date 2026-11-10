@@ -41,18 +41,12 @@ func Read(fileName string) (*Template, error) {
 }
 
 // Write writes an HTTP request template to a file
-func Write(fileName string, tmpl *Template) {
+func Write(fileName string, tmpl *Template) error {
 	if isJSON(fileName) {
-		writeJSON(fileName, tmpl)
-	} else {
-		writeYAML(fileName, tmpl)
+		return writeJSON(fileName, tmpl)
 	}
-}
 
-func writeFile(data []byte, fileName string) {
-	if err := os.WriteFile(fileName, data, 0o600); err != nil {
-		log.Printf("Error writing template to file %s: %v\n", fileName, err)
-	}
+	return writeYAML(fileName, tmpl)
 }
 
 // JSON
@@ -94,13 +88,13 @@ func externalBody(body string) (string, bool, error) {
 	return "", false, nil
 }
 
-func writeJSON(fileName string, tmpl *Template) {
+func writeJSON(fileName string, tmpl *Template) error {
 	data, err := json.MarshalIndent(tmpl, "", "\t")
 	if err != nil {
-		log.Printf("Error encoding request %v to JSON: %v\n", tmpl, err)
+		return err
 	}
 
-	writeFile(data, fileName)
+	return os.WriteFile(fileName, data, 0o600)
 }
 
 // YAML
@@ -162,15 +156,13 @@ func fromHeaderMap(headers map[string]string) []Header {
 	return tHeaders
 }
 
-func writeYAML(fileName string, tmpl *Template) {
-	tmply := toYamlTemplate(tmpl)
-
-	data, err := yaml.Marshal(tmply)
+func writeYAML(fileName string, tmpl *Template) error {
+	data, err := yaml.Marshal(toYamlTemplate(tmpl))
 	if err != nil {
-		log.Printf("Error encoding request %v to YAML: %v\n", tmpl, err)
+		return err
 	}
 
-	writeFile(data, fileName)
+	return os.WriteFile(fileName, data, 0o600)
 }
 
 func readYAML(fileName string, data []byte) *Template {

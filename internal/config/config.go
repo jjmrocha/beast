@@ -92,14 +92,11 @@ func checkConfig(cfg *Config) error {
 }
 
 // Write writes a configuration to a file
-func Write(fileName string, cfg *Config) {
+func Write(fileName string, cfg *Config) error {
 	data, err := json.MarshalIndent(cfg, "", "\t")
 	if err != nil {
-		log.Printf("Error encoding config %v to JSON: %v\n", cfg, err)
+		return err
 	}
 
-	err = os.WriteFile(fileName, data, 0o600)
-	if err != nil {
-		log.Printf("Error writing configuration to file %s: %v\n", fileName, err)
-	}
+	return os.WriteFile(fileName, data, 0o600)
 }

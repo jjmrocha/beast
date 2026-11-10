@@ -23,8 +23,11 @@ import (
 )
 
 // Config implements the `beast config <fileName>` command
-func Config(fileName string) {
-	defaults := config.Default()
-	config.Write(fileName, defaults)
+func Config(fileName string) error {
+	if err := config.Write(fileName, config.Default()); err != nil {
+		return err
+	}
+
 	fmt.Printf("File %s was created with default configuration\n", fileName)
+	return nil
 }

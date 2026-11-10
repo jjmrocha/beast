@@ -30,15 +30,15 @@ type TemplateOptions struct {
 }
 
 // Template implements the `beast template ... <fileName>` command
-func Template(opts TemplateOptions) {
+func Template(opts TemplateOptions) error {
 	if opts.URL == "" {
-		createTemplateExample(opts.File)
-	} else {
-		createTemplate(opts.Method, opts.URL, opts.File)
+		return createTemplateExample(opts.File)
 	}
+
+	return createTemplate(opts.Method, opts.URL, opts.File)
 }
 
-func createTemplateExample(fileName string) {
+func createTemplateExample(fileName string) error {
 	tmpl := template.Template{
 		Method:   "Use Http method: GET/POST/PUT/DELETE",
 		Endpoint: "Http URL to be invoked",
@@ -47,11 +47,15 @@ func createTemplateExample(fileName string) {
 		},
 		Body: "Optional, enter body to send with POST or PUT",
 	}
-	template.Write(fileName, &tmpl)
+	if err := template.Write(fileName, &tmpl); err != nil {
+		return err
+	}
+
 	fmt.Printf("File %s was created, please edit before use\n", fileName)
+	return nil
 }
 
-func createTemplate(method, url, fileName string) {
+func createTemplate(method, url, fileName string) error {
 	tmpl := template.Template{
 		Method:   method,
 		Endpoint: url,
@@ -64,8 +68,12 @@ func createTemplate(method, url, fileName string) {
 		tmpl.Body = "Optional, enter body to send with POST or PUT"
 	}
 
-	template.Write(fileName, &tmpl)
+	if err := template.Write(fileName, &tmpl); err != nil {
+		return err
+	}
+
 	fmt.Printf("File %s was created for '%s %s'\n", fileName, method, url)
+	return nil
 }
 
 func usesBody(method string) bool {

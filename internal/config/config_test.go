@@ -123,12 +123,22 @@ func TestGetMaxIdleConnections(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
+	t.Run("a missing folder returns an error", func(t *testing.T) {
+		// given
+		fileName := filepath.Join(t.TempDir(), "missing", "config.json")
+		// when
+		err := Write(fileName, Default())
+		// then
+		assert.ErrorIs(t, err, os.ErrNotExist)
+	})
+
 	t.Run("file reads back as the same configuration", func(t *testing.T) {
 		// given
 		fileName := filepath.Join(t.TempDir(), "config.json")
 		// when
-		Write(fileName, Default())
+		err := Write(fileName, Default())
 		// then
+		require.NoError(t, err)
 		result := mustRead(t, fileName)
 		assert.Equal(t, Default(), result)
 	})
@@ -137,8 +147,9 @@ func TestWrite(t *testing.T) {
 		// given
 		fileName := filepath.Join(t.TempDir(), "config.json")
 		// when
-		Write(fileName, Default())
+		err := Write(fileName, Default())
 		// then
+		require.NoError(t, err)
 		info, err := os.Stat(fileName)
 		require.NoError(t, err)
 		expected := os.FileMode(0o600)
@@ -149,8 +160,9 @@ func TestWrite(t *testing.T) {
 		// given
 		fileName := filepath.Join(t.TempDir(), "config.json")
 		// when
-		Write(fileName, Default())
+		err := Write(fileName, Default())
 		// then
+		require.NoError(t, err)
 		content, err := os.ReadFile(fileName)
 		require.NoError(t, err)
 		var result map[string]any
