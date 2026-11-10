@@ -18,6 +18,7 @@ package template
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -26,22 +27,17 @@ import (
 )
 
 // Read reads an HTTP request template from a file
-func Read(fileName string) *Template {
-	if isJSON(fileName) {
-		return readJSON(fileName)
-	}
-
-	return readYAML(fileName)
-}
-
-func readFile(fileName string) []byte {
+func Read(fileName string) (*Template, error) {
 	data, err := os.ReadFile(fileName) //nolint:gosec // reads the template file the user named
-
 	if err != nil {
-		log.Fatalf("Error reading template file %s: %v\n", fileName, err)
+		return nil, err
 	}
 
-	return data
+	if isJSON(fileName) {
+		return readJSON(fileName, data)
+	}
+
+	return readYAML(fileName, data), nil
 }
 
 // Write writes an HTTP request template to a file
@@ -66,33 +62,36 @@ func isJSON(fileName string) bool {
 	return strings.HasSuffix(lowerCaseFileName, ".json")
 }
 
-func readJSON(fileName string) *Template {
-	data := readFile(fileName)
-
+func readJSON(fileName string, data []byte) (*Template, error) {
 	var tmpl Template
 	if err := json.Unmarshal(data, &tmpl); err != nil {
 		log.Printf("Invalid JSON template file %s: %v\n", fileName, err)
 	}
 
-	if body, read := externalBody(tmpl.Body); read {
+	body, read, err := externalBody(tmpl.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if read {
 		tmpl.Body = body
 	}
 
-	return &tmpl
+	return &tmpl, nil
 }
 
-func externalBody(body string) (string, bool) {
+func externalBody(body string) (string, bool, error) {
 	if strings.HasPrefix(body, "@") {
 		fileName := body[1:]
 		data, err := os.ReadFile(fileName) //nolint:gosec // reads the body file the user named in the template
 		if err != nil {
-			log.Fatalf("Error reading external body file %s: %v\n", fileName, err)
+			return "", false, fmt.Errorf("external body: %w", err)
 		}
 
-		return string(data), true
+		return string(data), true, nil
 	}
 
-	return "", false
+	return "", false, nil
 }
 
 func writeJSON(fileName string, tmpl *Template) {
@@ -174,9 +173,7 @@ func writeYAML(fileName string, tmpl *Template) {
 	writeFile(data, fileName)
 }
 
-func readYAML(fileName string) *Template {
-	data := readFile(fileName)
-
+func readYAML(fileName string, data []byte) *Template {
 	var tmply templateY
 	if err := yaml.Unmarshal(data, &tmply); err != nil {
 		log.Printf("Invalid YAML template file %s: %v\n", fileName, err)

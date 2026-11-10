@@ -31,7 +31,6 @@ type Progress interface {
 
 // Stats collects statistics about the results of the execution
 type Stats struct {
-	concurrent     int
 	requests       int
 	executionStart time.Time
 	duration       time.Duration
@@ -43,9 +42,8 @@ type Stats struct {
 }
 
 // NewStats creates a new Stats
-func NewStats(nParallel int, progress Progress, outputFile string) *Stats {
+func NewStats(progress Progress, outputFile string) *Stats {
 	return &Stats{
-		concurrent:     nParallel,
 		executionStart: time.Now(),
 		successMap:     make(map[int]durationSlice),
 		statusMap:      make(map[int]int),
@@ -80,7 +78,7 @@ func (s *Stats) Update(response *client.Response) {
 }
 
 func (s *Stats) tps() float64 {
-	return float64(s.concurrent) * (float64(s.requests) / s.duration.Seconds())
+	return float64(s.requests) / s.executionDuration().Seconds()
 }
 
 func (s *Stats) avg() time.Duration {

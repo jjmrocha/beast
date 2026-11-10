@@ -60,7 +60,7 @@ func Run(nRequests, tDuration int, nParallel int, fileName, configFile, dataFile
 	ctrl := control.New(nRequests, tDuration, nParallel)
 	ctrl.AsyncExecute(httpClient, tmpl, data)
 
-	stats := report.NewStats(nParallel, report.NewBar(nRequests, tDuration), outputFile)
+	stats := report.NewStats(report.NewBar(nRequests, tDuration), outputFile)
 	for response := range ctrl.OutputChannel() {
 		stats.Update(response)
 	}
@@ -79,7 +79,11 @@ func readConfig(configFile string) *config.Config {
 	}
 
 	fmt.Println("- Reading configuration")
-	return config.Read(configFile)
+	cfg, err := config.Read(configFile)
+	if err != nil {
+		log.Fatalf("Error reading config file %s: %v\n", configFile, err)
+	}
+	return cfg
 }
 
 func readData(dataFile string) *data.Data {
@@ -97,7 +101,10 @@ func readData(dataFile string) *data.Data {
 
 func readTemplate(fileName string) *template.CompiledTemplate {
 	fmt.Println("- Loading request template")
-	tmpl := template.Read(fileName)
+	tmpl, err := template.Read(fileName)
+	if err != nil {
+		log.Fatalf("Error reading template file %s: %v\n", fileName, err)
+	}
 	tmplC, err := tmpl.Compile()
 	if err != nil {
 		log.Fatalf("Error compiling template: %v\n", err)

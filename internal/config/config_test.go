@@ -35,8 +35,9 @@ func TestRead(t *testing.T) {
 		// given
 		fileName := "../../testdata/empty.json"
 		// when
-		result := Read(fileName)
+		result, err := Read(fileName)
 		// then
+		require.NoError(t, err)
 		assert.Equal(t, Default(), result)
 	})
 
@@ -49,18 +50,43 @@ func TestRead(t *testing.T) {
 		log.SetOutput(&logged)
 		t.Cleanup(func() { log.SetOutput(original) })
 		// when
-		result := Read(fileName)
+		result, err := Read(fileName)
 		// then
+		require.NoError(t, err)
 		assert.Equal(t, Default(), result)
 		assert.Contains(t, logged.String(), "Invalid JSON config file "+fileName)
 	})
+
+	t.Run("a missing file returns an error", func(t *testing.T) {
+		// given
+		fileName := filepath.Join(t.TempDir(), "missing.json")
+		// when
+		result, err := Read(fileName)
+		// then
+		assert.ErrorIs(t, err, os.ErrNotExist)
+		assert.Nil(t, result)
+	})
+
+	for _, key := range []string{"max-connections", "max-idle-connections", "request-timeout"} {
+		t.Run("a negative "+key+" returns ErrInvalidConfig", func(t *testing.T) {
+			// given
+			fileName := filepath.Join(t.TempDir(), "config.json")
+			require.NoError(t, os.WriteFile(fileName, []byte(`{"`+key+`": -1}`), 0o600))
+			// when
+			result, err := Read(fileName)
+			// then
+			assert.ErrorIs(t, err, ErrInvalidConfig)
+			assert.Nil(t, result)
+		})
+	}
 
 	t.Run("reads every v2.6.1 key", func(t *testing.T) {
 		// given
 		fileName := "../../testdata/config_full.json"
 		// when
-		result := Read(fileName)
+		result, err := Read(fileName)
 		// then
+		require.NoError(t, err)
 		assert.False(t, result.DisableCompression)
 		assert.True(t, result.DisableKeepAlives)
 		assert.Equal(t, 10, result.MaxConnections)
@@ -103,7 +129,7 @@ func TestWrite(t *testing.T) {
 		// when
 		Write(fileName, Default())
 		// then
-		result := Read(fileName)
+		result := mustRead(t, fileName)
 		assert.Equal(t, Default(), result)
 	})
 
@@ -140,4 +166,13 @@ func TestWrite(t *testing.T) {
 		}
 		assert.ElementsMatch(t, expected, slices.Collect(maps.Keys(result)))
 	})
+}
+
+func mustRead(t testing.TB, fileName string) *Config {
+	t.Helper()
+	cfg, err := Read(fileName)
+	if err != nil {
+		t.Fatalf("Read(%s): unexpected error: %v", fileName, err)
+	}
+	return cfg
 }

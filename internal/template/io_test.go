@@ -79,8 +79,9 @@ func TestRead(t *testing.T) {
 			// given
 			input := tc.input
 			// when
-			result := Read(input)
+			result, err := Read(input)
 			// then
+			require.NoError(t, err)
 			assert.Equal(t, tc.expected.Method, result.Method)
 			assert.Equal(t, tc.expected.Endpoint, result.Endpoint)
 			assert.ElementsMatch(t, tc.expected.Headers, result.Headers)
@@ -93,20 +94,45 @@ func TestRead(t *testing.T) {
 		t.Chdir("..")
 		input := "../testdata/template_post_external.json"
 		// when
-		result := Read(input)
+		result, err := Read(input)
 		// then
+		require.NoError(t, err)
 		assert.Equal(t, http.MethodPost, result.Method)
 		assert.Equal(t, templatedEndpoint, result.Endpoint)
 		assert.ElementsMatch(t, jsonContentType, result.Headers)
 		assert.Equal(t, templatedBody, result.Body)
 	})
 
+	t.Run("a missing file returns an error", func(t *testing.T) {
+		// given
+		input := filepath.Join(t.TempDir(), "missing.yaml")
+		// when
+		result, err := Read(input)
+		// then
+		assert.ErrorIs(t, err, os.ErrNotExist)
+		assert.Nil(t, result)
+	})
+
+	t.Run("a missing @file body returns an error", func(t *testing.T) {
+		// given
+		dir := t.TempDir()
+		input := filepath.Join(dir, "request.json")
+		content := `{"method": "POST", "url": "http://a.pt", "body": "@` + filepath.Join(dir, "missing.json") + `"}`
+		require.NoError(t, os.WriteFile(input, []byte(content), 0o600))
+		// when
+		result, err := Read(input)
+		// then
+		assert.ErrorIs(t, err, os.ErrNotExist)
+		assert.Nil(t, result)
+	})
+
 	t.Run("templated POST in YAML", func(t *testing.T) {
 		// given
 		input := "../../testdata/template_post.yaml"
 		// when
-		result := Read(input)
+		result, err := Read(input)
 		// then
+		require.NoError(t, err)
 		assert.Equal(t, http.MethodPost, result.Method)
 		assert.Equal(t, templatedEndpoint, result.Endpoint)
 		assert.ElementsMatch(t, jsonContentType, result.Headers)
@@ -129,7 +155,7 @@ func TestWrite(t *testing.T) {
 		// when
 		Write(fileName, tmpl)
 		// then
-		result := Read(fileName)
+		result := mustRead(t, fileName)
 		assert.Equal(t, tmpl, result)
 	})
 
@@ -165,7 +191,7 @@ func TestWrite(t *testing.T) {
 		// when
 		Write(fileName, tmpl)
 		// then
-		result := Read(fileName)
+		result := mustRead(t, fileName)
 		assert.Equal(t, tmpl, result)
 	})
 
@@ -187,8 +213,9 @@ func TestExternalBody(t *testing.T) {
 		// given
 		body := "@../../testdata/body.json"
 		// when
-		result, found := externalBody(body)
+		result, found, err := externalBody(body)
 		// then
+		assert.NoError(t, err)
 		assert.True(t, found)
 		assert.Equal(t, templatedBody, result)
 	})
@@ -197,8 +224,9 @@ func TestExternalBody(t *testing.T) {
 		// given
 		body := templatedBody
 		// when
-		result, found := externalBody(body)
+		result, found, err := externalBody(body)
 		// then
+		assert.NoError(t, err)
 		assert.False(t, found)
 		assert.Empty(t, result)
 	})
@@ -333,4 +361,13 @@ func mustReadFile(t testing.TB, fileName string) string {
 	data, err := os.ReadFile(fileName)
 	require.NoError(t, err)
 	return string(data)
+}
+
+func mustRead(t testing.TB, fileName string) *Template {
+	t.Helper()
+	tmpl, err := Read(fileName)
+	if err != nil {
+		t.Fatalf("Read(%s): unexpected error: %v", fileName, err)
+	}
+	return tmpl
 }

@@ -19,6 +19,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 )
@@ -56,32 +57,38 @@ func Default() *Config {
 }
 
 // Read reads the configuration from a file
-func Read(fileName string) *Config {
+func Read(fileName string) (*Config, error) {
 	data, err := os.ReadFile(fileName) //nolint:gosec // reads the config file the user named
 	if err != nil {
-		log.Fatalf("Error reading config file %s: %v\n", fileName, err)
+		return nil, err
 	}
 
 	cfg := Default()
 	if err := json.Unmarshal(data, cfg); err != nil {
 		log.Printf("Invalid JSON config file %s: %v\n", fileName, err)
 	}
-	checkConfig(cfg)
-	return cfg
+
+	if err := checkConfig(cfg); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
 }
 
-func checkConfig(cfg *Config) {
+func checkConfig(cfg *Config) error {
 	if cfg.MaxConnections < 0 {
-		log.Fatalln("Invalid config, 'max-connections' must be zero or positive")
+		return fmt.Errorf("%w: 'max-connections' must be zero or positive", ErrInvalidConfig)
 	}
 
 	if cfg.MaxIdleConnections < 0 {
-		log.Fatalln("Invalid config, 'max-idle-connections' must be zero or positive")
+		return fmt.Errorf("%w: 'max-idle-connections' must be zero or positive", ErrInvalidConfig)
 	}
 
 	if cfg.RequestTimeout < 0 {
-		log.Fatalln("Invalid config, 'timeout' must be zero or positive")
+		return fmt.Errorf("%w: 'timeout' must be zero or positive", ErrInvalidConfig)
 	}
+
+	return nil
 }
 
 // Write writes a configuration to a file

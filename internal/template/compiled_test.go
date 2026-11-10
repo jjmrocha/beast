@@ -69,7 +69,7 @@ func TestExecuteTemplate(t *testing.T) {
 }
 
 func BenchmarkFromTemplateToClient(b *testing.B) {
-	tmpl := Read("../../testdata/template_post.json")
+	tmpl := mustRead(b, "../../testdata/template_post.json")
 	record := mustReadData(b, "../../testdata/data.csv").Next()
 
 	for b.Loop() {
@@ -89,7 +89,7 @@ func BenchmarkFromTemplateToClient(b *testing.B) {
 
 func mustCompile(t testing.TB, fileName string) *CompiledTemplate {
 	t.Helper()
-	tmplc, err := Read(fileName).Compile()
+	tmplc, err := mustRead(t, fileName).Compile()
 	if err != nil {
 		t.Fatalf("Compile(%s): unexpected error: %v", fileName, err)
 	}
