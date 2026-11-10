@@ -23,37 +23,46 @@ import (
 	"github.com/jjmrocha/beast/internal/command"
 )
 
+const usageError = 2
+
 func main() {
-	if len(os.Args) == 1 {
+	os.Exit(run(os.Args[1:]))
+}
+
+func run(args []string) int {
+	if len(args) == 0 {
 		command.Help()
-		return
+		return 0
 	}
 
-	switch os.Args[1] {
+	switch args[0] {
 	case "help":
 		command.Help()
+		return 0
 	case "config":
-		configCmd(os.Args[2:])
+		return configCmd(args[1:])
 	case "run":
-		runCmd(os.Args[2:])
+		return runCmd(args[1:])
 	case "template":
-		templateCmd(os.Args[2:])
+		return templateCmd(args[1:])
 	default:
 		command.Help()
+		return usageError
 	}
 }
 
-func configCmd(args []string) {
+func configCmd(args []string) int {
 	if len(args) != 1 {
 		command.Help()
-		return
+		return usageError
 	}
 
 	fileName := args[0]
 	command.Config(fileName)
+	return 0
 }
 
-func runCmd(args []string) {
+func runCmd(args []string) int {
 	runOption := flag.NewFlagSet("run", flag.ExitOnError)
 	nRequests := runOption.Int("n", 0, "Number of requests")
 	tDuration := runOption.Int("t", 0, "Duration of the test in seconds")
@@ -66,17 +75,17 @@ func runCmd(args []string) {
 
 	if len(nonFlagArgs) != 1 {
 		command.Help()
-		return
+		return usageError
 	}
 
 	if *nRequests < 0 || *nParallel <= 0 || *tDuration < 0 {
 		command.Help()
-		return
+		return usageError
 	}
 
 	if (*nRequests == 0 && *tDuration == 0) || (*nRequests > 0 && *tDuration > 0) {
 		command.Help()
-		return
+		return usageError
 	}
 
 	fileName := nonFlagArgs[0]
@@ -89,9 +98,10 @@ func runCmd(args []string) {
 		Data:        *dataFile,
 		Output:      *outputFile,
 	})
+	return 0
 }
 
-func templateCmd(args []string) {
+func templateCmd(args []string) int {
 	templateOption := flag.NewFlagSet("template", flag.ExitOnError)
 	method := templateOption.String("m", "GET", "HTTP method")
 	_ = templateOption.Parse(args)
@@ -107,8 +117,9 @@ func templateCmd(args []string) {
 		fileName = nonFlagArgs[1]
 	default:
 		command.Help()
-		return
+		return usageError
 	}
 
 	command.Template(command.TemplateOptions{Method: *method, URL: url, File: fileName})
+	return 0
 }
