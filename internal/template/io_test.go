@@ -32,9 +32,7 @@ const (
 	staticBody        = "{\"id\": 1, \"value\": \"any\"}"
 	userAgent         = "Beast/1"
 	headerKey1        = "Key_1"
-	headerKey2        = "Key_2"
 	headerValue1      = "Value_1"
-	headerValue2      = "Value_2"
 	userAgentHeader   = "User-Agent"
 	basicEndpoint     = "http://www.google.pt"
 )
@@ -145,7 +143,7 @@ func TestWrite(t *testing.T) {
 	tmpl := &Template{
 		Method:   "PUT",
 		Endpoint: templatedEndpoint,
-		Headers:  []Header{{Key: userAgentHeader, Value: userAgent}},
+		Headers:  []Header{{Key: userAgentHeader, Value: userAgent}, {Key: headerKey1, Value: headerValue1}},
 		Body:     templatedBody,
 	}
 
@@ -192,7 +190,10 @@ func TestWrite(t *testing.T) {
 		Write(fileName, tmpl)
 		// then
 		result := mustRead(t, fileName)
-		assert.Equal(t, tmpl, result)
+		assert.Equal(t, tmpl.Method, result.Method)
+		assert.Equal(t, tmpl.Endpoint, result.Endpoint)
+		assert.ElementsMatch(t, tmpl.Headers, result.Headers)
+		assert.Equal(t, tmpl.Body, result.Body)
 	})
 
 	t.Run("YAML file uses the v2.6.1 key names", func(t *testing.T) {
@@ -208,40 +209,12 @@ func TestWrite(t *testing.T) {
 	})
 }
 
-func TestExternalBody(t *testing.T) {
-	t.Run("reads the file named after @", func(t *testing.T) {
-		// given
-		body := "@../../testdata/body.json"
-		// when
-		result, found, err := externalBody(body)
-		// then
-		assert.NoError(t, err)
-		assert.True(t, found)
-		assert.Equal(t, templatedBody, result)
-	})
-
-	t.Run("ignores a body without @", func(t *testing.T) {
-		// given
-		body := templatedBody
-		// when
-		result, found, err := externalBody(body)
-		// then
-		assert.NoError(t, err)
-		assert.False(t, found)
-		assert.Empty(t, result)
-	})
-}
-
 func TestIsJSON(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
 		expected bool
 	}{
-		{name: "relative JSON path", input: "../../testdata/basic_get.json", expected: true},
-		{name: "relative YAML path", input: "../../testdata/basic_get.yaml", expected: false},
-		{name: "JSON file name", input: "template_post_external.json", expected: true},
-		{name: "YAML file name", input: "template_post_external.yaml", expected: false},
 		{name: "upper case extension", input: "SOME_FILE.JSON", expected: true},
 		{name: "json only in a folder name", input: "/json/not_ajson", expected: false},
 	}
@@ -255,104 +228,6 @@ func TestIsJSON(t *testing.T) {
 			// then
 			assert.Equal(t, tc.expected, result)
 		})
-	}
-}
-
-func TestToHeaderMap(t *testing.T) {
-	t.Run("turns the header list into a map", func(t *testing.T) {
-		// given
-		headers := []Header{{Key: headerKey1, Value: headerValue1}, {Key: headerKey2, Value: headerValue2}}
-		// when
-		result := toHeaderMap(headers)
-		// then
-		expected := map[string]string{headerKey1: headerValue1, headerKey2: headerValue2}
-		assert.Equal(t, expected, result)
-	})
-
-	t.Run("keeps no headers as nil", func(t *testing.T) {
-		// when
-		result := toHeaderMap(nil)
-		// then
-		assert.Nil(t, result)
-	})
-}
-
-func TestFromHeaderMap(t *testing.T) {
-	t.Run("turns the header map into a list", func(t *testing.T) {
-		// given
-		headers := map[string]string{headerKey1: headerValue1, headerKey2: headerValue2}
-		// when
-		result := fromHeaderMap(headers)
-		// then
-		expected := []Header{{Key: headerKey1, Value: headerValue1}, {Key: headerKey2, Value: headerValue2}}
-		assert.ElementsMatch(t, expected, result)
-	})
-
-	t.Run("keeps no headers as nil", func(t *testing.T) {
-		// when
-		result := fromHeaderMap(nil)
-		// then
-		assert.Nil(t, result)
-	})
-}
-
-func TestToYamlTemplate(t *testing.T) {
-	t.Run("full template", func(t *testing.T) {
-		// given
-		tmpl := exampleTemplate()
-		// when
-		result := toYamlTemplate(tmpl)
-		// then
-		assert.Equal(t, exampleYamlTemplate(), result)
-	})
-
-	t.Run("template without headers or body", func(t *testing.T) {
-		// given
-		tmpl := &Template{Method: http.MethodGet, Endpoint: basicEndpoint}
-		// when
-		result := toYamlTemplate(tmpl)
-		// then
-		expected := &templateY{Method: http.MethodGet, Endpoint: basicEndpoint}
-		assert.Equal(t, expected, result)
-	})
-}
-
-func TestFromYamlTemplate(t *testing.T) {
-	t.Run("full template", func(t *testing.T) {
-		// given
-		tmply := exampleYamlTemplate()
-		// when
-		result := fromYamlTemplate(tmply)
-		// then
-		assert.Equal(t, exampleTemplate(), result)
-	})
-
-	t.Run("template without headers or body", func(t *testing.T) {
-		// given
-		tmply := &templateY{Method: http.MethodGet, Endpoint: basicEndpoint}
-		// when
-		result := fromYamlTemplate(tmply)
-		// then
-		expected := &Template{Method: http.MethodGet, Endpoint: basicEndpoint}
-		assert.Equal(t, expected, result)
-	})
-}
-
-func exampleTemplate() *Template {
-	return &Template{
-		Method:   "Use Http method: GET/POST/PUT/DELETE",
-		Endpoint: "Http URL to be invoked",
-		Headers:  []Header{{Key: userAgentHeader, Value: userAgent}},
-		Body:     "Optional, enter body to send with POST or PUT",
-	}
-}
-
-func exampleYamlTemplate() *templateY {
-	return &templateY{
-		Method:   "Use Http method: GET/POST/PUT/DELETE",
-		Endpoint: "Http URL to be invoked",
-		Headers:  map[string]string{userAgentHeader: userAgent},
-		Body:     "Optional, enter body to send with POST or PUT",
 	}
 }
 

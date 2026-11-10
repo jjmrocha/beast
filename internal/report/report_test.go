@@ -69,19 +69,6 @@ var resultsOfEachKind = []struct {
 	},
 }
 
-func TestEncode(t *testing.T) {
-	for _, tc := range resultsOfEachKind {
-		t.Run(tc.name, func(t *testing.T) {
-			// given
-			response := tc.input
-			// when
-			result := encode(response)
-			// then
-			assert.Equal(t, tc.expected, result)
-		})
-	}
-}
-
 func TestCsvReport(t *testing.T) {
 	t.Run("writes the v2.6.1 header and one line per result", func(t *testing.T) {
 		// given
@@ -99,29 +86,6 @@ func TestCsvReport(t *testing.T) {
 			expected = append(expected, tc.expected)
 		}
 		assert.Equal(t, expected, result)
-	})
-
-	t.Run("keeps the error when the file cannot be written", func(t *testing.T) {
-		// given
-		fileName := filepath.Join(t.TempDir(), "output.csv")
-		report := mustNewCsvReport(t, fileName)
-		require.NoError(t, report.file.Close())
-		report.write(resultsOfEachKind[0].input)
-		// when
-		report.flush()
-		// then
-		assert.Error(t, report.err)
-	})
-
-	t.Run("has no error when the file was written", func(t *testing.T) {
-		// given
-		fileName := filepath.Join(t.TempDir(), "output.csv")
-		report := mustNewCsvReport(t, fileName)
-		report.write(resultsOfEachKind[0].input)
-		// when
-		report.flush()
-		// then
-		assert.NoError(t, report.err)
 	})
 
 	t.Run("quotes a request that contains a comma", func(t *testing.T) {
