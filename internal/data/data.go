@@ -20,7 +20,6 @@ package data
 import (
 	"encoding/csv"
 	"io"
-	"log"
 	"os"
 )
 
@@ -58,10 +57,10 @@ func (d *Data) Next() *Record {
 }
 
 // Read reads the content of the CSV file
-func Read(fileName string) *Data {
+func Read(fileName string) (*Data, error) {
 	csvfile, err := os.Open(fileName) //nolint:gosec // reads the data file the user named
 	if err != nil {
-		log.Fatalf("Error reading data file %s: %v\n", fileName, err)
+		return nil, err
 	}
 
 	defer func() { _ = csvfile.Close() }()
@@ -75,11 +74,15 @@ func Read(fileName string) *Data {
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			log.Fatalf("Error reading data file %s: %v\n", fileName, err)
+			return nil, err
 		}
 
 		dt.add(record)
 	}
 
-	return &dt
+	if len(dt.records) == 0 {
+		return nil, ErrNoRows
+	}
+
+	return &dt, nil
 }

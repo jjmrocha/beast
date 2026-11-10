@@ -88,7 +88,11 @@ func readData(dataFile string) *data.Data {
 	}
 
 	fmt.Println("- Loading data file")
-	return data.Read(dataFile)
+	dt, err := data.Read(dataFile)
+	if err != nil {
+		log.Fatalf("Error reading data file %s: %v\n", dataFile, err)
+	}
+	return dt
 }
 
 func readTemplate(fileName string) *template.CompiledTemplate {

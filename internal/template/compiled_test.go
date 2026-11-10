@@ -29,7 +29,7 @@ func TestExecuteTemplate(t *testing.T) {
 	t.Run("fills the URL, headers and body", func(t *testing.T) {
 		// given
 		tmplc := mustCompile(t, "../../testdata/template_post.json")
-		record := data.Read("../../testdata/data.csv").Next()
+		record := mustReadData(t, "../../testdata/data.csv").Next()
 		// when
 		result, err := tmplc.executeTemplate(1, record)
 		// then
@@ -70,7 +70,7 @@ func TestExecuteTemplate(t *testing.T) {
 
 func BenchmarkFromTemplateToClient(b *testing.B) {
 	tmpl := Read("../../testdata/template_post.json")
-	record := data.Read("../../testdata/data.csv").Next()
+	record := mustReadData(b, "../../testdata/data.csv").Next()
 
 	for b.Loop() {
 		tmplc, err := tmpl.Compile()
@@ -94,4 +94,13 @@ func mustCompile(t testing.TB, fileName string) *CompiledTemplate {
 		t.Fatalf("Compile(%s): unexpected error: %v", fileName, err)
 	}
 	return tmplc
+}
+
+func mustReadData(t testing.TB, fileName string) *data.Data {
+	t.Helper()
+	dt, err := data.Read(fileName)
+	if err != nil {
+		t.Fatalf("data.Read(%s): unexpected error: %v", fileName, err)
+	}
+	return dt
 }

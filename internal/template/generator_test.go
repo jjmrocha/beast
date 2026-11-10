@@ -29,7 +29,7 @@ func TestLog(t *testing.T) {
 	// given
 	gnt := &Generator{
 		RecordID: 1,
-		Data:     data.Read("../../testdata/simple.csv").Next(),
+		Data:     mustReadData(t, "../../testdata/simple.csv").Next(),
 	}
 	// when
 	result := gnt.Log()
@@ -44,7 +44,7 @@ func TestRequest(t *testing.T) {
 		gnt := &Generator{
 			Template: mustCompile(t, "../../testdata/template_post.json"),
 			RecordID: 1,
-			Data:     data.Read("../../testdata/data.csv").Next(),
+			Data:     mustReadData(t, "../../testdata/data.csv").Next(),
 		}
 		// when
 		result, err := gnt.Request()
@@ -73,7 +73,7 @@ func BenchmarkRequest(b *testing.B) {
 	gnt := &Generator{
 		Template: mustCompile(b, "../../testdata/template_post.json"),
 		RecordID: 1,
-		Data:     data.Read("../../testdata/data.csv").Next(),
+		Data:     mustReadData(b, "../../testdata/data.csv").Next(),
 	}
 
 	for b.Loop() {

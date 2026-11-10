@@ -35,8 +35,9 @@ func TestRead(t *testing.T) {
 		// given
 		fileName := "../../testdata/data.csv"
 		// when
-		result := Read(fileName)
+		result, err := Read(fileName)
 		// then
+		require.NoError(t, err)
 		assert.Equal(t, &firstRow, result.Next())
 		assert.Equal(t, &secondRow, result.Next())
 	})
@@ -45,17 +46,48 @@ func TestRead(t *testing.T) {
 		// given
 		fileName := writeCSV(t, "NAME,URL\n\"Smith, John\",http://a.pt\n")
 		// when
-		result := Read(fileName)
+		result, err := Read(fileName)
 		// then
+		require.NoError(t, err)
 		expected := &Record{"NAME": "Smith, John", "URL": "http://a.pt"}
 		assert.Equal(t, expected, result.Next())
+	})
+
+	t.Run("a file with only a header returns ErrNoRows", func(t *testing.T) {
+		// given
+		fileName := writeCSV(t, "A,B\n")
+		// when
+		result, err := Read(fileName)
+		// then
+		assert.ErrorIs(t, err, ErrNoRows)
+		assert.Nil(t, result)
+	})
+
+	t.Run("an empty file returns ErrNoRows", func(t *testing.T) {
+		// given
+		fileName := writeCSV(t, "")
+		// when
+		result, err := Read(fileName)
+		// then
+		assert.ErrorIs(t, err, ErrNoRows)
+		assert.Nil(t, result)
+	})
+
+	t.Run("a missing file returns an error", func(t *testing.T) {
+		// given
+		fileName := filepath.Join(t.TempDir(), "missing.csv")
+		// when
+		result, err := Read(fileName)
+		// then
+		assert.ErrorIs(t, err, os.ErrNotExist)
+		assert.Nil(t, result)
 	})
 }
 
 func TestNext(t *testing.T) {
 	t.Run("starts again at the first row after the last", func(t *testing.T) {
 		// given
-		dt := Read("../../testdata/data.csv")
+		dt := mustRead(t, "../../testdata/data.csv")
 		dt.Next()
 		dt.Next()
 		// when
@@ -66,7 +98,7 @@ func TestNext(t *testing.T) {
 
 	t.Run("returns the only row every time", func(t *testing.T) {
 		// given
-		dt := Read(writeCSV(t, "A\na1\n"))
+		dt := mustRead(t, writeCSV(t, "A\na1\n"))
 		dt.Next()
 		// when
 		result := dt.Next()
@@ -81,4 +113,13 @@ func writeCSV(t testing.TB, content string) string {
 	fileName := filepath.Join(t.TempDir(), "data.csv")
 	require.NoError(t, os.WriteFile(fileName, []byte(content), 0o600))
 	return fileName
+}
+
+func mustRead(t testing.TB, fileName string) *Data {
+	t.Helper()
+	dt, err := Read(fileName)
+	if err != nil {
+		t.Fatalf("Read(%s): unexpected error: %v", fileName, err)
+	}
+	return dt
 }
