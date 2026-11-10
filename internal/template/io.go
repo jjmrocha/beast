@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -33,11 +34,23 @@ func Read(fileName string) (*Template, error) {
 		return nil, err
 	}
 
+	var tmpl *Template
 	if isJSON(fileName) {
-		return readJSON(fileName, data)
+		tmpl = readJSON(fileName, data)
+	} else {
+		tmpl = readYAML(fileName, data)
 	}
 
-	return readYAML(fileName, data), nil
+	body, read, err := externalBody(fileName, tmpl.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if read {
+		tmpl.Body = body
+	}
+
+	return tmpl, nil
 }
 
 // Write writes an HTTP request template to a file
@@ -56,36 +69,31 @@ func isJSON(fileName string) bool {
 	return strings.HasSuffix(lowerCaseFileName, ".json")
 }
 
-func readJSON(fileName string, data []byte) (*Template, error) {
+func readJSON(fileName string, data []byte) *Template {
 	var tmpl Template
 	if err := json.Unmarshal(data, &tmpl); err != nil {
 		log.Printf("Invalid JSON template file %s: %v\n", fileName, err)
 	}
 
-	body, read, err := externalBody(tmpl.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if read {
-		tmpl.Body = body
-	}
-
-	return &tmpl, nil
+	return &tmpl
 }
 
-func externalBody(body string) (string, bool, error) {
-	if strings.HasPrefix(body, "@") {
-		fileName := body[1:]
-		data, err := os.ReadFile(fileName) //nolint:gosec // reads the body file the user named in the template
-		if err != nil {
-			return "", false, fmt.Errorf("external body: %w", err)
-		}
-
-		return string(data), true, nil
+func externalBody(templateFile, body string) (string, bool, error) {
+	if !strings.HasPrefix(body, "@") {
+		return "", false, nil
 	}
 
-	return "", false, nil
+	fileName := body[1:]
+	if !filepath.IsAbs(fileName) {
+		fileName = filepath.Join(filepath.Dir(templateFile), fileName)
+	}
+
+	data, err := os.ReadFile(fileName) //nolint:gosec // reads the body file the user named in the template
+	if err != nil {
+		return "", false, fmt.Errorf("external body: %w", err)
+	}
+
+	return string(data), true, nil
 }
 
 func writeJSON(fileName string, tmpl *Template) error {

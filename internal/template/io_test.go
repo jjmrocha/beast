@@ -111,6 +111,58 @@ func TestRead(t *testing.T) {
 		assert.Nil(t, result)
 	})
 
+	t.Run("reads an @file body next to the template", func(t *testing.T) {
+		// given
+		dir := t.TempDir()
+		input := writeTemplateDir(t, dir, "request.json", `{"method": "POST", "url": "http://a.pt", "body": "@body.txt"}`)
+		writeTemplateDir(t, dir, "body.txt", "next to the template")
+		// when
+		result, err := Read(input)
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, "next to the template", result.Body)
+	})
+
+	t.Run("does not look for an @file body in the current folder", func(t *testing.T) {
+		// given
+		input := writeTemplateDir(t, t.TempDir(), "request.json", `{"method": "POST", "url": "http://a.pt", "body": "@body.txt"}`)
+		current := t.TempDir()
+		writeTemplateDir(t, current, "body.txt", "in the current folder")
+		t.Chdir(current)
+		// when
+		result, err := Read(input)
+		// then
+		assert.ErrorIs(t, err, os.ErrNotExist)
+		assert.Nil(t, result)
+	})
+
+	t.Run("uses the @file body next to the template when the current folder has one too", func(t *testing.T) {
+		// given
+		dir := t.TempDir()
+		input := writeTemplateDir(t, dir, "request.json", `{"method": "POST", "url": "http://a.pt", "body": "@body.txt"}`)
+		writeTemplateDir(t, dir, "body.txt", "next to the template")
+		current := t.TempDir()
+		writeTemplateDir(t, current, "body.txt", "in the current folder")
+		t.Chdir(current)
+		// when
+		result, err := Read(input)
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, "next to the template", result.Body)
+	})
+
+	t.Run("reads an @file body in a YAML template", func(t *testing.T) {
+		// given
+		dir := t.TempDir()
+		input := writeTemplateDir(t, dir, "request.yaml", "method: POST\nendpoint: \"http://a.pt\"\nrequest-body: \"@body.txt\"\n")
+		writeTemplateDir(t, dir, "body.txt", "yaml body")
+		// when
+		result, err := Read(input)
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, "yaml body", result.Body)
+	})
+
 	t.Run("a missing @file body returns an error", func(t *testing.T) {
 		// given
 		dir := t.TempDir()
@@ -259,4 +311,11 @@ func mustRead(t testing.TB, fileName string) *Template {
 		t.Fatalf("Read(%s): unexpected error: %v", fileName, err)
 	}
 	return tmpl
+}
+
+func writeTemplateDir(t testing.TB, dir, name, content string) string {
+	t.Helper()
+	fileName := filepath.Join(dir, name)
+	require.NoError(t, os.WriteFile(fileName, []byte(content), 0o600))
+	return fileName
 }
