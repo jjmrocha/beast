@@ -27,8 +27,6 @@ import (
 )
 
 const (
-	clientError       = -500
-	timeoutError      = -400
 	redirectPath      = "/old"
 	redirectTarget    = "/new"
 	slowHandlerMaxRun = 3 * time.Second
@@ -50,7 +48,7 @@ func TestNewClient(t *testing.T) {
 		// when
 		result := c.Execute(request)
 		// then
-		assert.Equal(t, timeoutError, result.StatusCode)
+		assert.Equal(t, StatusTimeout, result.StatusCode)
 		assert.GreaterOrEqual(t, result.Duration, time.Second)
 	})
 
@@ -86,7 +84,7 @@ func TestNewClient(t *testing.T) {
 		// when
 		result := c.Execute(request)
 		// then
-		assert.Equal(t, clientError, result.StatusCode)
+		assert.Equal(t, StatusUnexpectedError, result.StatusCode)
 	})
 
 	t.Run("accepts a self-signed certificate when disable-certificate-check is true", func(t *testing.T) {
@@ -129,7 +127,7 @@ func TestExecute(t *testing.T) {
 		assert.Equal(t, http.StatusServiceUnavailable, result.StatusCode)
 	})
 
-	t.Run("returns -500 when the server cannot be reached", func(t *testing.T) {
+	t.Run("returns StatusUnexpectedError when the server cannot be reached", func(t *testing.T) {
 		// given
 		server := httptest.NewServer(http.NotFoundHandler())
 		url := server.URL
@@ -139,7 +137,7 @@ func TestExecute(t *testing.T) {
 		// when
 		result := c.Execute(request)
 		// then
-		assert.Equal(t, clientError, result.StatusCode)
+		assert.Equal(t, StatusUnexpectedError, result.StatusCode)
 		assert.Equal(t, "GET "+url, result.Request)
 	})
 }

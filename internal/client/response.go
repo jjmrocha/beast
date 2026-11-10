@@ -21,6 +21,12 @@ import (
 	"time"
 )
 
+const (
+	StatusGenerationError = -100
+	StatusTimeout         = -400
+	StatusUnexpectedError = -500
+)
+
 // Response contains the status code and the duration taken for execution of a request
 type Response struct {
 	Timestamp  time.Time
@@ -46,11 +52,11 @@ func (r *Response) IsClientError() bool {
 // ClientError returns the descriprion for the client error
 func (r *Response) ClientError() string {
 	switch r.StatusCode {
-	case -100:
+	case StatusGenerationError:
 		return "Request generation error"
-	case -400:
+	case StatusTimeout:
 		return "Request timeout"
-	case -500:
+	case StatusUnexpectedError:
 		return "Unexpected error"
 	}
 

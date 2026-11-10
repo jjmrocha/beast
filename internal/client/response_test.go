@@ -41,7 +41,7 @@ func TestIsSuccess(t *testing.T) {
 		{name: "429 too many requests", input: 429, expected: false},
 		{name: "500 internal error", input: 500, expected: false},
 		{name: "502 bad gateway", input: 502, expected: false},
-		{name: "-400 client timeout", input: -400, expected: false},
+		{name: "-400 client timeout", input: StatusTimeout, expected: false},
 	}
 
 	for _, tc := range tests {
@@ -62,7 +62,7 @@ func TestIsClientError(t *testing.T) {
 		input    int
 		expected bool
 	}{
-		{name: "-500 unexpected error", input: -500, expected: true},
+		{name: "-500 unexpected error", input: StatusUnexpectedError, expected: true},
 		{name: "-1 smallest negative", input: -1, expected: true},
 		{name: "0 no status", input: 0, expected: false},
 		{name: "200 ok", input: 200, expected: false},
@@ -86,9 +86,9 @@ func TestClientError(t *testing.T) {
 		input    int
 		expected string
 	}{
-		{name: "-100 generation error", input: -100, expected: "Request generation error"},
-		{name: "-400 timeout", input: -400, expected: "Request timeout"},
-		{name: "-500 unexpected error", input: -500, expected: "Unexpected error"},
+		{name: "-100 generation error", input: StatusGenerationError, expected: "Request generation error"},
+		{name: "-400 timeout", input: StatusTimeout, expected: "Request timeout"},
+		{name: "-500 unexpected error", input: StatusUnexpectedError, expected: "Unexpected error"},
 		{name: "-1 unknown client error", input: -1, expected: ""},
 		{name: "200 not a client error", input: 200, expected: ""},
 	}

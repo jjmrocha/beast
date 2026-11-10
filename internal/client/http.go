@@ -81,7 +81,7 @@ func (c *Client) Execute(request *Request) *Response {
 			return &Response{
 				Timestamp:  start,
 				Request:    request.String(),
-				StatusCode: -400,
+				StatusCode: StatusTimeout,
 				Duration:   duration,
 			}
 		}
@@ -90,7 +90,7 @@ func (c *Client) Execute(request *Request) *Response {
 		return &Response{
 			Timestamp:  start,
 			Request:    request.String(),
-			StatusCode: -500,
+			StatusCode: StatusUnexpectedError,
 			Duration:   duration,
 		}
 	}

@@ -54,17 +54,17 @@ var resultsOfEachKind = []struct {
 	},
 	{
 		name:     "request generation error",
-		input:    &client.Response{Timestamp: timestamp, StatusCode: -100},
+		input:    &client.Response{Timestamp: timestamp, StatusCode: client.StatusGenerationError},
 		expected: []string{formattedTimestamp, "", "Request generation error", "", notSuccess, ""},
 	},
 	{
 		name:     "request timeout",
-		input:    &client.Response{Timestamp: timestamp, Request: getRequest, StatusCode: -400, Duration: time.Second},
+		input:    &client.Response{Timestamp: timestamp, Request: getRequest, StatusCode: client.StatusTimeout, Duration: time.Second},
 		expected: []string{formattedTimestamp, getRequest, "Request timeout", "", notSuccess, "1000"},
 	},
 	{
 		name:     "unexpected error",
-		input:    &client.Response{Timestamp: timestamp, Request: getRequest, StatusCode: -500, Duration: 5 * time.Millisecond},
+		input:    &client.Response{Timestamp: timestamp, Request: getRequest, StatusCode: client.StatusUnexpectedError, Duration: 5 * time.Millisecond},
 		expected: []string{formattedTimestamp, getRequest, "Unexpected error", "", notSuccess, "5"},
 	},
 }

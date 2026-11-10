@@ -101,7 +101,7 @@ func TestPrintStats(t *testing.T) {
 	t.Run("prints client errors", func(t *testing.T) {
 		// given
 		var printed bytes.Buffer
-		s := statsOf(&client.Response{StatusCode: -400, Duration: time.Second})
+		s := statsOf(&client.Response{StatusCode: client.StatusTimeout, Duration: time.Second})
 		// when
 		s.PrintStats(&printed)
 		// then

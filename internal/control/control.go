@@ -82,7 +82,7 @@ func (c *Control) AsyncExecute(httpClient *client.Client, tmplc *template.Compil
 var emptyRecord = data.NewRecord()
 var generateError = client.Response{
 	Timestamp:  time.Now(),
-	StatusCode: -100,
+	StatusCode: client.StatusGenerationError,
 }
 
 func (c *Control) createGenerators(tmplc *template.CompiledTemplate, rows *data.Data) {
