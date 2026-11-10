@@ -17,11 +17,13 @@
 package report
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/jjmrocha/beast/internal/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -42,6 +44,24 @@ func TestClose(t *testing.T) {
 		// then
 		assert.Contains(t, result, successLine)
 		assert.NotContains(t, result, errorLine)
+	})
+
+	t.Run("writes every record in the order it was written", func(t *testing.T) {
+		// given
+		const records = 5000
+		fileName := filepath.Join(t.TempDir(), "output.csv")
+		output := NewOutput(fileName)
+		for i := range records {
+			output.Write(&client.Response{Timestamp: timestamp, Request: fmt.Sprintf("GET /%d", i), StatusCode: 200})
+		}
+		// when
+		captureStdout(t, output.Close)
+		// then
+		result := mustReadCSV(t, fileName)
+		require.Len(t, result, records+1)
+		for i := range records {
+			assert.Equal(t, fmt.Sprintf("GET /%d", i), result[i+1][1])
+		}
 	})
 
 	t.Run("prints an error line when the output file could not be written", func(t *testing.T) {

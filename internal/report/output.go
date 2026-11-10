@@ -20,17 +20,17 @@ import (
 	"fmt"
 
 	"github.com/jjmrocha/beast/internal/client"
-	"github.com/jjmrocha/beast/internal/control"
+	"github.com/jjmrocha/go-algo/queue"
 )
 
 const datetimeFormat = "2006-01-02 15:04:05.999"
 
 // Output is the handler for CVS output
 type Output struct {
-	csvReport     *csvReport
-	outputChannel chan *client.Response
-	buffer        *control.Fifo
-	closeFile     *control.WaitCompletion
+	csvReport *csvReport
+	records   *queue.SyncQueue[*client.Response]
+	wake      chan struct{}
+	done      chan struct{}
 }
 
 // NewOutput creates new Output handler
@@ -40,13 +40,13 @@ func NewOutput(fileName string) Output {
 	}
 
 	output := Output{
-		csvReport:     newCsvReport(fileName),
-		outputChannel: make(chan *client.Response, 1024),
-		buffer:        control.NewFifo(),
-		closeFile:     control.NewWaitCompletion(),
+		csvReport: newCsvReport(fileName),
+		records:   queue.NewSyncQueue[*client.Response](),
+		wake:      make(chan struct{}, 1),
+		done:      make(chan struct{}),
 	}
 
-	go asyncWrite(output)
+	go output.writeAll()
 	return output
 }
 
@@ -56,7 +56,11 @@ func (o Output) Write(response *client.Response) {
 		return
 	}
 
-	o.outputChannel <- response
+	o.records.Enqueue(response)
+	select {
+	case o.wake <- struct{}{}:
+	default:
+	}
 }
 
 // Close closes the CSV file
@@ -65,7 +69,8 @@ func (o Output) Close() {
 		return
 	}
 
-	o.closeFile.Request()
+	close(o.wake)
+	<-o.done
 	fmt.Printf("===== Output File =====\n")
 	if err := o.csvReport.err; err != nil {
 		fmt.Printf("Error writing output file '%s': %v\n", o.csvReport.FileName, err)
@@ -74,35 +79,15 @@ func (o Output) Close() {
 	fmt.Printf("Output file '%s' was successfully generated\n", o.csvReport.FileName)
 }
 
-func asyncWrite(o Output) {
-	defer func() {
-		defer o.closeFile.Completed()
-		o.csvReport.flush()
-		close(o.outputChannel)
-	}()
-
-	var msgIn, msgOut bool
-	run := true
-
-	for run {
-		msgIn = false
-		msgOut = false
-
-		select {
-		case response, ok := <-o.outputChannel:
-			if ok {
-				o.buffer.Push(response)
-				msgIn = true
-			}
-		default:
-			if element := o.buffer.Pop(); element != nil {
-				o.csvReport.write(element.Value)
-				msgOut = true
-			}
+func (o Output) writeAll() {
+	defer close(o.done)
+	for open := true; open; {
+		_, open = <-o.wake
+		for response := range o.records.Drain() {
+			o.csvReport.write(response)
 		}
-
-		run = msgIn || msgOut || !o.closeFile.WasRequested()
 	}
+	o.csvReport.flush()
 }
 
 func (o Output) isInUse() bool {
