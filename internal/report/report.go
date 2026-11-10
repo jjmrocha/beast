@@ -33,7 +33,7 @@ type csvReport struct {
 }
 
 func newCsvReport(fileName string) (*csvReport, error) {
-	fileHandler, err := os.Create(fileName) //nolint:gosec // writes the output file the user named
+	fileHandler, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600) //nolint:gosec // writes the output file the user named
 	if err != nil {
 		return nil, err
 	}

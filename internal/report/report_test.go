@@ -88,6 +88,19 @@ func TestCsvReport(t *testing.T) {
 		assert.Equal(t, expected, result)
 	})
 
+	t.Run("creates the file readable only by its owner", func(t *testing.T) {
+		// given
+		fileName := filepath.Join(t.TempDir(), "output.csv")
+		// when
+		report := mustNewCsvReport(t, fileName)
+		// then
+		report.flush()
+		info, err := os.Stat(fileName)
+		require.NoError(t, err)
+		expected := os.FileMode(0o600)
+		assert.Equal(t, expected, info.Mode().Perm())
+	})
+
 	t.Run("quotes a request that contains a comma", func(t *testing.T) {
 		// given
 		fileName := filepath.Join(t.TempDir(), "output.csv")
