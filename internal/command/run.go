@@ -19,6 +19,7 @@ package command
 import (
 	"fmt"
 	"log"
+	"os"
 	"runtime"
 
 	"github.com/jjmrocha/beast/internal/client"
@@ -60,12 +61,19 @@ func Run(nRequests, tDuration int, nParallel int, fileName, configFile, dataFile
 	ctrl := control.New(nRequests, tDuration, nParallel)
 	ctrl.AsyncExecute(httpClient, tmpl, data)
 
-	stats := report.NewStats(report.NewBar(nRequests, tDuration), outputFile)
-	for response := range ctrl.OutputChannel() {
-		stats.Update(response)
+	output, err := report.NewOutput(outputFile)
+	if err != nil {
+		log.Fatalf("Error creating output file %s: %v\n", outputFile, err)
 	}
 
-	stats.PrintStats()
+	stats := report.NewStats(report.NewBar(nRequests, tDuration))
+	for response := range ctrl.OutputChannel() {
+		stats.Update(response)
+		output.Write(response)
+	}
+
+	stats.PrintStats(os.Stdout)
+	output.Close(os.Stdout)
 }
 
 func createHTTPClient(configFile string, nParallel int) *client.Client {

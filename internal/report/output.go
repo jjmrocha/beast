@@ -18,6 +18,7 @@ package report
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/jjmrocha/beast/internal/client"
 	"github.com/jjmrocha/go-algo/queue"
@@ -34,20 +35,25 @@ type Output struct {
 }
 
 // NewOutput creates new Output handler
-func NewOutput(fileName string) Output {
+func NewOutput(fileName string) (Output, error) {
 	if fileName == "" {
-		return Output{}
+		return Output{}, nil
+	}
+
+	report, err := newCsvReport(fileName)
+	if err != nil {
+		return Output{}, err
 	}
 
 	output := Output{
-		csvReport: newCsvReport(fileName),
+		csvReport: report,
 		records:   queue.NewSyncQueue[*client.Response](),
 		wake:      make(chan struct{}, 1),
 		done:      make(chan struct{}),
 	}
 
 	go output.writeAll()
-	return output
+	return output, nil
 }
 
 // Write appends the response to the output file
@@ -64,19 +70,19 @@ func (o Output) Write(response *client.Response) {
 }
 
 // Close closes the CSV file
-func (o Output) Close() {
+func (o Output) Close(w io.Writer) {
 	if !o.isInUse() {
 		return
 	}
 
 	close(o.wake)
 	<-o.done
-	fmt.Printf("===== Output File =====\n")
+	_, _ = fmt.Fprintf(w, "===== Output File =====\n")
 	if err := o.csvReport.err; err != nil {
-		fmt.Printf("Error writing output file '%s': %v\n", o.csvReport.FileName, err)
+		_, _ = fmt.Fprintf(w, "Error writing output file '%s': %v\n", o.csvReport.FileName, err)
 		return
 	}
-	fmt.Printf("Output file '%s' was successfully generated\n", o.csvReport.FileName)
+	_, _ = fmt.Fprintf(w, "Output file '%s' was successfully generated\n", o.csvReport.FileName)
 }
 
 func (o Output) writeAll() {

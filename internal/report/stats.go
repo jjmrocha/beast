@@ -18,6 +18,7 @@ package report
 
 import (
 	"fmt"
+	"io"
 	"sort"
 	"time"
 
@@ -38,18 +39,16 @@ type Stats struct {
 	statusMap      map[int]int
 	errorMap       map[string]int
 	progress       Progress
-	output         Output
 }
 
 // NewStats creates a new Stats
-func NewStats(progress Progress, outputFile string) *Stats {
+func NewStats(progress Progress) *Stats {
 	return &Stats{
 		executionStart: time.Now(),
 		successMap:     make(map[int]durationSlice),
 		statusMap:      make(map[int]int),
 		errorMap:       make(map[string]int),
 		progress:       progress,
-		output:         NewOutput(outputFile),
 	}
 }
 
@@ -74,7 +73,6 @@ func (s *Stats) Update(response *client.Response) {
 	}
 
 	s.progress.Update()
-	s.output.Write(response)
 }
 
 func (s *Stats) tps() float64 {
@@ -94,54 +92,53 @@ func avg(duration time.Duration, requests int) time.Duration {
 }
 
 // PrintStats displays the stats
-func (s *Stats) PrintStats() {
-	fmt.Printf("===== Stats =====\n")
-	fmt.Printf("Executed requests: %v\n", s.requests)
-	fmt.Printf("Time taken to complete: %v\n", s.executionDuration())
-	fmt.Printf("Requests per second: %.4f\n", s.tps())
-	fmt.Printf("Avg response time: %v\n", s.avg())
+func (s *Stats) PrintStats(w io.Writer) {
+	_, _ = fmt.Fprintf(w, "===== Stats =====\n")
+	_, _ = fmt.Fprintf(w, "Executed requests: %v\n", s.requests)
+	_, _ = fmt.Fprintf(w, "Time taken to complete: %v\n", s.executionDuration())
+	_, _ = fmt.Fprintf(w, "Requests per second: %.4f\n", s.tps())
+	_, _ = fmt.Fprintf(w, "Avg response time: %v\n", s.avg())
 
 	for key, durations := range s.successMap {
-		fmt.Printf("===== Status %v =====\n", key)
+		_, _ = fmt.Fprintf(w, "===== Status %v =====\n", key)
 		count := durations.Len()
 		duration := durations.sum()
-		fmt.Printf("%v requests, with avg response time of %v\n", count, avg(duration, count))
+		_, _ = fmt.Fprintf(w, "%v requests, with avg response time of %v\n", count, avg(duration, count))
 		if count >= 5 {
 			sort.Sort(durations)
-			fmt.Printf("And the following distribution:\n")
-			fmt.Printf("- The fastest request took %v\n", durations.first())
-			fmt.Printf("- 20%% of requests under %v\n", durations.percentage(20))
-			fmt.Printf("- 40%% of requests under %v\n", durations.percentage(40))
-			fmt.Printf("- 60%% of requests under %v\n", durations.percentage(60))
-			fmt.Printf("- 80%% of requests under %v\n", durations.percentage(80))
+			_, _ = fmt.Fprintf(w, "And the following distribution:\n")
+			_, _ = fmt.Fprintf(w, "- The fastest request took %v\n", durations.first())
+			_, _ = fmt.Fprintf(w, "- 20%% of requests under %v\n", durations.percentage(20))
+			_, _ = fmt.Fprintf(w, "- 40%% of requests under %v\n", durations.percentage(40))
+			_, _ = fmt.Fprintf(w, "- 60%% of requests under %v\n", durations.percentage(60))
+			_, _ = fmt.Fprintf(w, "- 80%% of requests under %v\n", durations.percentage(80))
 			if count >= 10 {
-				fmt.Printf("- 90%% of requests under %v\n", durations.percentage(90))
+				_, _ = fmt.Fprintf(w, "- 90%% of requests under %v\n", durations.percentage(90))
 				if count >= 20 {
-					fmt.Printf("- 95%% of requests under %v\n", durations.percentage(95))
+					_, _ = fmt.Fprintf(w, "- 95%% of requests under %v\n", durations.percentage(95))
 					if count >= 100 {
-						fmt.Printf("- 99%% of requests under %v\n", durations.percentage(99))
+						_, _ = fmt.Fprintf(w, "- 99%% of requests under %v\n", durations.percentage(99))
 					}
 				}
 			}
-			fmt.Printf("- The slowest request took %v\n", durations.last())
+			_, _ = fmt.Fprintf(w, "- The slowest request took %v\n", durations.last())
 		}
 	}
 
 	if len(s.statusMap) > 0 {
-		fmt.Printf("===== Non Success Status =====\n")
+		_, _ = fmt.Fprintf(w, "===== Non Success Status =====\n")
 
 		for key, value := range s.statusMap {
-			fmt.Printf("Status %v: %v requests\n", key, value)
+			_, _ = fmt.Fprintf(w, "Status %v: %v requests\n", key, value)
 		}
 	}
 
 	if len(s.errorMap) > 0 {
-		fmt.Printf("===== Errors =====\n")
+		_, _ = fmt.Fprintf(w, "===== Errors =====\n")
 
 		for key, value := range s.errorMap {
-			fmt.Printf("- %v: %v errors\n", key, value)
+			_, _ = fmt.Fprintf(w, "- %v: %v errors\n", key, value)
 		}
 	}
 
-	s.output.Close()
 }

@@ -17,9 +17,8 @@
 package report
 
 import (
+	"bytes"
 	"fmt"
-	"io"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -33,29 +32,53 @@ const (
 	errorLine   = "Error writing output file"
 )
 
+func TestNewOutput(t *testing.T) {
+	t.Run("returns an error when the folder does not exist", func(t *testing.T) {
+		// given
+		fileName := filepath.Join(t.TempDir(), "missing", "output.csv")
+		// when
+		_, err := NewOutput(fileName)
+		// then
+		assert.Error(t, err)
+	})
+
+	t.Run("an empty file name gives an output that writes nothing", func(t *testing.T) {
+		// given
+		var printed bytes.Buffer
+		// when
+		output, err := NewOutput("")
+		// then
+		require.NoError(t, err)
+		output.Write(resultsOfEachKind[0].input)
+		output.Close(&printed)
+		assert.Empty(t, printed.String())
+	})
+}
+
 func TestClose(t *testing.T) {
 	t.Run("prints the success line when every write worked", func(t *testing.T) {
 		// given
-		fileName := filepath.Join(t.TempDir(), "output.csv")
-		output := NewOutput(fileName)
+		var printed bytes.Buffer
+		output := mustNewOutput(t, filepath.Join(t.TempDir(), "output.csv"))
 		output.Write(resultsOfEachKind[0].input)
 		// when
-		result := captureStdout(t, output.Close)
+		output.Close(&printed)
 		// then
-		assert.Contains(t, result, successLine)
-		assert.NotContains(t, result, errorLine)
+		assert.Contains(t, printed.String(), successLine)
+		assert.NotContains(t, printed.String(), errorLine)
 	})
 
 	t.Run("writes every record in the order it was written", func(t *testing.T) {
 		// given
 		const records = 5000
+		var printed bytes.Buffer
 		fileName := filepath.Join(t.TempDir(), "output.csv")
-		output := NewOutput(fileName)
+		output := mustNewOutput(t, fileName)
 		for i := range records {
 			output.Write(&client.Response{Timestamp: timestamp, Request: fmt.Sprintf("GET /%d", i), StatusCode: 200})
 		}
 		// when
-		captureStdout(t, output.Close)
+		output.Close(&printed)
 		// then
 		result := mustReadCSV(t, fileName)
 		require.Len(t, result, records+1)
@@ -66,43 +89,24 @@ func TestClose(t *testing.T) {
 
 	t.Run("prints an error line when the output file could not be written", func(t *testing.T) {
 		// given
+		var printed bytes.Buffer
 		fileName := filepath.Join(t.TempDir(), "output.csv")
-		output := NewOutput(fileName)
+		output := mustNewOutput(t, fileName)
 		require.NoError(t, output.csvReport.file.Close())
 		output.Write(resultsOfEachKind[0].input)
 		// when
-		result := captureStdout(t, output.Close)
+		output.Close(&printed)
 		// then
-		assert.Contains(t, result, errorLine+" '"+fileName+"'")
-		assert.NotContains(t, result, successLine)
-	})
-
-	t.Run("prints nothing when there is no output file", func(t *testing.T) {
-		// given
-		output := NewOutput("")
-		// when
-		result := captureStdout(t, output.Close)
-		// then
-		assert.Empty(t, result)
+		assert.Contains(t, printed.String(), errorLine+" '"+fileName+"'")
+		assert.NotContains(t, printed.String(), successLine)
 	})
 }
 
-func captureStdout(t testing.TB, fn func()) string {
+func mustNewOutput(t testing.TB, fileName string) Output {
 	t.Helper()
-	reader, writer, err := os.Pipe()
-	require.NoError(t, err)
-	original := os.Stdout
-	os.Stdout = writer
-	t.Cleanup(func() { os.Stdout = original })
-
-	done := make(chan string)
-	go func() {
-		data, _ := io.ReadAll(reader)
-		done <- string(data)
-	}()
-
-	fn()
-	os.Stdout = original
-	require.NoError(t, writer.Close())
-	return <-done
+	output, err := NewOutput(fileName)
+	if err != nil {
+		t.Fatalf("NewOutput(%s): unexpected error: %v", fileName, err)
+	}
+	return output
 }

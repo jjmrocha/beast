@@ -19,7 +19,6 @@ package report
 import (
 	"encoding/csv"
 	"errors"
-	"log"
 	"os"
 	"strconv"
 
@@ -33,10 +32,10 @@ type csvReport struct {
 	err      error
 }
 
-func newCsvReport(fileName string) *csvReport {
+func newCsvReport(fileName string) (*csvReport, error) {
 	fileHandler, err := os.Create(fileName) //nolint:gosec // writes the output file the user named
 	if err != nil {
-		log.Fatalf("Error creating output file %s: %v\n", fileName, err)
+		return nil, err
 	}
 
 	csvWriter := csv.NewWriter(fileHandler)
@@ -46,7 +45,7 @@ func newCsvReport(fileName string) *csvReport {
 		FileName: fileName,
 		file:     fileHandler,
 		writer:   csvWriter,
-	}
+	}, nil
 }
 
 func (csv *csvReport) write(response *client.Response) {

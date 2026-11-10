@@ -86,7 +86,7 @@ func TestCsvReport(t *testing.T) {
 	t.Run("writes the v2.6.1 header and one line per result", func(t *testing.T) {
 		// given
 		fileName := filepath.Join(t.TempDir(), "output.csv")
-		report := newCsvReport(fileName)
+		report := mustNewCsvReport(t, fileName)
 		// when
 		for _, tc := range resultsOfEachKind {
 			report.write(tc.input)
@@ -104,7 +104,7 @@ func TestCsvReport(t *testing.T) {
 	t.Run("keeps the error when the file cannot be written", func(t *testing.T) {
 		// given
 		fileName := filepath.Join(t.TempDir(), "output.csv")
-		report := newCsvReport(fileName)
+		report := mustNewCsvReport(t, fileName)
 		require.NoError(t, report.file.Close())
 		report.write(resultsOfEachKind[0].input)
 		// when
@@ -116,7 +116,7 @@ func TestCsvReport(t *testing.T) {
 	t.Run("has no error when the file was written", func(t *testing.T) {
 		// given
 		fileName := filepath.Join(t.TempDir(), "output.csv")
-		report := newCsvReport(fileName)
+		report := mustNewCsvReport(t, fileName)
 		report.write(resultsOfEachKind[0].input)
 		// when
 		report.flush()
@@ -127,7 +127,7 @@ func TestCsvReport(t *testing.T) {
 	t.Run("quotes a request that contains a comma", func(t *testing.T) {
 		// given
 		fileName := filepath.Join(t.TempDir(), "output.csv")
-		report := newCsvReport(fileName)
+		report := mustNewCsvReport(t, fileName)
 		request := "GET http://someendpoint.pt/a,b"
 		response := &client.Response{Timestamp: timestamp, Request: request, StatusCode: 200, Duration: time.Millisecond}
 		// when
@@ -150,4 +150,13 @@ func mustReadCSV(t testing.TB, fileName string) [][]string {
 	records, err := csv.NewReader(strings.NewReader(string(content))).ReadAll()
 	require.NoError(t, err)
 	return records
+}
+
+func mustNewCsvReport(t testing.TB, fileName string) *csvReport {
+	t.Helper()
+	report, err := newCsvReport(fileName)
+	if err != nil {
+		t.Fatalf("newCsvReport(%s): unexpected error: %v", fileName, err)
+	}
+	return report
 }
