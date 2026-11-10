@@ -30,43 +30,53 @@ import (
 	"github.com/jjmrocha/beast/internal/template"
 )
 
+type RunOptions struct {
+	Requests    int
+	Duration    int
+	Concurrency int
+	Template    string
+	Config      string
+	Data        string
+	Output      string
+}
+
 // Run implements the `beast run ...` command
-func Run(nRequests, tDuration int, nParallel int, fileName, configFile, dataFile string, outputFile string) {
+func Run(opts RunOptions) {
 	fmt.Printf("===== System =====\n")
 	fmt.Printf("Operating System: %v\n", runtime.GOOS)
 	fmt.Printf("System Architecture: %v\n", runtime.GOARCH)
 	fmt.Printf("Logical CPUs: %v\n", runtime.NumCPU())
 
 	fmt.Printf("===== Test =====\n")
-	fmt.Printf("Request template: %v\n", fileName)
-	if dataFile != "" {
-		fmt.Printf("Sample Data: %v\n", dataFile)
+	fmt.Printf("Request template: %v\n", opts.Template)
+	if opts.Data != "" {
+		fmt.Printf("Sample Data: %v\n", opts.Data)
 	}
-	if configFile != "" {
-		fmt.Printf("Configuration: %v\n", configFile)
+	if opts.Config != "" {
+		fmt.Printf("Configuration: %v\n", opts.Config)
 	}
-	if nRequests > 0 {
-		fmt.Printf("Number of requests: %v\n", nRequests)
+	if opts.Requests > 0 {
+		fmt.Printf("Number of requests: %v\n", opts.Requests)
 	} else {
-		fmt.Printf("Test duration: %v seconds\n", tDuration)
+		fmt.Printf("Test duration: %v seconds\n", opts.Duration)
 	}
-	fmt.Printf("Number of concurrent requests: %v\n", nParallel)
+	fmt.Printf("Number of concurrent requests: %v\n", opts.Concurrency)
 
 	fmt.Printf("===== Preparing =====\n")
-	httpClient := createHTTPClient(configFile, nParallel)
-	tmpl := readTemplate(fileName)
-	data := readData(dataFile)
+	httpClient := createHTTPClient(opts.Config, opts.Concurrency)
+	tmpl := readTemplate(opts.Template)
+	data := readData(opts.Data)
 
 	fmt.Printf("===== Executing =====\n")
-	ctrl := control.New(nRequests, tDuration, nParallel)
+	ctrl := control.New(control.Limits{Requests: opts.Requests, Duration: opts.Duration, Workers: opts.Concurrency})
 	ctrl.AsyncExecute(httpClient, tmpl, data)
 
-	output, err := report.NewOutput(outputFile)
+	output, err := report.NewOutput(opts.Output)
 	if err != nil {
-		log.Fatalf("Error creating output file %s: %v\n", outputFile, err)
+		log.Fatalf("Error creating output file %s: %v\n", opts.Output, err)
 	}
 
-	stats := report.NewStats(report.NewBar(nRequests, tDuration))
+	stats := report.NewStats(report.NewBar(opts.Requests, opts.Duration))
 	for response := range ctrl.OutputChannel() {
 		stats.Update(response)
 		output.Write(response)

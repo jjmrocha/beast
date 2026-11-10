@@ -37,16 +37,22 @@ type Control struct {
 	concurrentRoutines int
 }
 
+type Limits struct {
+	Requests int
+	Duration int
+	Workers  int
+}
+
 // New creates a control.Controle
-func New(nRequests, tDuration, nParallel int) *Control {
+func New(limits Limits) *Control {
 	ctrl := &Control{
-		generatorChannel:   make(chan *template.Generator, nParallel),
-		outputChannel:      make(chan *client.Response, nParallel),
-		requestCount:       nRequests,
-		executionDuration:  tDuration,
-		concurrentRoutines: nParallel,
+		generatorChannel:   make(chan *template.Generator, limits.Workers),
+		outputChannel:      make(chan *client.Response, limits.Workers),
+		requestCount:       limits.Requests,
+		executionDuration:  limits.Duration,
+		concurrentRoutines: limits.Workers,
 	}
-	ctrl.wg.Add(nParallel)
+	ctrl.wg.Add(limits.Workers)
 
 	go func() {
 		ctrl.wg.Wait()

@@ -80,7 +80,15 @@ func runCmd(args []string) {
 	}
 
 	fileName := nonFlagArgs[0]
-	command.Run(*nRequests, *tDuration, *nParallel, fileName, *configFile, *dataFile, *outputFile)
+	command.Run(command.RunOptions{
+		Requests:    *nRequests,
+		Duration:    *tDuration,
+		Concurrency: *nParallel,
+		Template:    fileName,
+		Config:      *configFile,
+		Data:        *dataFile,
+		Output:      *outputFile,
+	})
 }
 
 func templateCmd(args []string) {
@@ -102,5 +110,5 @@ func templateCmd(args []string) {
 		return
 	}
 
-	command.Template(*method, url, fileName)
+	command.Template(command.TemplateOptions{Method: *method, URL: url, File: fileName})
 }

@@ -23,12 +23,18 @@ import (
 	"github.com/jjmrocha/beast/internal/template"
 )
 
+type TemplateOptions struct {
+	Method string
+	URL    string
+	File   string
+}
+
 // Template implements the `beast template ... <fileName>` command
-func Template(method, url, fileName string) {
-	if url == "" {
-		createTemplateExample(fileName)
+func Template(opts TemplateOptions) {
+	if opts.URL == "" {
+		createTemplateExample(opts.File)
 	} else {
-		createTemplate(method, url, fileName)
+		createTemplate(opts.Method, opts.URL, opts.File)
 	}
 }
 
