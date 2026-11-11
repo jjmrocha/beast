@@ -76,6 +76,7 @@ func TestRead(t *testing.T) {
 			result, err := Read(fileName)
 			// then
 			assert.ErrorIs(t, err, ErrInvalidConfig)
+			assert.ErrorContains(t, err, "'"+key+"'")
 			assert.Nil(t, result)
 		})
 	}

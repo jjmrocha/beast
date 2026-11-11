@@ -85,7 +85,7 @@ func checkConfig(cfg *Config) error {
 	}
 
 	if cfg.RequestTimeout < 0 {
-		return fmt.Errorf("%w: 'timeout' must be zero or positive", ErrInvalidConfig)
+		return fmt.Errorf("%w: 'request-timeout' must be zero or positive", ErrInvalidConfig)
 	}
 
 	return nil
