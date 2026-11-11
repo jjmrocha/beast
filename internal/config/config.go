@@ -35,8 +35,8 @@ type Config struct {
 	DisableRedirects        bool `json:"disable-redirects"`
 }
 
-// GetMaxIdleConnections if Config.MaxIdleConnections is zero resturns parallelConns else will return Config.MaxIdleConnections
-func (c Config) GetMaxIdleConnections(parallelConns int) int {
+// IdleConnections returns the max-idle-connections value, or parallelConns when it is zero
+func (c Config) IdleConnections(parallelConns int) int {
 	if c.MaxIdleConnections == 0 {
 		return parallelConns
 	}

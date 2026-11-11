@@ -39,7 +39,7 @@ func NewClient(cfg *config.Config, parallelConns int) *Client {
 	tls := &tls.Config{
 		InsecureSkipVerify: cfg.DisableCertificateCheck, //nolint:gosec // only when the user sets disable-certificate-check
 	}
-	maxIdleConns := cfg.GetMaxIdleConnections(parallelConns)
+	maxIdleConns := cfg.IdleConnections(parallelConns)
 	transport := &http.Transport{
 		DisableCompression:  cfg.DisableCompression,
 		DisableKeepAlives:   cfg.DisableKeepAlives,

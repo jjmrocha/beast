@@ -98,7 +98,7 @@ func TestRead(t *testing.T) {
 	})
 }
 
-func TestGetMaxIdleConnections(t *testing.T) {
+func TestIdleConnections(t *testing.T) {
 	const parallelConns = 100
 
 	tests := []struct {
@@ -116,7 +116,7 @@ func TestGetMaxIdleConnections(t *testing.T) {
 			cfg := Default()
 			cfg.MaxIdleConnections = tc.input
 			// when
-			result := cfg.GetMaxIdleConnections(parallelConns)
+			result := cfg.IdleConnections(parallelConns)
 			// then
 			assert.Equal(t, tc.expected, result)
 		})
