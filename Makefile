@@ -1,4 +1,4 @@
-.PHONY: help build clean test bench lint deps tidy
+.PHONY: help build clean test bench lint vuln deps tidy
 .DEFAULT_GOAL := help
 
 help:
@@ -10,6 +10,7 @@ help:
 	@echo "  test         Run all tests"
 	@echo "  bench        Run benchmarks"
 	@echo "  lint         Run golangci-lint"
+	@echo "  vuln         Run govulncheck"
 	@echo "  deps         Update dependencies"
 	@echo "  tidy         Tidy go.mod"
 	@echo ""
@@ -29,6 +30,9 @@ bench:
 
 lint:
 	golangci-lint run
+
+vuln:
+	govulncheck ./...
 
 deps:
 	go get -u ./...
