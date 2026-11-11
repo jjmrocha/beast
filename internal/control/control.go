@@ -44,7 +44,7 @@ type Limits struct {
 	Workers  int
 }
 
-// New creates a control.Controle
+// New creates a Control
 func New(limits Limits) *Control {
 	ctrl := &Control{
 		generatorChannel:   make(chan *template.Generator, limits.Workers),
@@ -63,7 +63,7 @@ func New(limits Limits) *Control {
 	return ctrl
 }
 
-// OutputChannel returns a channel for receiving the client.Response sent using Push
+// OutputChannel returns the channel the workers send their results on
 func (c *Control) OutputChannel() <-chan *client.Response {
 	return c.outputChannel
 }
@@ -79,7 +79,6 @@ func (c *Control) AsyncExecute(httpClient *client.Client, tmplc *template.Compil
 	}
 }
 
-// Consts
 var emptyRecord = data.NewRecord()
 
 func (c *Control) createGenerators(tmplc *template.CompiledTemplate, rows *data.Data) {

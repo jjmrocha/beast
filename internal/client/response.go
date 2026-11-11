@@ -32,7 +32,7 @@ type Response struct {
 	Duration   time.Duration
 }
 
-// IsSuccess return true for statusCodes matchs 2xx
+// IsSuccess returns true for 2xx status codes
 func (r *Response) IsSuccess() bool {
 	return r.StatusCode >= 200 && r.StatusCode < 300
 }

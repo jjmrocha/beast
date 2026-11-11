@@ -23,14 +23,14 @@ import (
 	"github.com/jjmrocha/beast/internal/data"
 )
 
-// Generator generates BRequests
+// Generator builds HTTP requests from a compiled template
 type Generator struct {
 	Template *CompiledTemplate
 	RecordID int
 	Data     *data.Record
 }
 
-// Request uses that template and a record and returns a BRequests
+// Request renders the template with the record and returns the HTTP request
 func (g *Generator) Request() (*http.Request, error) {
 	tmplf, err := g.Template.executeTemplate(g.RecordID, g.Data)
 	if err != nil {

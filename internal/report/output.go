@@ -26,7 +26,7 @@ import (
 
 const datetimeFormat = "2006-01-02 15:04:05.999"
 
-// Output is the handler for CVS output
+// Output writes results to the CSV output file
 type Output struct {
 	csvReport *csvReport
 	records   *queue.SyncQueue[*client.Response]
