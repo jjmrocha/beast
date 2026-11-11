@@ -18,8 +18,8 @@ package template
 
 import (
 	"fmt"
+	"net/http"
 
-	"github.com/jjmrocha/beast/internal/client"
 	"github.com/jjmrocha/beast/internal/data"
 )
 
@@ -31,7 +31,7 @@ type Generator struct {
 }
 
 // Request uses that template and a record and returns a BRequests
-func (g *Generator) Request() (*client.Request, error) {
+func (g *Generator) Request() (*http.Request, error) {
 	tmplf, err := g.Template.executeTemplate(g.RecordID, g.Data)
 	if err != nil {
 		return nil, err

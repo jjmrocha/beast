@@ -19,6 +19,7 @@ package control
 
 import (
 	"log"
+	"net/http"
 	"sync"
 	"time"
 
@@ -72,7 +73,7 @@ func (c *Control) AsyncExecute(httpClient *client.Client, tmplc *template.Compil
 	go c.createGenerators(tmplc, rows)
 
 	for range c.concurrentRoutines {
-		requestChannel := make(chan *client.Request)
+		requestChannel := make(chan *http.Request)
 		go c.makeRequest(requestChannel)
 		go c.executeRequest(requestChannel, httpClient)
 	}
@@ -117,7 +118,7 @@ func (c *Control) createGenerators(tmplc *template.CompiledTemplate, rows *data.
 	}
 }
 
-func (c *Control) makeRequest(requestChannel chan<- *client.Request) {
+func (c *Control) makeRequest(requestChannel chan<- *http.Request) {
 	defer close(requestChannel)
 
 	for generator := range c.generatorChannel {
@@ -135,7 +136,7 @@ func (c *Control) makeRequest(requestChannel chan<- *client.Request) {
 	}
 }
 
-func (c *Control) executeRequest(requestChannel <-chan *client.Request, httpClient *client.Client) {
+func (c *Control) executeRequest(requestChannel <-chan *http.Request, httpClient *client.Client) {
 	defer c.wg.Done()
 
 	for req := range requestChannel {

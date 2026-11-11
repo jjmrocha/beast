@@ -50,8 +50,8 @@ func TestRequest(t *testing.T) {
 		result, err := gnt.Request()
 		// then
 		require.NoError(t, err)
-		expected := "POST http://someendpoint.pt/1"
-		assert.Equal(t, expected, result.String())
+		assert.Equal(t, http.MethodPost, result.Method)
+		assert.Equal(t, "http://someendpoint.pt/1", result.URL.String())
 	})
 
 	t.Run("returns an error when the rendered URL is invalid", func(t *testing.T) {

@@ -142,13 +142,13 @@ func TestExecute(t *testing.T) {
 	})
 }
 
-func mustNewRequest(t testing.TB, url string) *Request {
+func mustNewRequest(t testing.TB, url string) *http.Request {
 	t.Helper()
 	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, url, nil)
 	if err != nil {
 		t.Fatalf("http.NewRequest(%s): unexpected error: %v", url, err)
 	}
-	return BuildRequest(req)
+	return req
 }
 
 func newServer(t testing.TB, handler http.HandlerFunc) *httptest.Server {

@@ -22,8 +22,6 @@ import (
 	"net/http"
 	"strings"
 	"text/template"
-
-	"github.com/jjmrocha/beast/internal/client"
 )
 
 // Header represents an HTTP Header template
@@ -40,7 +38,7 @@ type Template struct {
 	Body     string   `json:"body,omitempty"`
 }
 
-func (t *Template) request() (*client.Request, error) {
+func (t *Template) request() (*http.Request, error) {
 	req, err := http.NewRequest(t.Method, t.Endpoint, bodyReader(t.Body))
 	if err != nil {
 		return nil, err
@@ -50,7 +48,7 @@ func (t *Template) request() (*client.Request, error) {
 		req.Header.Add(header.Key, header.Value)
 	}
 
-	return client.BuildRequest(req), nil
+	return req, nil
 }
 
 func bodyReader(body string) io.Reader {

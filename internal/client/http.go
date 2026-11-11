@@ -70,9 +70,10 @@ func NewClient(cfg *config.Config, parallelConns int) *Client {
 }
 
 // Execute executes the request measuring the time taken to execute and return a client.Response
-func (c *Client) Execute(request *Request) *Response {
+func (c *Client) Execute(request *http.Request) *Response {
+	description := request.Method + " " + request.URL.String()
 	start := time.Now()
-	resp, err := c.native.Do(request.native)
+	resp, err := c.native.Do(request)
 	duration := time.Since(start)
 
 	if err != nil {
@@ -80,16 +81,16 @@ func (c *Client) Execute(request *Request) *Response {
 		if ok := errors.As(err, &urlErr); ok && urlErr.Timeout() {
 			return &Response{
 				Timestamp:  start,
-				Request:    request.String(),
+				Request:    description,
 				StatusCode: StatusTimeout,
 				Duration:   duration,
 			}
 		}
 
-		log.Printf("Error executing request '%v': %v\n", request, err)
+		log.Printf("Error executing request '%s': %v\n", description, err) //nolint:gosec // the URL comes from the user's own template
 		return &Response{
 			Timestamp:  start,
-			Request:    request.String(),
+			Request:    description,
 			StatusCode: StatusUnexpectedError,
 			Duration:   duration,
 		}
@@ -100,7 +101,7 @@ func (c *Client) Execute(request *Request) *Response {
 
 	return &Response{
 		Timestamp:  start,
-		Request:    request.String(),
+		Request:    description,
 		StatusCode: resp.StatusCode,
 		Duration:   duration,
 	}
