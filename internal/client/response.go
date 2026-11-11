@@ -16,10 +16,7 @@
 
 package client
 
-import (
-	"fmt"
-	"time"
-)
+import "time"
 
 const (
 	StatusGenerationError = -100
@@ -33,10 +30,6 @@ type Response struct {
 	Request    string
 	StatusCode int
 	Duration   time.Duration
-}
-
-func (r *Response) String() string {
-	return fmt.Sprintf("%v - %v", r.StatusCode, r.Duration)
 }
 
 // IsSuccess return true for statusCodes matchs 2xx
