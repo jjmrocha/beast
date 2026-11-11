@@ -26,14 +26,14 @@ Usage:
    beast config <configFile>
    beast template [-m <http method>] [url] <templateFile>
    beast run (-n <number of requests> | -t <test duration>)
-             [-c <number of concurrent requests>] 
+             [-c <number of concurrent requests>]
              [-config <configFile>] [-data <dataFile>]
              [-output <outputFile>] <templateFile>
 
 Where:
    config   Creates a file with the default parameters to setup HTTP connections
             configFile   string Name of the file to be created
-			 			
+
    template Creates a request template file, using user-provided parameters
             -m           string HTTP method (default "GET")
             url          string Endpoint to be tested
@@ -45,8 +45,8 @@ Where:
             -t           int    Duration of the test in seconds (can't be used with "-n")
             -config      string Config file to setup HTTP client
             -data        string CSV file with data for request generation
-            -output      string CVS file with detailed execution results
-            templateFile string JSON/YAML file with details about the request to test 
+            -output      string CSV file with detailed execution results
+            templateFile string JSON/YAML file with details about the request to test
 
 `
 

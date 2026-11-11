@@ -73,7 +73,7 @@ func runCmd(args []string) int {
 	nParallel := runOption.Int("c", 1, "Number of concurrent requests")
 	configFile := runOption.String("config", "", "Config file to setup HTTP client")
 	dataFile := runOption.String("data", "", "CSV file with data for request generation")
-	outputFile := runOption.String("output", "", "CVS file with detailed execution results")
+	outputFile := runOption.String("output", "", "CSV file with detailed execution results")
 	_ = runOption.Parse(args)
 	nonFlagArgs := runOption.Args()
 
