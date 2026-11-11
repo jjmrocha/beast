@@ -70,6 +70,11 @@ func TestRead(t *testing.T) {
 			input:    "../../testdata/template_post.json",
 			expected: &Template{Method: http.MethodPost, Endpoint: templatedEndpoint, Headers: jsonContentType, Body: templatedBody},
 		},
+		{
+			name:     "JSON with an external body file",
+			input:    "../../testdata/template_post_external.json",
+			expected: &Template{Method: http.MethodPost, Endpoint: templatedEndpoint, Headers: jsonContentType, Body: templatedBody},
+		},
 	}
 
 	for _, tc := range tests {
@@ -86,20 +91,6 @@ func TestRead(t *testing.T) {
 			assert.Equal(t, tc.expected.Body, result.Body)
 		})
 	}
-
-	t.Run("JSON with an external body file", func(t *testing.T) {
-		// given
-		t.Chdir("..")
-		input := "../testdata/template_post_external.json"
-		// when
-		result, err := Read(input)
-		// then
-		require.NoError(t, err)
-		assert.Equal(t, http.MethodPost, result.Method)
-		assert.Equal(t, templatedEndpoint, result.Endpoint)
-		assert.ElementsMatch(t, jsonContentType, result.Headers)
-		assert.Equal(t, templatedBody, result.Body)
-	})
 
 	t.Run("a missing file returns an error", func(t *testing.T) {
 		// given
