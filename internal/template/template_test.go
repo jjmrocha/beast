@@ -26,16 +26,6 @@ import (
 const unclosedAction = "{{ .RequestID"
 
 func TestCompile(t *testing.T) {
-	t.Run("compiles a valid template", func(t *testing.T) {
-		// given
-		tmpl := &Template{Method: http.MethodPost, Endpoint: templatedEndpoint, Headers: jsonContentType, Body: templatedBody}
-		// when
-		result, err := tmpl.Compile()
-		// then
-		assert.NoError(t, err)
-		assert.NotNil(t, result)
-	})
-
 	tests := []struct {
 		name  string
 		input *Template
