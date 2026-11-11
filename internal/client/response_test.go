@@ -56,7 +56,7 @@ func TestIsSuccess(t *testing.T) {
 	}
 }
 
-func TestIsClientError(t *testing.T) {
+func TestFailed(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    int
@@ -73,14 +73,14 @@ func TestIsClientError(t *testing.T) {
 			// given
 			response := &Response{StatusCode: tc.input}
 			// when
-			result := response.IsClientError()
+			result := response.Failed()
 			// then
 			assert.Equal(t, tc.expected, result)
 		})
 	}
 }
 
-func TestClientError(t *testing.T) {
+func TestFailureReason(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    int
@@ -98,7 +98,7 @@ func TestClientError(t *testing.T) {
 			// given
 			response := &Response{StatusCode: tc.input}
 			// when
-			result := response.ClientError()
+			result := response.FailureReason()
 			// then
 			assert.Equal(t, tc.expected, result)
 		})

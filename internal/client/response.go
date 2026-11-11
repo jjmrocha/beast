@@ -44,13 +44,13 @@ func (r *Response) IsSuccess() bool {
 	return r.StatusCode >= 200 && r.StatusCode < 300
 }
 
-// IsClientError returns true if we didn't receive an awnser from the endpoint
-func (r *Response) IsClientError() bool {
+// Failed returns true if no HTTP answer was received from the endpoint
+func (r *Response) Failed() bool {
 	return r.StatusCode < 0
 }
 
-// ClientError returns the descriprion for the client error
-func (r *Response) ClientError() string {
+// FailureReason returns the description of the failure, or an empty string when the request did not fail
+func (r *Response) FailureReason() string {
 	switch r.StatusCode {
 	case StatusGenerationError:
 		return "Request generation error"

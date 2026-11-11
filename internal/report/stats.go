@@ -65,8 +65,8 @@ func (s *Stats) Update(response *client.Response) {
 		}
 
 		s.successMap[response.StatusCode] = append(durations, response.Duration)
-	case response.IsClientError():
-		errorDesc := response.ClientError()
+	case response.Failed():
+		errorDesc := response.FailureReason()
 		s.errorMap[errorDesc]++
 	default:
 		s.statusMap[response.StatusCode]++

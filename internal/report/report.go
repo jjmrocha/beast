@@ -81,8 +81,8 @@ func encode(response *client.Response) []string {
 		duration = strconv.FormatInt(response.Duration.Milliseconds(), 10)
 	}
 
-	if response.IsClientError() {
-		result = response.ClientError()
+	if response.Failed() {
+		result = response.FailureReason()
 	} else {
 		statusCode = strconv.Itoa(response.StatusCode)
 
