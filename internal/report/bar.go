@@ -33,9 +33,9 @@ type Bar struct {
 }
 
 // NewBar creates a new progress bar
-func NewBar(max, duration int) *Bar {
+func NewBar(requests, duration int) *Bar {
 	return &Bar{
-		requestCount:      max,
+		requestCount:      requests,
 		executionDuration: duration,
 		executionStart:    time.Now(),
 	}
