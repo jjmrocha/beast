@@ -29,14 +29,9 @@ import (
 	"github.com/jjmrocha/beast/internal/config"
 )
 
-// This interface exists to allow the mocking of the client
-type httpClient interface {
-	Do(*http.Request) (*http.Response, error)
-}
-
 // Client represents an HTTP client
 type Client struct {
-	native httpClient
+	native *http.Client
 }
 
 // NewClient creates a client.Client based on the provided configuration
