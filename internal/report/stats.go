@@ -88,6 +88,9 @@ func (s *Stats) executionDuration() time.Duration {
 }
 
 func avg(duration time.Duration, requests int) time.Duration {
+	if requests == 0 {
+		return 0
+	}
 	return time.Duration(duration.Nanoseconds() / int64(requests))
 }
 

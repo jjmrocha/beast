@@ -17,6 +17,7 @@
 package command
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -41,7 +42,7 @@ type RunOptions struct {
 }
 
 // Run implements the `beast run ...` command
-func Run(opts RunOptions) {
+func Run(ctx context.Context, opts RunOptions) {
 	fmt.Printf("===== System =====\n")
 	fmt.Printf("Operating System: %v\n", runtime.GOOS)
 	fmt.Printf("System Architecture: %v\n", runtime.GOARCH)
@@ -68,8 +69,8 @@ func Run(opts RunOptions) {
 	data := readData(opts.Data)
 
 	fmt.Printf("===== Executing =====\n")
-	ctrl := control.New(control.Limits{Requests: opts.Requests, Duration: opts.Duration, Workers: opts.Concurrency})
-	ctrl.AsyncExecute(httpClient, tmpl, data)
+	limits := control.Limits{Requests: opts.Requests, Duration: opts.Duration, Workers: opts.Concurrency}
+	results := control.Start(ctx, limits, httpClient, tmpl, data)
 
 	output, err := report.NewOutput(opts.Output)
 	if err != nil {
@@ -77,7 +78,7 @@ func Run(opts RunOptions) {
 	}
 
 	stats := report.NewStats(report.NewBar(opts.Requests, opts.Duration))
-	for response := range ctrl.OutputChannel() {
+	for response := range results {
 		stats.Update(response)
 		output.Write(response)
 	}

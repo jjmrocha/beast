@@ -63,6 +63,19 @@ func TestPrintStats(t *testing.T) {
 		assert.Contains(t, printed.String(), "===== Stats =====\nExecuted requests: 2\n")
 	})
 
+	t.Run("prints a report with no results when the run stops before any request", func(t *testing.T) {
+		// given
+		var printed bytes.Buffer
+		s := statsOf()
+		// when
+		s.PrintStats(&printed)
+		// then
+		result := printed.String()
+		assert.Contains(t, result, "Executed requests: 0\n")
+		assert.Contains(t, result, "Requests per second: 0.0000\n")
+		assert.Contains(t, result, "Avg response time: 0s\n")
+	})
+
 	t.Run("prints the distribution of a success status with at least 5 results", func(t *testing.T) {
 		// given
 		var printed bytes.Buffer

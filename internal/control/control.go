@@ -18,6 +18,7 @@
 package control
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"sync"
@@ -28,69 +29,46 @@ import (
 	"github.com/jjmrocha/beast/internal/template"
 )
 
-// Control is used to control the execution of multiple goroutines
-type Control struct {
-	wg                 sync.WaitGroup
-	generatorChannel   chan *template.Generator
-	outputChannel      chan *client.Response
-	requestCount       int
-	executionDuration  int
-	concurrentRoutines int
-}
-
 type Limits struct {
 	Requests int
 	Duration int
 	Workers  int
 }
 
-// New creates a Control
-func New(limits Limits) *Control {
-	ctrl := &Control{
-		generatorChannel:   make(chan *template.Generator, limits.Workers),
-		outputChannel:      make(chan *client.Response, limits.Workers),
-		requestCount:       limits.Requests,
-		executionDuration:  limits.Duration,
-		concurrentRoutines: limits.Workers,
+func Start(ctx context.Context, limits Limits, httpClient *client.Client, tmplc *template.CompiledTemplate, rows *data.Data) <-chan *client.Response {
+	ctx, cancel := withDuration(ctx, limits.Duration)
+
+	generators := make(chan *template.Generator, limits.Workers)
+	results := make(chan *client.Response, limits.Workers)
+	go handOut(ctx, limits.Requests, tmplc, rows, generators)
+
+	var wg sync.WaitGroup
+	for range limits.Workers {
+		requests := make(chan *http.Request)
+		wg.Go(func() { render(ctx, generators, requests, results) })
+		wg.Go(func() { send(ctx, requests, httpClient, results) })
 	}
-	ctrl.wg.Add(limits.Workers)
 
 	go func() {
-		ctrl.wg.Wait()
-		close(ctrl.outputChannel)
+		wg.Wait()
+		cancel()
+		close(results)
 	}()
 
-	return ctrl
+	return results
 }
 
-// OutputChannel returns the channel the workers send their results on
-func (c *Control) OutputChannel() <-chan *client.Response {
-	return c.outputChannel
-}
-
-// AsyncExecute creates the goroutines and start the test execution
-func (c *Control) AsyncExecute(httpClient *client.Client, tmplc *template.CompiledTemplate, rows *data.Data) {
-	go c.createGenerators(tmplc, rows)
-
-	for range c.concurrentRoutines {
-		requestChannel := make(chan *http.Request)
-		go c.makeRequest(requestChannel)
-		go c.executeRequest(requestChannel, httpClient)
+func withDuration(ctx context.Context, seconds int) (context.Context, context.CancelFunc) {
+	if seconds == 0 {
+		return context.WithCancel(ctx)
 	}
+	return context.WithTimeout(ctx, time.Duration(seconds)*time.Second)
 }
 
 var emptyRecord = data.NewRecord()
 
-func (c *Control) createGenerators(tmplc *template.CompiledTemplate, rows *data.Data) {
-	requestCount := c.requestCount
-	if requestCount == 0 {
-		requestCount = int(^uint(0) >> 1) // Max int value
-	}
-
-	duration := c.executionDuration
-	if duration == 0 {
-		duration = 31536000 // One year
-	}
+func handOut(ctx context.Context, requests int, tmplc *template.CompiledTemplate, rows *data.Data, generators chan<- *template.Generator) {
+	defer close(generators)
 
 	nextRecord := func() *data.Record {
 		if rows == nil {
@@ -100,45 +78,52 @@ func (c *Control) createGenerators(tmplc *template.CompiledTemplate, rows *data.
 		return rows.Next()
 	}
 
-	defer close(c.generatorChannel)
-	timeout := time.After(time.Duration(duration) * time.Second)
-
-	for i := 1; i <= requestCount; i++ {
+	for i := 1; requests == 0 || i <= requests; i++ {
 		generator := &template.Generator{
 			Data:     nextRecord(),
 			RecordID: i,
 			Template: tmplc,
 		}
 		select {
-		case c.generatorChannel <- generator:
-		case <-timeout:
+		case generators <- generator:
+		case <-ctx.Done():
 			return
 		}
 	}
 }
 
-func (c *Control) makeRequest(requestChannel chan<- *http.Request) {
-	defer close(requestChannel)
+func render(ctx context.Context, generators <-chan *template.Generator, requests chan<- *http.Request, results chan<- *client.Response) {
+	defer close(requests)
 
-	for generator := range c.generatorChannel {
+	for generator := range generators {
+		if ctx.Err() != nil {
+			return
+		}
+
 		req, err := generator.Request()
 		if err != nil {
 			log.Printf("Error generating request for %s: %v\n", generator.Log(), err)
-			c.outputChannel <- &client.Response{
+			results <- &client.Response{
 				Timestamp:  time.Now(),
 				StatusCode: client.StatusGenerationError,
 			}
 			continue
 		}
 
-		requestChannel <- req
+		select {
+		case requests <- req:
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
-func (c *Control) executeRequest(requestChannel <-chan *http.Request, httpClient *client.Client) {
-	defer c.wg.Done()
+func send(ctx context.Context, requests <-chan *http.Request, httpClient *client.Client, results chan<- *client.Response) {
+	for req := range requests {
+		if ctx.Err() != nil {
+			continue
+		}
 
-	for req := range requestChannel {
-		c.outputChannel <- httpClient.Execute(req)
+		results <- httpClient.Execute(req)
 	}
 }

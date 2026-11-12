@@ -17,14 +17,19 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"os"
+	"os/signal"
 
 	"github.com/jjmrocha/beast/internal/command"
 )
 
-const usageError = 2
+const (
+	usageError  = 2
+	interrupted = 130
+)
 
 func main() {
 	os.Exit(run(os.Args[1:]))
@@ -92,8 +97,16 @@ func runCmd(args []string) int {
 		return usageError
 	}
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	announce := context.AfterFunc(ctx, func() {
+		log.Println("Stopping: waiting for requests in flight. Press Ctrl-C again to exit now.")
+		stop()
+	})
+	defer announce()
+
 	fileName := nonFlagArgs[0]
-	command.Run(command.RunOptions{
+	command.Run(ctx, command.RunOptions{
 		Requests:    *nRequests,
 		Duration:    *tDuration,
 		Concurrency: *nParallel,
@@ -102,6 +115,11 @@ func runCmd(args []string) int {
 		Data:        *dataFile,
 		Output:      *outputFile,
 	})
+
+	if ctx.Err() != nil {
+		return interrupted
+	}
+
 	return 0
 }
 
