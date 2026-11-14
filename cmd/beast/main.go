@@ -45,6 +45,9 @@ func run(args []string) int {
 	case "help":
 		command.Help()
 		return 0
+	case "version":
+		command.Version()
+		return 0
 	case "config":
 		return configCmd(args[1:])
 	case "run":

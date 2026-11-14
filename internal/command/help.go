@@ -18,11 +18,13 @@ package command
 
 import "fmt"
 
-const version = "v2.6.1"
-const help = `the Beast %v - Stress testing for RESTful APIs
+var version = "dev"
 
+const title = "the Beast %v - Stress testing for RESTful APIs\n"
+const help = `
 Usage:
    beast [help]
+   beast version
    beast config <configFile>
    beast template [-m <http method>] [url] <templateFile>
    beast run (-n <number of requests> | -t <test duration>)
@@ -31,6 +33,8 @@ Usage:
              [-output <outputFile>] <templateFile>
 
 Where:
+   version  Prints the version of the Beast
+
    config   Creates a file with the default parameters to setup HTTP connections
             configFile   string Name of the file to be created
 
@@ -50,7 +54,13 @@ Where:
 
 `
 
+// Version implements the `beast version` command
+func Version() {
+	fmt.Printf(title, version)
+}
+
 // Help implements the `beast [help]` command
 func Help() {
-	fmt.Printf(help, version)
+	Version()
+	fmt.Print(help)
 }

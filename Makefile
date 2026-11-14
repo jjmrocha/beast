@@ -1,12 +1,16 @@
-.PHONY: help build clean test bench lint vuln deps tidy
+.PHONY: help build snapshot clean test bench lint vuln deps tidy
 .DEFAULT_GOAL := help
+
+VERSION := $(shell git describe --tags --abbrev=0 2>/dev/null || echo dev)
+LDFLAGS := -X github.com/jjmrocha/beast/internal/command.version=$(VERSION)
 
 help:
 	@echo "Usage: make <target>"
 	@echo ""
 	@echo "Targets:"
 	@echo "  build        Build beast into ./bin"
-	@echo "  clean        Remove the build output in ./bin"
+	@echo "  snapshot     Build the release files into ./dist without publishing"
+	@echo "  clean        Remove the build output in ./bin and ./dist"
 	@echo "  test         Run all tests"
 	@echo "  bench        Run benchmarks"
 	@echo "  lint         Run golangci-lint"
@@ -17,10 +21,13 @@ help:
 	@echo "CI runs on GitHub Actions (.github/workflows/ci.yml)."
 
 build:
-	go build -o bin/beast ./cmd/beast
+	go build -ldflags "$(LDFLAGS)" -o bin/beast ./cmd/beast
+
+snapshot:
+	goreleaser release --snapshot --clean --skip=sign
 
 clean:
-	rm -rf bin
+	rm -rf bin dist
 
 test:
 	go test -race ./...

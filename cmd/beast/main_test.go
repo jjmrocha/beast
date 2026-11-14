@@ -38,6 +38,7 @@ func TestRun(t *testing.T) {
 	}{
 		{name: "no arguments prints help", input: nil, expected: success},
 		{name: "help", input: []string{"help"}, expected: success},
+		{name: "version", input: []string{"version"}, expected: success},
 		{name: "unknown command", input: []string{"bogus"}, expected: usageError},
 		{name: "config without a file", input: []string{"config"}, expected: usageError},
 		{name: "run without -n or -t", input: []string{runCommand, templateFile}, expected: usageError},
