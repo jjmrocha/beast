@@ -142,6 +142,17 @@ func TestRead(t *testing.T) {
 		assert.Equal(t, "next to the template", result.Body)
 	})
 
+	t.Run("reads an @file body from an absolute path", func(t *testing.T) {
+		// given
+		bodyFile := writeTemplateDir(t, t.TempDir(), "body.txt", "in another folder")
+		input := writeTemplateDir(t, t.TempDir(), "request.json", `{"method": "POST", "url": "http://a.pt", "body": "@`+bodyFile+`"}`)
+		// when
+		result, err := Read(input)
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, "in another folder", result.Body)
+	})
+
 	t.Run("reads an @file body in a YAML template", func(t *testing.T) {
 		// given
 		dir := t.TempDir()

@@ -41,16 +41,30 @@ func Read(fileName string) (*Template, error) {
 		tmpl = readYAML(fileName, data)
 	}
 
-	body, read, err := externalBody(fileName, tmpl.Body)
+	tmpl.Body, err = externalBody(fileName, tmpl.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	if read {
-		tmpl.Body = body
+	return tmpl, nil
+}
+
+func externalBody(templateFile, body string) (string, error) {
+	if !strings.HasPrefix(body, "@") {
+		return body, nil
 	}
 
-	return tmpl, nil
+	fileName := body[1:]
+	if !filepath.IsAbs(fileName) {
+		fileName = filepath.Join(filepath.Dir(templateFile), fileName)
+	}
+
+	data, err := os.ReadFile(fileName) //nolint:gosec // reads the body file the user named in the template
+	if err != nil {
+		return "", fmt.Errorf("external body: %w", err)
+	}
+
+	return string(data), nil
 }
 
 // Write writes an HTTP request template to a file
@@ -78,24 +92,6 @@ func readJSON(fileName string, data []byte) *Template {
 	return &tmpl
 }
 
-func externalBody(templateFile, body string) (string, bool, error) {
-	if !strings.HasPrefix(body, "@") {
-		return "", false, nil
-	}
-
-	fileName := body[1:]
-	if !filepath.IsAbs(fileName) {
-		fileName = filepath.Join(filepath.Dir(templateFile), fileName)
-	}
-
-	data, err := os.ReadFile(fileName) //nolint:gosec // reads the body file the user named in the template
-	if err != nil {
-		return "", false, fmt.Errorf("external body: %w", err)
-	}
-
-	return string(data), true, nil
-}
-
 func writeJSON(fileName string, tmpl *Template) error {
 	data, err := json.MarshalIndent(tmpl, "", "\t")
 	if err != nil {
@@ -114,27 +110,13 @@ type templateY struct {
 	Body     string            `yaml:"request-body,omitempty"`
 }
 
-func toYamlTemplate(tmpl *Template) *templateY {
-	return &templateY{
-		Method:   tmpl.Method,
-		Endpoint: tmpl.Endpoint,
-		Headers:  toHeaderMap(tmpl.Headers),
-		Body:     tmpl.Body,
-	}
-}
-
-func toHeaderMap(headers []Header) map[string]string {
-	if headers == nil {
-		return nil
+func readYAML(fileName string, data []byte) *Template {
+	var tmply templateY
+	if err := yaml.Unmarshal(data, &tmply); err != nil {
+		log.Printf("Invalid YAML template file %s: %v\n", fileName, err)
 	}
 
-	headerMap := make(map[string]string)
-
-	for _, header := range headers {
-		headerMap[header.Key] = header.Value
-	}
-
-	return headerMap
+	return fromYamlTemplate(&tmply)
 }
 
 func fromYamlTemplate(tmply *templateY) *Template {
@@ -173,11 +155,25 @@ func writeYAML(fileName string, tmpl *Template) error {
 	return os.WriteFile(fileName, data, 0o600)
 }
 
-func readYAML(fileName string, data []byte) *Template {
-	var tmply templateY
-	if err := yaml.Unmarshal(data, &tmply); err != nil {
-		log.Printf("Invalid YAML template file %s: %v\n", fileName, err)
+func toYamlTemplate(tmpl *Template) *templateY {
+	return &templateY{
+		Method:   tmpl.Method,
+		Endpoint: tmpl.Endpoint,
+		Headers:  toHeaderMap(tmpl.Headers),
+		Body:     tmpl.Body,
+	}
+}
+
+func toHeaderMap(headers []Header) map[string]string {
+	if headers == nil {
+		return nil
 	}
 
-	return fromYamlTemplate(&tmply)
+	headerMap := make(map[string]string)
+
+	for _, header := range headers {
+		headerMap[header.Key] = header.Value
+	}
+
+	return headerMap
 }

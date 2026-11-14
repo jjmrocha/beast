@@ -59,15 +59,9 @@ func (s *Stats) Update(response *client.Response) {
 
 	switch {
 	case response.IsSuccess():
-		durations, present := s.successMap[response.StatusCode]
-		if !present {
-			durations = make(durationSlice, 0)
-		}
-
-		s.successMap[response.StatusCode] = append(durations, response.Duration)
+		s.successMap[response.StatusCode] = append(s.successMap[response.StatusCode], response.Duration)
 	case response.Failed():
-		errorDesc := response.FailureReason()
-		s.errorMap[errorDesc]++
+		s.errorMap[response.FailureReason()]++
 	default:
 		s.statusMap[response.StatusCode]++
 	}
@@ -75,12 +69,86 @@ func (s *Stats) Update(response *client.Response) {
 	s.progress.Update()
 }
 
-func (s *Stats) tps() float64 {
-	return float64(s.requests) / s.executionDuration().Seconds()
+// PrintStats displays the stats
+func (s *Stats) PrintStats(w io.Writer) {
+	s.printTotals(w)
+	s.printSuccessStatuses(w)
+	s.printNonSuccessStatuses(w)
+	s.printErrors(w)
 }
 
-func (s *Stats) avg() time.Duration {
-	return avg(s.duration, s.requests)
+func (s *Stats) printTotals(w io.Writer) {
+	_, _ = fmt.Fprintf(w, "===== Stats =====\n")
+	_, _ = fmt.Fprintf(w, "Executed requests: %v\n", s.requests)
+	_, _ = fmt.Fprintf(w, "Time taken to complete: %v\n", s.executionDuration())
+	_, _ = fmt.Fprintf(w, "Requests per second: %.4f\n", s.tps())
+	_, _ = fmt.Fprintf(w, "Avg response time: %v\n", avg(s.duration, s.requests))
+}
+
+func (s *Stats) printSuccessStatuses(w io.Writer) {
+	for status, durations := range s.successMap {
+		count := durations.Len()
+		_, _ = fmt.Fprintf(w, "===== Status %v =====\n", status)
+		_, _ = fmt.Fprintf(w, "%v requests, with avg response time of %v\n", count, avg(durations.sum(), count))
+
+		if count >= minResultsForDistribution {
+			printDistribution(w, durations)
+		}
+	}
+}
+
+const minResultsForDistribution = 5
+
+var percentiles = []struct {
+	percent    int
+	minResults int
+}{
+	{percent: 20, minResults: minResultsForDistribution},
+	{percent: 40, minResults: minResultsForDistribution},
+	{percent: 60, minResults: minResultsForDistribution},
+	{percent: 80, minResults: minResultsForDistribution},
+	{percent: 90, minResults: 10},
+	{percent: 95, minResults: 20},
+	{percent: 99, minResults: 100},
+}
+
+func printDistribution(w io.Writer, durations durationSlice) {
+	sort.Sort(durations)
+
+	_, _ = fmt.Fprintf(w, "And the following distribution:\n")
+	_, _ = fmt.Fprintf(w, "- The fastest request took %v\n", durations.first())
+	for _, p := range percentiles {
+		if durations.Len() >= p.minResults {
+			_, _ = fmt.Fprintf(w, "- %v%% of requests under %v\n", p.percent, durations.percentage(p.percent))
+		}
+	}
+	_, _ = fmt.Fprintf(w, "- The slowest request took %v\n", durations.last())
+}
+
+func (s *Stats) printNonSuccessStatuses(w io.Writer) {
+	if len(s.statusMap) == 0 {
+		return
+	}
+
+	_, _ = fmt.Fprintf(w, "===== Non Success Status =====\n")
+	for status, count := range s.statusMap {
+		_, _ = fmt.Fprintf(w, "Status %v: %v requests\n", status, count)
+	}
+}
+
+func (s *Stats) printErrors(w io.Writer) {
+	if len(s.errorMap) == 0 {
+		return
+	}
+
+	_, _ = fmt.Fprintf(w, "===== Errors =====\n")
+	for reason, count := range s.errorMap {
+		_, _ = fmt.Fprintf(w, "- %v: %v errors\n", reason, count)
+	}
+}
+
+func (s *Stats) tps() float64 {
+	return float64(s.requests) / s.executionDuration().Seconds()
 }
 
 func (s *Stats) executionDuration() time.Duration {
@@ -91,57 +159,6 @@ func avg(duration time.Duration, requests int) time.Duration {
 	if requests == 0 {
 		return 0
 	}
+
 	return time.Duration(duration.Nanoseconds() / int64(requests))
-}
-
-// PrintStats displays the stats
-func (s *Stats) PrintStats(w io.Writer) {
-	_, _ = fmt.Fprintf(w, "===== Stats =====\n")
-	_, _ = fmt.Fprintf(w, "Executed requests: %v\n", s.requests)
-	_, _ = fmt.Fprintf(w, "Time taken to complete: %v\n", s.executionDuration())
-	_, _ = fmt.Fprintf(w, "Requests per second: %.4f\n", s.tps())
-	_, _ = fmt.Fprintf(w, "Avg response time: %v\n", s.avg())
-
-	for key, durations := range s.successMap {
-		_, _ = fmt.Fprintf(w, "===== Status %v =====\n", key)
-		count := durations.Len()
-		duration := durations.sum()
-		_, _ = fmt.Fprintf(w, "%v requests, with avg response time of %v\n", count, avg(duration, count))
-		if count >= 5 {
-			sort.Sort(durations)
-			_, _ = fmt.Fprintf(w, "And the following distribution:\n")
-			_, _ = fmt.Fprintf(w, "- The fastest request took %v\n", durations.first())
-			_, _ = fmt.Fprintf(w, "- 20%% of requests under %v\n", durations.percentage(20))
-			_, _ = fmt.Fprintf(w, "- 40%% of requests under %v\n", durations.percentage(40))
-			_, _ = fmt.Fprintf(w, "- 60%% of requests under %v\n", durations.percentage(60))
-			_, _ = fmt.Fprintf(w, "- 80%% of requests under %v\n", durations.percentage(80))
-			if count >= 10 {
-				_, _ = fmt.Fprintf(w, "- 90%% of requests under %v\n", durations.percentage(90))
-				if count >= 20 {
-					_, _ = fmt.Fprintf(w, "- 95%% of requests under %v\n", durations.percentage(95))
-					if count >= 100 {
-						_, _ = fmt.Fprintf(w, "- 99%% of requests under %v\n", durations.percentage(99))
-					}
-				}
-			}
-			_, _ = fmt.Fprintf(w, "- The slowest request took %v\n", durations.last())
-		}
-	}
-
-	if len(s.statusMap) > 0 {
-		_, _ = fmt.Fprintf(w, "===== Non Success Status =====\n")
-
-		for key, value := range s.statusMap {
-			_, _ = fmt.Fprintf(w, "Status %v: %v requests\n", key, value)
-		}
-	}
-
-	if len(s.errorMap) > 0 {
-		_, _ = fmt.Fprintf(w, "===== Errors =====\n")
-
-		for key, value := range s.errorMap {
-			_, _ = fmt.Fprintf(w, "- %v: %v errors\n", key, value)
-		}
-	}
-
 }

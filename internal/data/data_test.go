@@ -17,6 +17,7 @@
 package data
 
 import (
+	"encoding/csv"
 	"os"
 	"path/filepath"
 	"testing"
@@ -70,6 +71,16 @@ func TestRead(t *testing.T) {
 		result, err := Read(fileName)
 		// then
 		assert.ErrorIs(t, err, ErrNoRows)
+		assert.Nil(t, result)
+	})
+
+	t.Run("a row with a different number of values returns an error", func(t *testing.T) {
+		// given
+		fileName := writeCSV(t, "A,B\na1,b1\na2\n")
+		// when
+		result, err := Read(fileName)
+		// then
+		assert.ErrorIs(t, err, csv.ErrFieldCount)
 		assert.Nil(t, result)
 	})
 

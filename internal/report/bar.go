@@ -45,9 +45,7 @@ func NewBar(requests, duration int) *Bar {
 // the bar will update its representation accordingly
 func (b *Bar) Update() {
 	b.executedRequestsCount++
-	percentage := b.percentage()
-
-	percentage = min(percentage, 100)
+	percentage := min(b.percentage(), 100)
 
 	if percentage != b.lastPercentageDisplayed && percentage%5 == 0 {
 		b.lastPercentageDisplayed = percentage

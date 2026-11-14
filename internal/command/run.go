@@ -19,8 +19,8 @@ package command
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
-	"os"
 	"runtime"
 
 	"github.com/jjmrocha/beast/internal/client"
@@ -42,62 +42,64 @@ type RunOptions struct {
 }
 
 // Run implements the `beast run ...` command
-func Run(ctx context.Context, opts RunOptions) {
-	fmt.Printf("===== System =====\n")
-	fmt.Printf("Operating System: %v\n", runtime.GOOS)
-	fmt.Printf("System Architecture: %v\n", runtime.GOARCH)
-	fmt.Printf("Logical CPUs: %v\n", runtime.NumCPU())
+func Run(ctx context.Context, w io.Writer, opts RunOptions) {
+	printSystem(w)
+	printTest(w, opts)
 
-	fmt.Printf("===== Test =====\n")
-	fmt.Printf("Request template: %v\n", opts.Template)
-	if opts.Data != "" {
-		fmt.Printf("Sample Data: %v\n", opts.Data)
-	}
-	if opts.Config != "" {
-		fmt.Printf("Configuration: %v\n", opts.Config)
-	}
-	if opts.Requests > 0 {
-		fmt.Printf("Number of requests: %v\n", opts.Requests)
-	} else {
-		fmt.Printf("Test duration: %v seconds\n", opts.Duration)
-	}
-	fmt.Printf("Number of concurrent requests: %v\n", opts.Concurrency)
+	_, _ = fmt.Fprintf(w, "===== Preparing =====\n")
+	httpClient := createHTTPClient(w, opts.Config, opts.Concurrency)
+	tmpl := readTemplate(w, opts.Template)
+	data := readData(w, opts.Data)
 
-	fmt.Printf("===== Preparing =====\n")
-	httpClient := createHTTPClient(opts.Config, opts.Concurrency)
-	tmpl := readTemplate(opts.Template)
-	data := readData(opts.Data)
-
-	fmt.Printf("===== Executing =====\n")
+	_, _ = fmt.Fprintf(w, "===== Executing =====\n")
 	limits := control.Limits{Requests: opts.Requests, Duration: opts.Duration, Workers: opts.Concurrency}
 	results := control.Start(ctx, limits, httpClient, tmpl, data)
-
-	output, err := report.NewOutput(opts.Output)
-	if err != nil {
-		log.Fatalf("Error creating output file %s: %v\n", opts.Output, err)
-	}
-
+	output := createOutput(opts.Output)
 	stats := report.NewStats(report.NewBar(opts.Requests, opts.Duration))
 	for response := range results {
 		stats.Update(response)
 		output.Write(response)
 	}
 
-	stats.PrintStats(os.Stdout)
-	output.Close(os.Stdout)
+	stats.PrintStats(w)
+	output.Close(w)
 }
 
-func createHTTPClient(configFile string, nParallel int) *client.Client {
-	cfg := readConfig(configFile)
+func printSystem(w io.Writer) {
+	_, _ = fmt.Fprintf(w, "===== System =====\n")
+	_, _ = fmt.Fprintf(w, "Operating System: %v\n", runtime.GOOS)
+	_, _ = fmt.Fprintf(w, "System Architecture: %v\n", runtime.GOARCH)
+	_, _ = fmt.Fprintf(w, "Logical CPUs: %v\n", runtime.NumCPU())
+}
+
+func printTest(w io.Writer, opts RunOptions) {
+	_, _ = fmt.Fprintf(w, "===== Test =====\n")
+	_, _ = fmt.Fprintf(w, "Request template: %v\n", opts.Template)
+	if opts.Data != "" {
+		_, _ = fmt.Fprintf(w, "Sample Data: %v\n", opts.Data)
+	}
+	if opts.Config != "" {
+		_, _ = fmt.Fprintf(w, "Configuration: %v\n", opts.Config)
+	}
+	if opts.Requests > 0 {
+		_, _ = fmt.Fprintf(w, "Number of requests: %v\n", opts.Requests)
+	} else {
+		_, _ = fmt.Fprintf(w, "Test duration: %v seconds\n", opts.Duration)
+	}
+	_, _ = fmt.Fprintf(w, "Number of concurrent requests: %v\n", opts.Concurrency)
+}
+
+func createHTTPClient(w io.Writer, configFile string, nParallel int) *client.Client {
+	cfg := readConfig(w, configFile)
 	return client.NewClient(cfg, nParallel)
 }
 
-func readConfig(configFile string) *config.Config {
+func readConfig(w io.Writer, configFile string) *config.Config {
 	if configFile == "" {
 		return config.Default()
 	}
 
-	fmt.Println("- Reading configuration")
+	_, _ = fmt.Fprintln(w, "- Reading configuration")
 	cfg, err := config.Read(configFile)
 	if err != nil {
 		log.Fatalf("Error reading config file %s: %v\n", configFile, err)
@@ -105,21 +107,8 @@ func readConfig(configFile string) *config.Config {
 	return cfg
 }
 
-func readData(dataFile string) *data.Data {
-	if dataFile == "" {
-		return nil
-	}
-
-	fmt.Println("- Loading data file")
-	dt, err := data.Read(dataFile)
-	if err != nil {
-		log.Fatalf("Error reading data file %s: %v\n", dataFile, err)
-	}
-	return dt
-}
-
-func readTemplate(fileName string) *template.CompiledTemplate {
-	fmt.Println("- Loading request template")
+func readTemplate(w io.Writer, fileName string) *template.CompiledTemplate {
+	_, _ = fmt.Fprintln(w, "- Loading request template")
 	tmpl, err := template.Read(fileName)
 	if err != nil {
 		log.Fatalf("Error reading template file %s: %v\n", fileName, err)
@@ -129,4 +118,25 @@ func readTemplate(fileName string) *template.CompiledTemplate {
 		log.Fatalf("Error compiling template: %v\n", err)
 	}
 	return tmplC
+}
+
+func readData(w io.Writer, dataFile string) *data.Data {
+	if dataFile == "" {
+		return nil
+	}
+
+	_, _ = fmt.Fprintln(w, "- Loading data file")
+	dt, err := data.Read(dataFile)
+	if err != nil {
+		log.Fatalf("Error reading data file %s: %v\n", dataFile, err)
+	}
+	return dt
+}
+
+func createOutput(fileName string) report.Output {
+	output, err := report.NewOutput(fileName)
+	if err != nil {
+		log.Fatalf("Error creating output file %s: %v\n", fileName, err)
+	}
+	return output
 }

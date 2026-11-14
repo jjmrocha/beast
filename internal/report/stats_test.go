@@ -18,6 +18,7 @@ package report
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 	"time"
 
@@ -90,6 +91,39 @@ func TestPrintStats(t *testing.T) {
 		assert.Contains(t, result, "- The slowest request took 5ms\n")
 	})
 
+	t.Run("prints the higher percentiles once there are enough results", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			count    int
+			expected map[int]string
+		}{
+			{name: "9 results", count: 9, expected: map[int]string{}},
+			{name: "10 results", count: 10, expected: map[int]string{90: "9ms"}},
+			{name: "20 results", count: 20, expected: map[int]string{90: "18ms", 95: "19ms"}},
+			{name: "100 results", count: 100, expected: map[int]string{90: "90ms", 95: "95ms", 99: "99ms"}},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				// given
+				var printed bytes.Buffer
+				s := statsOf(successes(tc.count)...)
+				// when
+				s.PrintStats(&printed)
+				// then
+				result := printed.String()
+				for _, percent := range []int{90, 95, 99} {
+					line := fmt.Sprintf("- %v%% of requests under ", percent)
+					if duration, ok := tc.expected[percent]; ok {
+						assert.Contains(t, result, line+duration+"\n")
+					} else {
+						assert.NotContains(t, result, line)
+					}
+				}
+			})
+		}
+	})
+
 	t.Run("prints no distribution for fewer than 5 results", func(t *testing.T) {
 		// given
 		var printed bytes.Buffer
@@ -132,6 +166,14 @@ func statsOf(responses ...*client.Response) *Stats {
 		s.Update(response)
 	}
 	return s
+}
+
+func successes(count int) []*client.Response {
+	responses := make([]*client.Response, 0, count)
+	for milliseconds := 1; milliseconds <= count; milliseconds++ {
+		responses = append(responses, success(milliseconds))
+	}
+	return responses
 }
 
 func success(milliseconds int) *client.Response {

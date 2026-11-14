@@ -50,7 +50,7 @@ func NewClient(cfg *config.Config, parallelConns int) *Client {
 	}
 	native := &http.Client{
 		Transport: transport,
-		Timeout:   time.Duration(time.Second.Nanoseconds() * int64(cfg.RequestTimeout)),
+		Timeout:   time.Duration(cfg.RequestTimeout) * time.Second,
 	}
 
 	if cfg.DisableRedirects {
@@ -69,35 +69,30 @@ func (c *Client) Execute(request *http.Request) *Response {
 	description := request.Method + " " + request.URL.String()
 	start := time.Now()
 	resp, err := c.native.Do(request)
-	duration := time.Since(start)
+	result := &Response{Timestamp: start, Request: description, Duration: time.Since(start)}
+
+	if isTimeout(err) {
+		result.StatusCode = StatusTimeout
+		return result
+	}
 
 	if err != nil {
-		var urlErr *url.Error
-		if ok := errors.As(err, &urlErr); ok && urlErr.Timeout() {
-			return &Response{
-				Timestamp:  start,
-				Request:    description,
-				StatusCode: StatusTimeout,
-				Duration:   duration,
-			}
-		}
-
 		log.Printf("Error executing request '%s': %v\n", description, err) //nolint:gosec // the URL comes from the user's own template
-		return &Response{
-			Timestamp:  start,
-			Request:    description,
-			StatusCode: StatusUnexpectedError,
-			Duration:   duration,
-		}
+		result.StatusCode = StatusUnexpectedError
+		return result
 	}
 
+	discardBody(resp)
+	result.StatusCode = resp.StatusCode
+	return result
+}
+
+func isTimeout(err error) bool {
+	var urlErr *url.Error
+	return errors.As(err, &urlErr) && urlErr.Timeout()
+}
+
+func discardBody(resp *http.Response) {
 	defer func() { _ = resp.Body.Close() }()
 	_, _ = io.Copy(io.Discard, resp.Body)
-
-	return &Response{
-		Timestamp:  start,
-		Request:    description,
-		StatusCode: resp.StatusCode,
-		Duration:   duration,
-	}
 }

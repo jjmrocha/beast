@@ -36,45 +36,53 @@ type CompiledTemplate struct {
 	body     *txt.Template
 }
 
+type requestValues struct {
+	RequestID int
+	Data      *data.Record
+}
+
 func (c *CompiledTemplate) executeTemplate(requestID int, record *data.Record) (*Template, error) {
-	var context = struct {
-		RequestID int
-		Data      *data.Record
-	}{
-		RequestID: requestID,
-		Data:      record,
-	}
+	values := requestValues{RequestID: requestID, Data: record}
 
-	tmplf := Template{
-		Method:  c.method,
-		Headers: make([]Header, 0, len(c.headers)),
-	}
-
-	var endpoint bytes.Buffer
-	if err := c.endpoint.Execute(&endpoint, context); err != nil {
+	endpoint, err := render(c.endpoint, values)
+	if err != nil {
 		return nil, err
 	}
-	tmplf.Endpoint = endpoint.String()
 
+	headers, err := c.renderHeaders(values)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := render(c.body, values)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Template{Method: c.method, Endpoint: endpoint, Headers: headers, Body: body}, nil
+}
+
+func (c *CompiledTemplate) renderHeaders(values requestValues) ([]Header, error) {
+	headers := make([]Header, 0, len(c.headers))
 	for _, header := range c.headers {
-		var headerValue bytes.Buffer
-		if err := header.value.Execute(&headerValue, context); err != nil {
+		value, err := render(header.value, values)
+		if err != nil {
 			return nil, err
 		}
-		hdf := Header{
-			Key:   header.key,
-			Value: headerValue.String(),
-		}
-		tmplf.Headers = append(tmplf.Headers, hdf)
+		headers = append(headers, Header{Key: header.key, Value: value})
+	}
+	return headers, nil
+}
+
+func render(tmpl *txt.Template, values requestValues) (string, error) {
+	if tmpl == nil {
+		return "", nil
 	}
 
-	if c.body != nil {
-		var body bytes.Buffer
-		if err := c.body.Execute(&body, context); err != nil {
-			return nil, err
-		}
-		tmplf.Body = body.String()
+	var rendered bytes.Buffer
+	if err := tmpl.Execute(&rendered, values); err != nil {
+		return "", err
 	}
 
-	return &tmplf, nil
+	return rendered.String(), nil
 }

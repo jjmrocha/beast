@@ -19,6 +19,7 @@ package data
 
 import (
 	"encoding/csv"
+	"errors"
 	"io"
 	"os"
 )
@@ -30,19 +31,46 @@ type Data struct {
 	current int
 }
 
+// Read reads the content of the CSV file
+func Read(fileName string) (*Data, error) {
+	csvfile, err := os.Open(fileName) //nolint:gosec // reads the data file the user named
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = csvfile.Close() }()
+
+	reader := csv.NewReader(csvfile)
+	var dt Data
+	for {
+		columns, err := reader.Read()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		dt.add(columns)
+	}
+
+	if len(dt.records) == 0 {
+		return nil, ErrNoRows
+	}
+
+	return &dt, nil
+}
+
 func (d *Data) add(columns []string) {
 	if d.fields == nil {
 		d.fields = columns
-	} else {
-		fieldsNumber := len(d.fields)
-		record := NewRecord()
-
-		for i := range fieldsNumber {
-			record[d.fields[i]] = columns[i]
-		}
-
-		d.records = append(d.records, record)
+		return
 	}
+
+	record := NewRecord()
+	for i, field := range d.fields {
+		record[field] = columns[i]
+	}
+	d.records = append(d.records, record)
 }
 
 // Next loops through the records
@@ -54,35 +82,4 @@ func (d *Data) Next() *Record {
 	next := d.records[d.current]
 	d.current++
 	return &next
-}
-
-// Read reads the content of the CSV file
-func Read(fileName string) (*Data, error) {
-	csvfile, err := os.Open(fileName) //nolint:gosec // reads the data file the user named
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() { _ = csvfile.Close() }()
-	reader := csv.NewReader(csvfile)
-	dt := Data{
-		records: make([]Record, 0),
-	}
-
-	for {
-		record, err := reader.Read()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return nil, err
-		}
-
-		dt.add(record)
-	}
-
-	if len(dt.records) == 0 {
-		return nil, ErrNoRows
-	}
-
-	return &dt, nil
 }

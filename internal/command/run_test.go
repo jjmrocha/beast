@@ -19,10 +19,12 @@ package command
 import (
 	"context"
 	"encoding/csv"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -33,6 +35,30 @@ import (
 const runTimeout = 10 * time.Second
 
 func TestRun(t *testing.T) {
+	t.Run("prints the test settings, then the stats", func(t *testing.T) {
+		// given
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+		t.Cleanup(server.Close)
+		templateFile := writeTemplate(t, server.URL)
+		opts := RunOptions{Requests: 3, Concurrency: 2, Template: templateFile}
+		var out strings.Builder
+		// when
+		Run(t.Context(), &out, opts)
+		// then
+		result := out.String()
+		expectedSettings := "===== Test =====\n" +
+			"Request template: " + templateFile + "\n" +
+			"Number of requests: 3\n" +
+			"Number of concurrent requests: 2\n" +
+			"===== Preparing =====\n" +
+			"- Loading request template\n" +
+			"===== Executing =====\n" +
+			"===== Stats =====\n" +
+			"Executed requests: 3\n"
+		assert.True(t, strings.HasPrefix(result, "===== System =====\n"), "run output: %q", result)
+		assert.Contains(t, result, expectedSettings)
+	})
+
 	t.Run("writes a complete output file when the run is cancelled", func(t *testing.T) {
 		// given
 		arrived := make(chan struct{}, 16)
@@ -48,15 +74,13 @@ func TestRun(t *testing.T) {
 			}
 		}))
 		t.Cleanup(server.Close)
-		dir := t.TempDir()
-		templateFile := filepath.Join(dir, "request.json")
-		require.NoError(t, os.WriteFile(templateFile, []byte(`{"method": "GET", "url": "`+server.URL+`"}`), 0o600))
-		opts := RunOptions{Duration: 60, Concurrency: 2, Template: templateFile, Output: filepath.Join(dir, "output.csv")}
+		templateFile := writeTemplate(t, server.URL)
+		opts := RunOptions{Duration: 60, Concurrency: 2, Template: templateFile, Output: filepath.Join(t.TempDir(), "output.csv")}
 		ctx, cancel := context.WithCancel(t.Context())
 		finished := make(chan struct{})
 		go func() {
 			defer close(finished)
-			Run(ctx, opts)
+			Run(ctx, io.Discard, opts)
 		}()
 		<-arrived
 		<-arrived
@@ -77,4 +101,13 @@ func TestRun(t *testing.T) {
 		expectedLines := 3
 		assert.Len(t, lines, expectedLines, "the header and one line for each request in flight")
 	})
+}
+
+func writeTemplate(t testing.TB, url string) string {
+	t.Helper()
+	fileName := filepath.Join(t.TempDir(), "request.json")
+	if err := os.WriteFile(fileName, []byte(`{"method": "GET", "url": "`+url+`"}`), 0o600); err != nil {
+		t.Fatalf("writing template %s: %v", fileName, err)
+	}
+	return fileName
 }

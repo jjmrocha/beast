@@ -16,12 +16,15 @@
 
 package command
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+)
 
 var version = "dev"
 
 const title = "the Beast %v - Stress testing for RESTful APIs\n"
-const help = `
+const usage = `
 Usage:
    beast [help]
    beast version
@@ -54,13 +57,13 @@ Where:
 
 `
 
-// Version implements the `beast version` command
-func Version() {
-	fmt.Printf(title, version)
+// Help implements the `beast [help]` command
+func Help(w io.Writer) {
+	Version(w)
+	_, _ = fmt.Fprint(w, usage)
 }
 
-// Help implements the `beast [help]` command
-func Help() {
-	Version()
-	fmt.Print(help)
+// Version implements the `beast version` command
+func Version(w io.Writer) {
+	_, _ = fmt.Fprintf(w, title, version)
 }

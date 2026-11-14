@@ -48,14 +48,14 @@ func newCsvReport(fileName string) (*csvReport, error) {
 	}, nil
 }
 
-func (csv *csvReport) write(response *client.Response) {
+func (r *csvReport) write(response *client.Response) {
 	record := encode(response)
-	_ = csv.writer.Write(record)
+	_ = r.writer.Write(record)
 }
 
-func (csv *csvReport) flush() {
-	csv.writer.Flush()
-	csv.err = errors.Join(csv.writer.Error(), csv.file.Close())
+func (r *csvReport) flush() {
+	r.writer.Flush()
+	r.err = errors.Join(r.writer.Error(), r.file.Close())
 }
 
 func csvHeader() []string {

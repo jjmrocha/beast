@@ -55,16 +55,38 @@ func TestExecuteTemplate(t *testing.T) {
 	})
 
 	t.Run("returns an error when the template fails while running", func(t *testing.T) {
-		// given
-		tmpl := &Template{Method: http.MethodGet, Endpoint: "http://someendpoint.pt/{{ .Data.A.B }}"}
-		tmplc, err := tmpl.Compile()
-		require.NoError(t, err)
-		record := data.Record{"A": "a1"}
-		// when
-		result, err := tmplc.executeTemplate(1, &record)
-		// then
-		assert.Error(t, err)
-		assert.Nil(t, result)
+		const failingAction = "{{ .Data.A.B }}"
+		tests := []struct {
+			name  string
+			input *Template
+		}{
+			{
+				name:  "in the URL",
+				input: &Template{Method: http.MethodGet, Endpoint: "http://someendpoint.pt/" + failingAction},
+			},
+			{
+				name:  "in a header value",
+				input: &Template{Method: http.MethodGet, Endpoint: "http://someendpoint.pt/", Headers: []Header{{Key: "X-Id", Value: failingAction}}},
+			},
+			{
+				name:  "in the body",
+				input: &Template{Method: http.MethodPost, Endpoint: "http://someendpoint.pt/", Body: failingAction},
+			},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				// given
+				tmplc, err := tc.input.Compile()
+				require.NoError(t, err)
+				record := data.Record{"A": "a1"}
+				// when
+				result, err := tmplc.executeTemplate(1, &record)
+				// then
+				assert.Error(t, err)
+				assert.Nil(t, result)
+			})
+		}
 	})
 }
 

@@ -114,6 +114,7 @@ func TestExecute(t *testing.T) {
 		expectedRequest := "GET " + server.URL + "/apps"
 		assert.Equal(t, expectedRequest, result.Request)
 		assert.Positive(t, result.Duration)
+		assert.False(t, result.Timestamp.IsZero())
 	})
 
 	t.Run("returns a non-success status as it is", func(t *testing.T) {
@@ -139,6 +140,7 @@ func TestExecute(t *testing.T) {
 		// then
 		assert.Equal(t, StatusUnexpectedError, result.StatusCode)
 		assert.Equal(t, "GET "+url, result.Request)
+		assert.False(t, result.Timestamp.IsZero())
 	})
 }
 

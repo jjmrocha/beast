@@ -38,6 +38,46 @@ type Template struct {
 	Body     string   `json:"body,omitempty"`
 }
 
+// Compile returns a compiled version of the template
+func (t *Template) Compile() (*CompiledTemplate, error) {
+	endpoint, err := parse("endpoint", t.Endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	headers, err := compileHeaders(t.Headers)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := parse("body", t.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return &CompiledTemplate{method: t.Method, endpoint: endpoint, headers: headers, body: body}, nil
+}
+
+func compileHeaders(headers []Header) ([]compiledHeader, error) {
+	compiled := make([]compiledHeader, 0, len(headers))
+	for _, header := range headers {
+		value, err := parse("headerValue", header.Value)
+		if err != nil {
+			return nil, err
+		}
+		compiled = append(compiled, compiledHeader{key: header.Key, value: value})
+	}
+	return compiled, nil
+}
+
+func parse(name, text string) (*template.Template, error) {
+	if text == "" {
+		return nil, nil
+	}
+
+	return template.New(name).Parse(text)
+}
+
 func (t *Template) request() (*http.Request, error) {
 	req, err := http.NewRequest(t.Method, t.Endpoint, bodyReader(t.Body))
 	if err != nil {
@@ -57,41 +97,4 @@ func bodyReader(body string) io.Reader {
 	}
 
 	return strings.NewReader(body)
-}
-
-// Compile returns a compiled version of the template
-func (t *Template) Compile() (*CompiledTemplate, error) {
-	tEndpoint, err := template.New("endpoint").Parse(t.Endpoint)
-	if err != nil {
-		return nil, err
-	}
-
-	tHeaders := make([]compiledHeader, 0, len(t.Headers))
-	for _, header := range t.Headers {
-		tValue, headerErr := template.New("headerValue").Parse(header.Value)
-		if headerErr != nil {
-			return nil, headerErr
-		}
-		hdc := compiledHeader{
-			key:   header.Key,
-			value: tValue,
-		}
-		tHeaders = append(tHeaders, hdc)
-	}
-
-	var tBody *template.Template
-	if t.Body != "" {
-		tBody, err = template.New("body").Parse(t.Body)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	tmplc := CompiledTemplate{
-		method:   t.Method,
-		endpoint: tEndpoint,
-		headers:  tHeaders,
-		body:     tBody,
-	}
-	return &tmplc, nil
 }

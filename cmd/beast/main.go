@@ -37,16 +37,16 @@ func main() {
 
 func run(args []string) int {
 	if len(args) == 0 {
-		command.Help()
+		command.Help(os.Stdout)
 		return 0
 	}
 
 	switch args[0] {
 	case "help":
-		command.Help()
+		command.Help(os.Stdout)
 		return 0
 	case "version":
-		command.Version()
+		command.Version(os.Stdout)
 		return 0
 	case "config":
 		return configCmd(args[1:])
@@ -55,14 +55,14 @@ func run(args []string) int {
 	case "template":
 		return templateCmd(args[1:])
 	default:
-		command.Help()
+		command.Help(os.Stdout)
 		return usageError
 	}
 }
 
 func configCmd(args []string) int {
 	if len(args) != 1 {
-		command.Help()
+		command.Help(os.Stdout)
 		return usageError
 	}
 
@@ -86,17 +86,18 @@ func runCmd(args []string) int {
 	nonFlagArgs := runOption.Args()
 
 	if len(nonFlagArgs) != 1 {
-		command.Help()
+		command.Help(os.Stdout)
 		return usageError
 	}
 
 	if *nRequests < 0 || *nParallel <= 0 || *tDuration < 0 {
-		command.Help()
+		command.Help(os.Stdout)
 		return usageError
 	}
 
-	if (*nRequests == 0 && *tDuration == 0) || (*nRequests > 0 && *tDuration > 0) {
-		command.Help()
+	exactlyOneLimit := (*nRequests > 0) != (*tDuration > 0)
+	if !exactlyOneLimit {
+		command.Help(os.Stdout)
 		return usageError
 	}
 
@@ -109,7 +110,7 @@ func runCmd(args []string) int {
 	defer announce()
 
 	fileName := nonFlagArgs[0]
-	command.Run(ctx, command.RunOptions{
+	command.Run(ctx, os.Stdout, command.RunOptions{
 		Requests:    *nRequests,
 		Duration:    *tDuration,
 		Concurrency: *nParallel,
@@ -141,7 +142,7 @@ func templateCmd(args []string) int {
 		url = nonFlagArgs[0]
 		fileName = nonFlagArgs[1]
 	default:
-		command.Help()
+		command.Help(os.Stdout)
 		return usageError
 	}
 
