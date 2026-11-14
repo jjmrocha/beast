@@ -109,16 +109,19 @@ func runCmd(args []string) int {
 	})
 	defer announce()
 
-	fileName := nonFlagArgs[0]
-	command.Run(ctx, os.Stdout, command.RunOptions{
+	opts := command.RunOptions{
 		Requests:    *nRequests,
 		Duration:    *tDuration,
 		Concurrency: *nParallel,
-		Template:    fileName,
+		Template:    nonFlagArgs[0],
 		Config:      *configFile,
 		Data:        *dataFile,
 		Output:      *outputFile,
-	})
+	}
+	if err := command.Run(ctx, os.Stdout, opts); err != nil {
+		log.Printf("Error %v\n", err)
+		return 1
+	}
 
 	if ctx.Err() != nil {
 		return interrupted

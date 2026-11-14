@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"runtime"
 
 	"github.com/jjmrocha/beast/internal/client"
@@ -42,19 +41,32 @@ type RunOptions struct {
 }
 
 // Run implements the `beast run ...` command
-func Run(ctx context.Context, w io.Writer, opts RunOptions) {
+func Run(ctx context.Context, w io.Writer, opts RunOptions) error {
 	printSystem(w)
 	printTest(w, opts)
 
 	_, _ = fmt.Fprintf(w, "===== Preparing =====\n")
-	httpClient := createHTTPClient(w, opts.Config, opts.Concurrency)
-	tmpl := readTemplate(w, opts.Template)
-	data := readData(w, opts.Data)
+	httpClient, err := createHTTPClient(w, opts.Config, opts.Concurrency)
+	if err != nil {
+		return err
+	}
+	tmpl, err := readTemplate(w, opts.Template)
+	if err != nil {
+		return err
+	}
+	data, err := readData(w, opts.Data)
+	if err != nil {
+		return err
+	}
 
 	_, _ = fmt.Fprintf(w, "===== Executing =====\n")
+	output, err := createOutput(opts.Output)
+	if err != nil {
+		return err
+	}
+
 	limits := control.Limits{Requests: opts.Requests, Duration: opts.Duration, Workers: opts.Concurrency}
 	results := control.Start(ctx, limits, httpClient, tmpl, data)
-	output := createOutput(opts.Output)
 	stats := report.NewStats(report.NewBar(opts.Requests, opts.Duration))
 	for response := range results {
 		stats.Update(response)
@@ -63,6 +75,7 @@ func Run(ctx context.Context, w io.Writer, opts RunOptions) {
 
 	stats.PrintStats(w)
 	output.Close(w)
+	return nil
 }
 
 func printSystem(w io.Writer) {
@@ -89,54 +102,57 @@ func printTest(w io.Writer, opts RunOptions) {
 	_, _ = fmt.Fprintf(w, "Number of concurrent requests: %v\n", opts.Concurrency)
 }
 
-func createHTTPClient(w io.Writer, configFile string, nParallel int) *client.Client {
-	cfg := readConfig(w, configFile)
-	return client.NewClient(cfg, nParallel)
+func createHTTPClient(w io.Writer, configFile string, nParallel int) (*client.Client, error) {
+	cfg, err := readConfig(w, configFile)
+	if err != nil {
+		return nil, err
+	}
+	return client.NewClient(cfg, nParallel), nil
 }
 
-func readConfig(w io.Writer, configFile string) *config.Config {
+func readConfig(w io.Writer, configFile string) (*config.Config, error) {
 	if configFile == "" {
-		return config.Default()
+		return config.Default(), nil
 	}
 
 	_, _ = fmt.Fprintln(w, "- Reading configuration")
 	cfg, err := config.Read(configFile)
 	if err != nil {
-		log.Fatalf("Error reading config file %s: %v\n", configFile, err)
+		return nil, fmt.Errorf("reading config file %s: %w", configFile, err)
 	}
-	return cfg
+	return cfg, nil
 }
 
-func readTemplate(w io.Writer, fileName string) *template.CompiledTemplate {
+func readTemplate(w io.Writer, fileName string) (*template.CompiledTemplate, error) {
 	_, _ = fmt.Fprintln(w, "- Loading request template")
 	tmpl, err := template.Read(fileName)
 	if err != nil {
-		log.Fatalf("Error reading template file %s: %v\n", fileName, err)
+		return nil, fmt.Errorf("reading template file %s: %w", fileName, err)
 	}
 	tmplC, err := tmpl.Compile()
 	if err != nil {
-		log.Fatalf("Error compiling template: %v\n", err)
+		return nil, fmt.Errorf("compiling template: %w", err)
 	}
-	return tmplC
+	return tmplC, nil
 }
 
-func readData(w io.Writer, dataFile string) *data.Data {
+func readData(w io.Writer, dataFile string) (*data.Data, error) {
 	if dataFile == "" {
-		return nil
+		return nil, nil
 	}
 
 	_, _ = fmt.Fprintln(w, "- Loading data file")
 	dt, err := data.Read(dataFile)
 	if err != nil {
-		log.Fatalf("Error reading data file %s: %v\n", dataFile, err)
+		return nil, fmt.Errorf("reading data file %s: %w", dataFile, err)
 	}
-	return dt
+	return dt, nil
 }
 
-func createOutput(fileName string) report.Output {
+func createOutput(fileName string) (report.Output, error) {
 	output, err := report.NewOutput(fileName)
 	if err != nil {
-		log.Fatalf("Error creating output file %s: %v\n", fileName, err)
+		return report.Output{}, fmt.Errorf("creating output file %s: %w", fileName, err)
 	}
-	return output
+	return output, nil
 }

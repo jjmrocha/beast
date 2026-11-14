@@ -25,6 +25,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -43,8 +44,9 @@ func TestRun(t *testing.T) {
 		opts := RunOptions{Requests: 3, Concurrency: 2, Template: templateFile}
 		var out strings.Builder
 		// when
-		Run(t.Context(), &out, opts)
+		err := Run(t.Context(), &out, opts)
 		// then
+		assert.NoError(t, err)
 		result := out.String()
 		expectedSettings := "===== Test =====\n" +
 			"Request template: " + templateFile + "\n" +
@@ -57,6 +59,76 @@ func TestRun(t *testing.T) {
 			"Executed requests: 3\n"
 		assert.True(t, strings.HasPrefix(result, "===== System =====\n"), "run output: %q", result)
 		assert.Contains(t, result, expectedSettings)
+	})
+
+	t.Run("returns an error when a file cannot be used", func(t *testing.T) {
+		missing := filepath.Join(t.TempDir(), "missing")
+		validTemplate := writeTemplate(t, "http://127.0.0.1:1/")
+		tests := []struct {
+			name            string
+			input           RunOptions
+			expectedCause   error
+			expectedMessage string
+		}{
+			{
+				name:            "a missing config file",
+				input:           RunOptions{Requests: 1, Concurrency: 1, Template: validTemplate, Config: missing},
+				expectedCause:   os.ErrNotExist,
+				expectedMessage: "reading config file " + missing + ": ",
+			},
+			{
+				name:            "a missing template file",
+				input:           RunOptions{Requests: 1, Concurrency: 1, Template: missing},
+				expectedCause:   os.ErrNotExist,
+				expectedMessage: "reading template file " + missing + ": ",
+			},
+			{
+				name:            "a template that does not compile",
+				input:           RunOptions{Requests: 1, Concurrency: 1, Template: writeTemplate(t, "http://a.pt/{{")},
+				expectedMessage: "compiling template: ",
+			},
+			{
+				name:            "a missing data file",
+				input:           RunOptions{Requests: 1, Concurrency: 1, Template: validTemplate, Data: missing},
+				expectedCause:   os.ErrNotExist,
+				expectedMessage: "reading data file " + missing + ": ",
+			},
+			{
+				name:            "an output file in a missing folder",
+				input:           RunOptions{Requests: 1, Concurrency: 1, Template: validTemplate, Output: filepath.Join(missing, "output.csv")},
+				expectedCause:   os.ErrNotExist,
+				expectedMessage: "creating output file " + filepath.Join(missing, "output.csv") + ": ",
+			},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				// given
+				opts := tc.input
+				// when
+				err := Run(t.Context(), io.Discard, opts)
+				// then
+				assert.ErrorContains(t, err, tc.expectedMessage)
+				if tc.expectedCause != nil {
+					assert.ErrorIs(t, err, tc.expectedCause)
+				}
+			})
+		}
+	})
+
+	t.Run("sends no request when the output file cannot be created", func(t *testing.T) {
+		// given
+		var received atomic.Int32
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			received.Add(1)
+		}))
+		t.Cleanup(server.Close)
+		opts := RunOptions{Requests: 5, Concurrency: 1, Template: writeTemplate(t, server.URL), Output: filepath.Join(t.TempDir(), "missing", "output.csv")}
+		// when
+		err := Run(t.Context(), io.Discard, opts)
+		// then
+		assert.Error(t, err)
+		assert.Zero(t, received.Load())
 	})
 
 	t.Run("writes a complete output file when the run is cancelled", func(t *testing.T) {
@@ -80,7 +152,7 @@ func TestRun(t *testing.T) {
 		finished := make(chan struct{})
 		go func() {
 			defer close(finished)
-			Run(ctx, io.Discard, opts)
+			assert.NoError(t, Run(ctx, io.Discard, opts))
 		}()
 		<-arrived
 		<-arrived

@@ -59,6 +59,15 @@ func TestRun(t *testing.T) {
 		})
 	}
 
+	t.Run("run with a missing template", func(t *testing.T) {
+		// given
+		args := []string{runCommand, "-n", "1", filepath.Join(t.TempDir(), "missing.json")}
+		// when
+		result := run(args)
+		// then
+		assert.Equal(t, 1, result)
+	})
+
 	t.Run("config that cannot write its file", func(t *testing.T) {
 		// given
 		args := []string{"config", filepath.Join(t.TempDir(), "missing", "config.json")}
