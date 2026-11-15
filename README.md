@@ -1,114 +1,103 @@
-the Beast
-=========
-*Stress testing for RESTful APIs*
+<div align="center">
 
-Installation
-------------
-Binaries are available on [releases](https://github.com/jjmrocha/beast/releases).
+# the Beast
 
-Or you can download the code and compile yourself:
+Stress testing for HTTP APIs, from the command line.
+
+[![CI](https://github.com/jjmrocha/beast/actions/workflows/ci.yml/badge.svg)](https://github.com/jjmrocha/beast/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/jjmrocha/beast)](https://github.com/jjmrocha/beast/releases)
+[![Go](https://img.shields.io/github/go-mod/go-version/jjmrocha/beast)](https://go.dev/dl/)
+[![License](https://img.shields.io/github/license/jjmrocha/beast)](LICENSE)
+
+<img src="docs/demo.gif" alt="beast template writes get.yaml for GET http://127.0.0.1:8080/apps/101, then beast run -n 20000 -c 10 sends 20,000 requests with a progress bar and prints the report: requests per second, average response time and the response time distribution" width="720">
+
+</div>
+
+beast sends many HTTP requests at once to an API and reports how it held up: requests per second, response time percentiles, and every status code and error. You describe the request once, in a small YAML or JSON template. A CSV file can fill in the template, so each request is different.
+
+## Features
+
+- Runs for a number of requests (`-n`) or a number of seconds (`-t`), with `-c` requests in progress at the same time.
+- Requests come from a YAML or JSON template, and a CSV file can fill in the URL, the headers and the body.
+- The report has requests per second, response time percentiles from 20% to 99%, a count for each status, and every timeout and connection error.
+- `-output` writes one CSV line for each request, with its time, status and duration, for your own analysis.
+- Ctrl-C stops a run early. beast waits for the requests in progress and still prints the report.
+- A config file sets the timeout, keep-alives, connection limits, redirects and the TLS certificate check.
+- One binary for macOS, Linux and Windows, on Intel and ARM.
+
+## Installation
+
+### Release binaries
+
+Download the archive for your system from [Releases](https://github.com/jjmrocha/beast/releases), and put `beast` in a folder on your `PATH`. Each release also has `checksums.txt` and a cosign signature, to [check a download](docs/manual.md#check-a-download).
+
+### With Go
+
 ```
-$ go install github.com/jjmrocha/beast/cmd/beast@latest
-```
-
-Documentation
--------------
-Please check our [wiki](https://github.com/jjmrocha/beast/wiki).
-
-Usage Manual
-------------
-```bash
-$ beast help
-the Beast v2.x.x - Stress testing for RESTful APIs
-
-Usage:
-   beast [help]
-   beast config <configFile>
-   beast template [-m <http method>] [url] <templateFile>
-   beast run (-n <number of requests> | -t <test duration>)
-             [-c <number of concurrent requests>]
-             [-config <configFile>] [-data <dataFile>]
-             [-output <outputFile>] <templateFile>
-
-Where:
-   config   Creates a file with the default parameters to setup HTTP connections
-            configFile   string Name of the file to be created
-
-   template Creates a request template file, using user-provided parameters
-            -m           string HTTP method (default "GET")
-            url          string Endpoint to be tested
-            templateFile string JSON/YAML file with details about the request to test
-
-   run      Executes a script and presents a report with execution results
-            -c           int    Number of concurrent requests (default 1)
-            -n           int    Number of requests (can't be used with "-t")
-            -t           int    Duration of the test in seconds (can't be used with "-n")
-            -config      string Config file to setup HTTP client
-            -data        string CSV file with data for request generation
-            -output      string CVS file with detailed execution results
-            templateFile string JSON/YAML file with details about the request to test
+go install github.com/jjmrocha/beast/cmd/beast@master
 ```
 
-Execution Output
-----------------
-```bash
-$ beast run -n 100000 -c 100 -config config.json -data ../test_data.csv -output get_100.csv apps_get.yaml
-===== System =====
-Operating System: darwin
-System Architecture: amd64
-Logical CPUs: 12
-===== Test =====
-Request template: apps_get.yaml
-Sample Data: ../test_data.csv
-Configuration: config.json
-Number of requests: 10000
-Number of concurrent requests: 100
-===== Preparing =====
-- Reading configuration
-- Loading request template
-- Loading data file
-===== Executing =====
-2020/07/07 23:03:33 [#...................] 5%
-2020/07/07 23:03:37 [##..................] 10%
-2020/07/07 23:03:40 [###.................] 15%
-2020/07/07 23:03:44 [####................] 20%
-2020/07/07 23:03:47 [#####...............] 25%
-2020/07/07 23:03:49 [######..............] 30%
-2020/07/07 23:03:52 [#######.............] 35%
-2020/07/07 23:03:54 [########............] 40%
-2020/07/07 23:03:56 [#########...........] 45%
-2020/07/07 23:03:59 [##########..........] 50%
-2020/07/07 23:04:01 [###########.........] 55%
-2020/07/07 23:04:04 [############........] 60%
-2020/07/07 23:04:06 [#############.......] 65%
-2020/07/07 23:04:09 [##############......] 70%
-2020/07/07 23:04:11 [###############.....] 75%
-2020/07/07 23:04:14 [################....] 80%
-2020/07/07 23:04:16 [#################...] 85%
-2020/07/07 23:04:19 [##################..] 90%
-2020/07/07 23:04:21 [###################.] 95%
-2020/07/07 23:04:23 [####################] 100%
-===== Stats =====
-Executed requests: 100000
-Time taken to complete: 55.167930783s
-Requests per second: 1860.9974
-Avg response time: 53.734627ms
-===== Status 200 =====
-100000 requests, with avg response time of 53.734627ms
-And the following distribution:
-- The fastest request took 6.988515ms
-- 20% of requests under 30.239955ms
-- 40% of requests under 40.23343ms
-- 60% of requests under 52.59765ms
-- 80% of requests under 72.891344ms
-- 90% of requests under 91.691174ms
-- 95% of requests under 110.193479ms
-- 99% of requests under 152.862198ms
-- The slowest request took 311.154579ms
-===== Output File =====
-Output file 'get_100.csv' was successfully generated
+This needs Go 1.27 or later. Use `@master`, because `@latest` resolves to an old version without `cmd/beast`.
+
+### From source
+
+Clone the repository and run `make build`, which writes `bin/beast`:
+
+```
+git clone https://github.com/jjmrocha/beast.git
+cd beast
+make build
 ```
 
-License
--------
-Any contributions made under this project will be governed by the [Apache License 2.0](./LICENSE.md).
+## Usage
+
+Create a template for the endpoint you want to test:
+
+```
+beast template http://127.0.0.1:8080/apps/101 get.yaml
+```
+
+Send 1,000 requests, 10 at a time:
+
+```
+beast run -n 1000 -c 10 get.yaml
+```
+
+Run for 10 seconds, and take the app ID in the URL from a [data file](docs/manual.md#data-files):
+
+```
+beast run -t 10 -c 10 -data apps.csv apps_get.yaml
+```
+
+Write one line for each request to an [output file](docs/manual.md#output-file):
+
+```
+beast run -n 1000 -c 10 -data apps.csv -output results.csv apps_get.yaml
+```
+
+The `apps.csv` and `apps_get.yaml` files are from the manual's [worked example](docs/manual.md#worked-example).
+
+## Documentation
+
+The [manual](docs/manual.md) covers:
+
+- [every command](docs/manual.md#commands), with the flags and exit statuses of `beast run`;
+- [templates](docs/manual.md#templates), including a body read from a file;
+- [what each line of the report means](docs/manual.md#the-report), and how much memory a long run needs;
+- [configuration](docs/manual.md#configuration), the [output file](docs/manual.md#output-file) and [troubleshooting](docs/manual.md#troubleshooting).
+
+## Contributing
+
+Issues and pull requests are welcome. Before you open a pull request, run:
+
+```
+make test
+make lint
+make vuln
+```
+
+The [Development](docs/manual.md#development) section of the manual has the other make targets and the release steps.
+
+## License
+
+[Apache License 2.0](LICENSE) © 2019 Joaquim Rocha and Contributors
